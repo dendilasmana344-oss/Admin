@@ -32,7 +32,6 @@
             --darker: #050505;
         }
 
-        /* ANIMATIONS */
         @keyframes neonPulse {
             0%, 100% { text-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan); }
             50% { text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-cyan); }
@@ -93,7 +92,6 @@
             min-height: 100vh;
         }
 
-        /* NEON BACKGROUND */
         .neon-bg {
             position: fixed;
             top: 0;
@@ -158,14 +156,15 @@
             background: #ff4444;
             color: white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 11px;
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             display: none;
+            animation: pulse 1s infinite;
         }
 
         .notification-badge.show {
@@ -442,91 +441,6 @@
             margin-top: 5px;
         }
 
-        /* VIDEO BACKGROUND SELECTION */
-        .video-grid-select {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .video-card-select {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid rgba(0, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .video-card-select:hover {
-            transform: translateY(-5px);
-            border-color: var(--neon-cyan);
-            box-shadow: 0 15px 30px rgba(0, 255, 255, 0.3);
-        }
-
-        .video-card-select.active {
-            border-color: #00ff88;
-            background: rgba(0, 255, 136, 0.1);
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
-        }
-
-        .video-card-select.active::before {
-            content: '✓';
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 20px;
-            color: #00ff88;
-            font-weight: bold;
-        }
-
-        .video-preview-small {
-            width: 100%;
-            height: 120px;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 12px;
-            border: 2px solid rgba(0, 255, 255, 0.3);
-        }
-
-        .video-preview-small video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .video-name-select {
-            font-family: 'Orbitron', monospace;
-            color: var(--neon-cyan);
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .video-status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .video-status-badge.active {
-            background: rgba(0, 255, 136, 0.2);
-            color: #00ff88;
-            border: 1px solid #00ff88;
-        }
-
-        .video-status-badge.inactive {
-            background: rgba(244, 67, 54, 0.2);
-            color: #ff4444;
-            border: 1px solid #ff4444;
-        }
-
         /* FILTER TABS */
         .filter-tabs {
             display: flex;
@@ -642,11 +556,6 @@
         .btn-info {
             background: linear-gradient(135deg, #2196f3, #1976d2);
             color: white;
-        }
-
-        .btn-info:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(33, 150, 243, 0.4);
         }
 
         .btn-secondary {
@@ -1170,6 +1079,173 @@
             transform: translateY(-2px);
         }
 
+        /* ==================== MODAL STYLES YANG DIPERBAIKI ==================== */
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(25px);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Modal Content */
+        .modal-content {
+            max-width: 520px;
+            width: 100%;
+            background: linear-gradient(145deg, #0a0a0a, #0f0f0f);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 40px;
+            padding: 35px;
+            animation: fadeIn 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.3);
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 10px;
+        }
+
+        /* Modal Header */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 15px;
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-close {
+            background: rgba(255, 68, 68, 0.1);
+            border: none;
+            color: #ff4444;
+            font-size: 22px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 68, 68, 0.3);
+            transform: rotate(90deg);
+        }
+
+        /* Modal Form Group */
+        .modal-form-group {
+            margin-bottom: 22px;
+        }
+
+        .modal-label {
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-input, .modal-select, .modal-textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .modal-input:focus, .modal-select:focus, .modal-textarea:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .modal-textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .modal-select {
+            cursor: pointer;
+        }
+
+        .modal-select option {
+            background: #0a0a0a;
+            color: white;
+        }
+
+        /* Modal Actions (Buttons) */
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+            text-align: center;
+            justify-content: center;
+        }
+
+        /* Ikon dalam modal */
+        .modal-icon {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-icon i {
+            font-size: 55px;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px var(--neon-cyan);
+        }
+
         /* LEADERBOARD */
         .leaderboard-item {
             display: flex;
@@ -1321,15 +1397,15 @@
             background: rgba(0, 255, 255, 0.05);
         }
 
-        /* MODAL */
-        .modal-overlay {
+        /* NEON MODAL */
+        .neon-modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.98);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
             z-index: 10000;
             display: flex;
             justify-content: center;
@@ -1337,112 +1413,62 @@
             padding: 20px;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
 
-        .modal-overlay.active {
+        .neon-modal.active {
             opacity: 1;
             visibility: visible;
         }
 
-        .modal-content {
-            max-width: 550px;
+        .neon-modal-content {
+            max-width: 500px;
             width: 100%;
             background: linear-gradient(145deg, #0a0a0a, #0f0f0f);
             border: 2px solid var(--neon-cyan);
-            border-radius: 40px;
+            border-radius: 45px;
             padding: 35px;
-            animation: fadeIn 0.3s;
-            max-height: 90vh;
-            overflow-y: auto;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.4);
+            animation: fadeIn 0.3s ease;
+            text-align: center;
         }
 
-        .modal-content::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .modal-content::-webkit-scrollbar-track {
-            background: rgba(0, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb {
-            background: var(--neon-cyan);
-            border-radius: 10px;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
-            padding-bottom: 15px;
-        }
-
-        .modal-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 24px;
+        .neon-modal-icon {
+            font-size: 60px;
             color: var(--neon-cyan);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: #ff4444;
-            font-size: 24px;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 68, 68, 0.1);
-            transition: all 0.3s;
-        }
-
-        .modal-close:hover {
-            background: rgba(255, 68, 68, 0.3);
-            transform: rotate(90deg);
-        }
-
-        .modal-form-group {
             margin-bottom: 20px;
+            text-shadow: 0 0 20px var(--neon-cyan);
         }
 
-        .modal-label {
-            color: #aaa;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .neon-modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            margin-bottom: 15px;
+        }
+
+        .neon-modal-message {
+            color: #ccc;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .neon-modal-btn {
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            border: none;
+            padding: 14px 35px;
+            border-radius: 35px;
             font-weight: bold;
-        }
-
-        .modal-input, .modal-select, .modal-textarea {
-            width: 100%;
-            padding: 15px;
-            background: #000;
-            border: 2px solid var(--neon-cyan);
-            border-radius: 20px;
-            color: white;
-            font-size: 14px;
+            font-size: 16px;
+            cursor: pointer;
+            color: #000;
             transition: all 0.3s;
         }
 
-        .modal-input:focus, .modal-select:focus, .modal-textarea:focus {
-            outline: none;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
-            border-color: #00ffff;
-        }
-
-        .modal-textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
+        .neon-modal-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
         }
 
         /* CONFIRM MODAL */
@@ -1453,7 +1479,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.98);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
             z-index: 11000;
             display: flex;
             justify-content: center;
@@ -1706,9 +1732,6 @@
             .free-update-stats {
                 grid-template-columns: 1fr;
             }
-            .video-grid-select {
-                grid-template-columns: 1fr;
-            }
             .modal-content {
                 padding: 25px;
             }
@@ -1874,11 +1897,11 @@
         </div>
     </div>
 
-    <!-- BACKGROUND VIDEO TAB -->
+    <!-- BACKGROUND VIDEO TAB (ADMIN ONLY) -->
     <div id="background" class="tab-content">
         <div class="card">
-            <div class="card-title"><i class="fas fa-video"></i> Background Video Settings</div>
-            <p style="color:#aaa; margin-bottom:20px;">Pilih video background yang akan tampil di halaman login user. Video disimpan di folder assets dengan nama video1.mp4 hingga video8.mp4</p>
+            <div class="card-title"><i class="fas fa-video"></i> Background Video Settings <span style="font-size:12px; color:#ffaa00;">(Admin Only)</span></div>
+            <p style="color:#aaa; margin-bottom:20px;">Video background hanya untuk tampilan admin. User tidak akan melihat video ini.</p>
             <div class="video-grid-select" id="videoSelectionGrid"></div>
             <div class="action-buttons" style="margin-top:20px;">
                 <button class="btn btn-primary" onclick="saveActiveVideo()"><i class="fas fa-save"></i> Simpan Pengaturan</button>
@@ -1929,83 +1952,192 @@
         <div class="card">
             <div class="card-title"><i class="fas fa-history"></i> Admin Activity Logs <button class="btn btn-primary btn-sm" onclick="loadActivityLogs()" style="margin-left:auto;"><i class="fas fa-sync-alt"></i> Refresh</button><button class="btn btn-danger btn-sm" onclick="clearActivityLogs()" style="margin-left:10px;"><i class="fas fa-trash"></i> Clear All</button></div>
             <div class="search-box"><input type="text" class="search-input" id="logSearch" placeholder="🔍 Search logs..." onkeyup="filterLogs()"></div>
-            <div style="overflow-x: auto;">
-                <table class="log-table" id="logTable">
-                    <thead>
-                        <tr><th>Time</th><th>Admin</th><th>Action</th><th>Details</th><th>IP Address</th></tr>
-                    </thead>
-                    <tbody id="logList"></tbody>
-                </table>
-            </div>
+            <div style="overflow-x: auto;"><table class="log-table" id="logTable"><thead><tr><th>Time</th><th>Admin</th><th>Action</th><th>Details</th><th>IP Address</th></tr></thead><tbody id="logList"></tbody></table></div>
         </div>
     </div>
 
-    <!-- MAINTENANCE TAB (DIPERBAIKI) -->
+    <!-- MAINTENANCE TAB -->
     <div id="maintenance" class="tab-content">
         <div class="card">
             <div class="card-title"><i class="fas fa-tools"></i> Maintenance Control</div>
-            
-            <!-- Current Maintenance Status -->
-            <div id="currentMaintenanceStatus" style="margin-bottom: 20px; display: none;">
-                <div style="background: rgba(255, 68, 68, 0.1); border: 2px solid #ff4444; border-radius: 20px; padding: 20px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 28px; color: #ff4444;"></i>
-                        <span style="font-weight: bold; color: #ff4444; font-size: 18px;">MAINTENANCE ACTIVE</span>
-                    </div>
-                    <div id="maintenanceDetails"></div>
-                    <button class="btn btn-danger btn-sm" onclick="deactivateMaintenance()" style="margin-top: 15px;"><i class="fas fa-stop"></i> Deactivate Maintenance</button>
-                </div>
-            </div>
-
-            <div class="modal-form-group">
-                <label class="modal-label">Status</label>
-                <select class="modal-select" id="maintenanceStatus">
-                    <option value="inactive">Inactive</option>
-                    <option value="active">Active</option>
-                </select>
-            </div>
-
-            <div class="modal-form-group">
-                <label class="modal-label">Title</label>
-                <input type="text" class="modal-input" id="maintenanceTitle" placeholder="Maintenance title...">
-            </div>
-
-            <div class="modal-form-group">
-                <label class="modal-label">Message</label>
-                <textarea class="modal-textarea" id="maintenanceMessage" placeholder="Maintenance message..."></textarea>
-            </div>
-
-            <div class="modal-form-group">
-                <label class="modal-label">Duration</label>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <input type="number" class="modal-input" id="maintenanceHours" placeholder="Hours" min="0" max="23" value="2" style="width: 120px;">
-                    <input type="number" class="modal-input" id="maintenanceMinutes" placeholder="Minutes" min="0" max="59" value="0" style="width: 120px;">
-                </div>
-                <small style="color: #888;">Estimasi waktu maintenance (akan ditampilkan ke user)</small>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="activateMaintenance()"><i class="fas fa-play"></i> Activate Maintenance</button>
-                <button class="btn btn-danger" onclick="deactivateMaintenance()"><i class="fas fa-stop"></i> Deactivate Maintenance</button>
-            </div>
+            <div id="currentMaintenanceStatus" style="margin-bottom:20px; display:none;"><div style="background:rgba(255,68,68,0.1); border:2px solid #ff4444; border-radius:20px; padding:20px;"><div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;"><i class="fas fa-exclamation-triangle" style="font-size:28px; color:#ff4444;"></i><span style="font-weight:bold; color:#ff4444; font-size:18px;">MAINTENANCE ACTIVE</span></div><div id="maintenanceDetails"></div><button class="btn btn-danger btn-sm" onclick="deactivateMaintenance()" style="margin-top:15px;"><i class="fas fa-stop"></i> Deactivate Maintenance</button></div></div>
+            <div class="modal-form-group"><label class="modal-label">Status</label><select class="modal-select" id="maintenanceStatus"><option value="inactive">Inactive</option><option value="active">Active</option></select></div>
+            <div class="modal-form-group"><label class="modal-label">Title</label><input type="text" class="modal-input" id="maintenanceTitle" placeholder="Maintenance title..."></div>
+            <div class="modal-form-group"><label class="modal-label">Message</label><textarea class="modal-textarea" id="maintenanceMessage" placeholder="Maintenance message..."></textarea></div>
+            <div class="modal-form-group"><label class="modal-label">Duration</label><div style="display:flex; gap:10px; flex-wrap:wrap;"><input type="number" class="modal-input" id="maintenanceHours" placeholder="Hours" min="0" max="23" value="2" style="width:120px;"><input type="number" class="modal-input" id="maintenanceMinutes" placeholder="Minutes" min="0" max="59" value="0" style="width:120px;"></div><small style="color:#888;">Estimasi waktu maintenance (akan ditampilkan ke user)</small></div>
+            <div class="action-buttons"><button class="btn btn-primary" onclick="activateMaintenance()"><i class="fas fa-play"></i> Activate Maintenance</button><button class="btn btn-danger" onclick="deactivateMaintenance()"><i class="fas fa-stop"></i> Deactivate Maintenance</button></div>
         </div>
     </div>
 
     <div class="footer"><p>&copy; 2026 VIP Files Admin Panel | Real-Time Management System | V1.0.0</p></div>
 </div>
 
-<!-- MODALS -->
-<div class="modal-overlay" id="updateModal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title"><i class="fas fa-file-upload"></i> Create VIP Update</h2><button class="modal-close" onclick="closeUpdateModal()">✕</button></div><div class="modal-form-group"><label class="modal-label">Title</label><input type="text" class="modal-input" id="updateTitle" placeholder="e.g., VIP Update v2.0"></div><div class="modal-form-group"><label class="modal-label">Description</label><textarea class="modal-textarea" id="updateDescription" placeholder="Update description..."></textarea></div><div class="modal-form-group"><label class="modal-label">Download Link</label><input type="text" class="modal-input" id="updateLink" placeholder="https://..."></div><div class="modal-form-group"><label class="modal-label">Version</label><input type="text" class="modal-input" id="updateVersion" placeholder="v2.0.0"></div><div class="modal-form-group"><label class="modal-label">Expiry Days</label><input type="number" class="modal-input" id="updateExpiry" value="7" min="1"></div><div class="modal-actions"><button class="btn btn-primary" onclick="createFileUpdate()">Create</button><button class="btn btn-danger" onclick="closeUpdateModal()">Cancel</button></div></div></div>
+    <!-- UPDATE MODAL -->
+    <div class="modal-overlay" id="updateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-file-upload"></i> Create VIP Update</h2>
+                <button class="modal-close" onclick="closeUpdateModal()">✕</button>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-heading"></i> Title</label>
+                <input type="text" class="modal-input" id="updateTitle" placeholder="e.g., VIP Update v2.0">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-align-left"></i> Description</label>
+                <textarea class="modal-textarea" id="updateDescription" placeholder="Update description..."></textarea>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-link"></i> Download Link</label>
+                <input type="text" class="modal-input" id="updateLink" placeholder="https://...">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-code-branch"></i> Version</label>
+                <input type="text" class="modal-input" id="updateVersion" placeholder="v2.0.0">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-calendar-day"></i> Expiry Days</label>
+                <input type="number" class="modal-input" id="updateExpiry" value="7" min="1">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="createFileUpdate()"><i class="fas fa-save"></i> Create</button>
+                <button class="btn btn-danger" onclick="closeUpdateModal()"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+        </div>
+    </div>
 
-<div class="modal-overlay" id="discountModal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title"><i class="fas fa-tags"></i> Add Discount</h2><button class="modal-close" onclick="closeDiscountModal()">✕</button></div><div class="modal-form-group"><label class="modal-label">Code</label><input type="text" class="modal-input" id="discountCode" placeholder="e.g., VIP50"></div><div class="modal-form-group"><label class="modal-label">Percentage</label><input type="number" class="modal-input" id="discountPercent" placeholder="50" min="1" max="100"></div><div class="modal-form-group"><label class="modal-label">Min Purchase</label><input type="number" class="modal-input" id="discountMin" placeholder="0" min="0" value="0"></div><div class="modal-form-group"><label class="modal-label">Expiry Days</label><input type="number" class="modal-input" id="discountExpiry" value="7" min="1"></div><div class="modal-actions"><button class="btn btn-primary" onclick="addDiscount()">Add</button><button class="btn btn-danger" onclick="closeDiscountModal()">Cancel</button></div></div></div>
+    <div class="modal-overlay" id="discountModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-tags"></i> Add Discount</h2>
+                <button class="modal-close" onclick="closeDiscountModal()">✕</button>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-code"></i> Code</label>
+                <input type="text" class="modal-input" id="discountCode" placeholder="e.g., VIP50" maxlength="20" style="text-transform: uppercase;">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-percent"></i> Percentage</label>
+                <input type="number" class="modal-input" id="discountPercent" placeholder="50" min="1" max="100">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-money-bill"></i> Min Purchase</label>
+                <input type="number" class="modal-input" id="discountMin" placeholder="0" min="0" value="0">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-calendar-week"></i> Expiry Days</label>
+                <input type="number" class="modal-input" id="discountExpiry" value="7" min="1">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="addDiscount()"><i class="fas fa-save"></i> Add</button>
+                <button class="btn btn-danger" onclick="closeDiscountModal()"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+        </div>
+    </div>
 
-<div class="modal-overlay" id="packageModal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title"><i class="fas fa-box"></i> Add Premium Package</h2><button class="modal-close" onclick="closePackageModal()">✕</button></div><div class="modal-form-group"><label class="modal-label">Package Label</label><input type="text" class="modal-input" id="packageLabel" placeholder="e.g., 4X UPDATE"></div><div class="modal-form-group"><label class="modal-label">Price (Rp)</label><input type="number" class="modal-input" id="packagePrice" placeholder="35000"></div><div class="modal-form-group"><label class="modal-label">Package Type</label><select class="modal-select" id="packageType"><option value="quota">Quota (Limited Updates)</option><option value="unlimited">Unlimited (Time-based)</option><option value="lifetime">Lifetime</option></select></div><div class="modal-form-group"><label class="modal-label">Description</label><textarea class="modal-textarea" id="packageDesc" placeholder="Package description..."></textarea></div><div class="modal-actions"><button class="btn btn-primary" onclick="addPackage()">Add</button><button class="btn btn-danger" onclick="closePackageModal()">Cancel</button></div></div></div>
+    <div class="modal-overlay" id="packageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-box"></i> Add Premium Package</h2>
+                <button class="modal-close" onclick="closePackageModal()">✕</button>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-tag"></i> Package Label</label>
+                <input type="text" class="modal-input" id="packageLabel" placeholder="e.g., 4X UPDATE">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-money-bill-wave"></i> Price (Rp)</label>
+                <input type="number" class="modal-input" id="packagePrice" placeholder="35000">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-layer-group"></i> Package Type</label>
+                <select class="modal-select" id="packageType">
+                    <option value="quota">Quota (Limited Updates)</option>
+                    <option value="unlimited">Unlimited (Time-based)</option>
+                    <option value="lifetime">Lifetime</option>
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-info-circle"></i> Description (Optional)</label>
+                <textarea class="modal-textarea" id="packageDesc" placeholder="Package description..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="addPackage()"><i class="fas fa-save"></i> Add</button>
+                <button class="btn btn-danger" onclick="closePackageModal()"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+        </div>
+    </div>
 
-<div class="modal-overlay" id="resetPinModal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title"><i class="fas fa-key"></i> Reset PIN</h2><button class="modal-close" onclick="closeResetPinModal()">✕</button></div><div class="modal-form-group"><label class="modal-label">UID</label><input type="text" class="modal-input" id="resetUID" readonly></div><div class="modal-form-group"><label class="modal-label">New PIN (6 digits)</label><input type="password" class="modal-input" id="newPin" maxlength="6" placeholder="******"></div><div class="modal-actions"><button class="btn btn-primary" onclick="resetUserPin()">Reset</button><button class="btn btn-danger" onclick="closeResetPinModal()">Cancel</button></div></div></div>
+    <div class="modal-overlay" id="resetPinModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-key"></i> Reset PIN</h2>
+                <button class="modal-close" onclick="closeResetPinModal()">✕</button>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-user"></i> UID</label>
+                <input type="text" class="modal-input" id="resetUID" readonly>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-lock"></i> New PIN (6 digits)</label>
+                <input type="password" class="modal-input" id="newPin" maxlength="6" placeholder="******">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="resetUserPin()"><i class="fas fa-sync-alt"></i> Reset</button>
+                <button class="btn btn-danger" onclick="closeResetPinModal()"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+        </div>
+    </div>
 
-<div class="modal-overlay" id="saldoModal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title"><i class="fas fa-wallet"></i> Add Saldo</h2><button class="modal-close" onclick="closeSaldoModal()">✕</button></div><div class="modal-form-group"><label class="modal-label">UID</label><input type="text" class="modal-input" id="saldoUID" readonly></div><div class="modal-form-group"><label class="modal-label">Amount</label><input type="number" class="modal-input" id="saldoAmount" placeholder="Amount" min="0"></div><div class="modal-form-group"><label class="modal-label">Note</label><textarea class="modal-textarea" id="saldoNote" placeholder="Optional note..."></textarea></div><div class="modal-actions"><button class="btn btn-primary" onclick="addSaldo()">Add</button><button class="btn btn-danger" onclick="closeSaldoModal()">Cancel</button></div></div></div>
+    <div class="modal-overlay" id="saldoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-wallet"></i> Add Saldo</h2>
+                <button class="modal-close" onclick="closeSaldoModal()">✕</button>
+            </div>
+                <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-user"></i> UID</label>
+                <input type="text" class="modal-input" id="saldoUID" readonly>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-money-bill"></i> Amount</label>
+                <input type="number" class="modal-input" id="saldoAmount" placeholder="Amount" min="0">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-pen"></i> Note (Optional)</label>
+                <textarea class="modal-textarea" id="saldoNote" placeholder="Optional note..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="addSaldo()"><i class="fas fa-plus-circle"></i> Add</button>
+                <button class="btn btn-danger" onclick="closeSaldoModal()"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+        </div>
+    </div>
 
-<div class="modal-overlay" id="changePasswordModal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title"><i class="fas fa-key"></i> Change Password</h2><button class="modal-close" onclick="closeChangePasswordModal()">✕</button></div><div class="modal-form-group"><label class="modal-label">Current Password</label><input type="password" class="modal-input" id="currentPassword" placeholder="Current password"></div><div class="modal-form-group"><label class="modal-label">New Password</label><input type="password" class="modal-input" id="newPassword" placeholder="New password" minlength="6"></div><div class="modal-form-group"><label class="modal-label">Confirm Password</label><input type="password" class="modal-input" id="confirmPassword" placeholder="Confirm password"></div><div class="modal-actions"><button class="btn btn-primary" onclick="changeAdminPassword()">Change</button><button class="btn btn-danger" onclick="closeChangePasswordModal()">Cancel</button></div></div></div>
+    <div class="modal-overlay" id="changePasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-key"></i> Change Password</h2>
+                <button class="modal-close" onclick="closeChangePasswordModal()">✕</button>
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-lock"></i> Current Password</label>
+                <input type="password" class="modal-input" id="currentPassword" placeholder="Current password">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-lock"></i> New Password</label>
+                <input type="password" class="modal-input" id="newPassword" placeholder="New password" minlength="6">
+            </div>
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-check-circle"></i> Confirm Password</label>
+                <input type="password" class="modal-input" id="confirmPassword" placeholder="Confirm password">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="changeAdminPassword()"><i class="fas fa-save"></i> Change</button>
+                <button class="btn btn-danger" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+        </div>
+    </div>
 
 <div class="confirm-modal" id="confirmModal"><div class="confirm-content"><div class="confirm-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="confirm-title" id="confirmTitle">Confirm</div><div class="confirm-message" id="confirmMessage">Are you sure?</div><div class="confirm-actions"><button class="confirm-btn confirm-btn-yes" id="confirmYesBtn">Yes</button><button class="confirm-btn confirm-btn-no" onclick="closeConfirm()">No</button></div></div></div>
 
@@ -2034,9 +2166,11 @@
     let currentDepositFilter = 'all', currentVIPFilter = 'all', currentFileFilter = 'all', currentChatUser = '';
     let chatListener = null, confirmCallback = null;
     let adminLogs = [];
-    let maintenanceCheckInterval = null;
+    let unreadDepositCount = 0;
+    let unreadVIPCount = 0;
+    let notificationInterval = null;
     
-    // Video background list (8 videos)
+    // Video list (8 videos) - ADMIN ONLY
     const videoList = [
         { id: 1, name: 'Video Background 1', file: 'video1.mp4' },
         { id: 2, name: 'Video Background 2', file: 'video2.mp4' },
@@ -2055,7 +2189,29 @@
     // ==================== HELPER FUNCTIONS ====================
     function escapeHtml(text) { if (!text) return ''; return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
     function formatRupiah(num) { if (!num && num !== 0) return '0'; return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
-    function showToast(msg) { const toast = document.getElementById('toastNeon'); toast.textContent = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3000); }
+    
+    function showToast(msg) { 
+        const toast = document.getElementById('toastNeon'); 
+        toast.textContent = msg; 
+        toast.classList.add('show'); 
+        setTimeout(() => toast.classList.remove('show'), 3000); 
+    }
+    
+    function showNeonModal(title, message, isError = false) {
+        const modal = document.createElement('div');
+        modal.className = 'neon-modal active';
+        modal.innerHTML = `
+            <div class="neon-modal-content">
+                <div class="neon-modal-icon"><i class="fas fa-${isError ? 'exclamation-triangle' : 'check-circle'}"></i></div>
+                <div class="neon-modal-title" style="color: ${isError ? '#ff4444' : '#00ffff'};">${title}</div>
+                <div class="neon-modal-message">${message}</div>
+                <button class="neon-modal-btn" onclick="this.closest('.neon-modal').remove()">OK</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        setTimeout(() => modal.remove(), 5000);
+    }
+    
     function showLoading() { document.getElementById('loading').classList.add('active'); }
     function hideLoading() { document.getElementById('loading').classList.remove('active'); }
     
@@ -2072,18 +2228,46 @@
     function updateAdminStatus() { db.ref('admin_status').set({ status: 'online', last_seen: Date.now(), name: 'Admin' }); }
     
     function addActivityLog(action, details = '') {
-        const log = {
-            id: Date.now(),
-            time: new Date().toISOString(),
-            admin: 'Admin',
-            action: action,
-            details: details,
-            ip: 'server'
-        };
+        const log = { id: Date.now(), time: new Date().toISOString(), admin: 'Admin', action: action, details: details, ip: 'server' };
         adminLogs.unshift(log);
         if (adminLogs.length > 100) adminLogs.pop();
         localStorage.setItem('admin_activity_logs', JSON.stringify(adminLogs));
         displayActivityLogs();
+    }
+    
+    // ==================== NOTIFICATION SYSTEM ====================
+    function checkNewNotifications() {
+        let newDeposits = 0;
+        let newVIP = 0;
+        
+        Object.keys(allDeposits).forEach(uid => {
+            Object.keys(allDeposits[uid]).forEach(id => {
+                if (allDeposits[uid][id].status === 'pending' && (!localStorage.getItem(`deposit_notified_${id}`))) {
+                    newDeposits++;
+                    localStorage.setItem(`deposit_notified_${id}`, 'true');
+                }
+            });
+        });
+        
+        Object.keys(allPurchases).forEach(uid => {
+            Object.keys(allPurchases[uid]).forEach(id => {
+                if (allPurchases[uid][id].status === 'pending' && (!localStorage.getItem(`vip_notified_${id}`))) {
+                    newVIP++;
+                    localStorage.setItem(`vip_notified_${id}`, 'true');
+                }
+            });
+        });
+        
+        const totalNotif = newDeposits + newVIP;
+        const badge = document.getElementById('adminNotifBadge');
+        if (totalNotif > 0) {
+            badge.textContent = totalNotif > 9 ? '9+' : totalNotif;
+            badge.classList.add('show');
+            if (newDeposits > 0) showNeonModal('📢 Notifikasi', `${newDeposits} deposit baru menunggu approval!`, false);
+            if (newVIP > 0) showNeonModal('📢 Notifikasi', `${newVIP} VIP order baru menunggu approval!`, false);
+        } else {
+            badge.classList.remove('show');
+        }
     }
     
     // Upload progress functions
@@ -2120,7 +2304,6 @@
         });
     }
     
-    // Change admin photo
     function changeAdminPhoto() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -2135,9 +2318,7 @@
                     localStorage.setItem('admin_avatar', url);
                     addActivityLog('Change Profile Photo', 'Admin updated profile picture');
                     showToast('Profile photo updated!');
-                } catch (error) {
-                    showToast('Upload failed: ' + error.message);
-                }
+                } catch (error) { showToast('Upload failed: ' + error.message); }
                 hideLoading();
             }
         };
@@ -2153,17 +2334,12 @@
         if (!current || !newPass || !confirm) { showToast('Please fill all fields!'); return; }
         if (newPass !== confirm) { showToast('New passwords do not match!'); return; }
         if (newPass.length < 6) { showToast('Password must be at least 6 characters!'); return; }
-        // Simpan ke localStorage (simulasi)
         localStorage.setItem('admin_password', newPass);
         addActivityLog('Change Password', 'Admin changed password');
         showToast('Password changed successfully!');
         closeChangePasswordModal();
-        document.getElementById('currentPassword').value = '';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmPassword').value = '';
     }
     
-    // Export data to CSV
     function exportDataToCSV() {
         let csv = "Type,UID,Amount,Status,Date\n";
         Object.keys(allDeposits).forEach(uid => {
@@ -2187,7 +2363,7 @@
         showToast('Data exported!');
     }
     
-    // ==================== VIDEO BACKGROUND FUNCTIONS ====================
+    // ==================== VIDEO BACKGROUND (ADMIN ONLY) ====================
     function renderVideoSelection() {
         const container = document.getElementById('videoSelectionGrid');
         if (!container) return;
@@ -2210,7 +2386,7 @@
         catch (error) { hideLoading(); showToast('Error saving: ' + error.message); }
     }
     
-    // ==================== MAINTENANCE FUNCTIONS (DIPERBAIKI) ====================
+    // ==================== MAINTENANCE FUNCTIONS ====================
     async function loadMaintenanceStatus() {
         try {
             const snap = await db.ref('maintenance').once('value');
@@ -2218,12 +2394,7 @@
             if (m && m.status === 'active') {
                 document.getElementById('currentMaintenanceStatus').style.display = 'block';
                 document.getElementById('maintenanceStatus').value = 'active';
-                document.getElementById('maintenanceDetails').innerHTML = `
-                    <div><strong>Title:</strong> ${m.title || '-'}</div>
-                    <div><strong>Message:</strong> ${m.message || '-'}</div>
-                    <div><strong>Started:</strong> ${m.startTime ? new Date(m.startTime).toLocaleString() : '-'}</div>
-                    <div><strong>Estimate End:</strong> ${m.endTime ? new Date(m.endTime).toLocaleString() : '-'}</div>
-                `;
+                document.getElementById('maintenanceDetails').innerHTML = `<div><strong>Title:</strong> ${m.title || '-'}</div><div><strong>Message:</strong> ${m.message || '-'}</div><div><strong>Started:</strong> ${m.startTime ? new Date(m.startTime).toLocaleString() : '-'}</div><div><strong>Estimate End:</strong> ${m.endTime ? new Date(m.endTime).toLocaleString() : '-'}</div>`;
                 document.getElementById('maintenanceTitle').value = m.title || '';
                 document.getElementById('maintenanceMessage').value = m.message || '';
                 document.getElementById('maintenanceHours').value = m.hours || 2;
@@ -2247,10 +2418,7 @@
         const endTime = new Date(Date.now() + totalMinutes * 60000).toISOString();
         showLoading();
         try {
-            await db.ref('maintenance').set({
-                status: 'active', title: title, message: message, hours: hours, minutes: minutes,
-                totalMinutes: totalMinutes, startTime: startTime, endTime: endTime, updatedAt: Date.now()
-            });
+            await db.ref('maintenance').set({ status: 'active', title: title, message: message, hours: hours, minutes: minutes, totalMinutes: totalMinutes, startTime: startTime, endTime: endTime, updatedAt: Date.now() });
             addActivityLog('Activate Maintenance', `Maintenance activated: ${title}`);
             hideLoading();
             showToast('✅ Maintenance activated!');
@@ -2285,6 +2453,7 @@
             loadDashboard(); loadDepositOrders(); loadVIPOrders(); loadCustomers(); loadVIPMembers();
             loadLeaderboard(); loadDiscounts(); loadPackages(); loadFreeUpdateStats(); loadFreeUpdateHistory();
             loadMaintenanceStatus();
+            checkNewNotifications();
             hideLoading();
         }).catch(error => { hideLoading(); showToast('Error loading data'); });
     }
@@ -2300,6 +2469,7 @@
         document.getElementById('totalVIP').innerHTML = totalVIP; document.getElementById('pendingVIP').innerHTML = pendingVIP + ' Pending';
         document.getElementById('totalUsers').innerHTML = totalUsers; document.getElementById('activeUsers').innerHTML = onlineUsers + ' Online';
         document.getElementById('totalRevenue').innerHTML = 'Rp ' + formatRupiah(revenue);
+        
         let recent = [];
         Object.keys(allDeposits).forEach(uid => { Object.keys(allDeposits[uid]).forEach(id => { recent.push({ type: 'deposit', uid: uid, ...allDeposits[uid][id] }); }); });
         Object.keys(allPurchases).forEach(uid => { Object.keys(allPurchases[uid]).forEach(id => { recent.push({ type: 'vip', uid: uid, ...allPurchases[uid][id] }); }); });
@@ -2325,8 +2495,7 @@
         const search = document.getElementById('depositSearch')?.value.toLowerCase() || '';
         if (search) filtered = filtered.filter(d => d.uid.toLowerCase().includes(search));
         let html = '';
-        filtered.forEach(d => { html += `<div class="deposit-item ${d.status}"><div class="deposit-header"><span class="deposit-uid" onclick="copyUID('${d.uid}')">${d.uid}</span><span class="deposit-amount">Rp ${formatRupiah(d.jumlah)}</span><span class="deposit-status status-${d.status}">${d.status}</span></div><div class="deposit-details"><div class="detail-item"><span class="detail-label">Nama</span><span class="detail-value">${d.namaPengirim || '-'}</span></div><div class="detail-item"><span class="detail-label">E-Wallet</span><span class="detail-value">${d.noEwallet || '-'}</span></div><div class="detail-item"><span class="detail-label">Tanggal</span><span class="detail-value">${d.timestamp ? new Date(d.timestamp).toLocaleString() : '-'}</span></div></div><div class="action-buttons">${d.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveDeposit('${d.uid}', '${d.id}', ${d.jumlah})">Approve</button><button class="btn btn-danger btn-sm" onclick="rejectDeposit('${d.uid}', '${d.id}')">Reject</button>` : ''}<button class="btn btn-secondary btn-sm" onclick="deleteDeposit('${d.uid}', '${d.id}')">Delete</button></div></div>`;
-        });
+        filtered.forEach(d => { html += `<div class="deposit-item ${d.status}"><div class="deposit-header"><span class="deposit-uid" onclick="copyUID('${d.uid}')">${d.uid}</span><span class="deposit-amount">Rp ${formatRupiah(d.jumlah)}</span><span class="deposit-status status-${d.status}">${d.status}</span></div><div class="deposit-details"><div class="detail-item"><span class="detail-label">Nama</span><span class="detail-value">${d.namaPengirim || '-'}</span></div><div class="detail-item"><span class="detail-label">E-Wallet</span><span class="detail-value">${d.noEwallet || '-'}</span></div><div class="detail-item"><span class="detail-label">Tanggal</span><span class="detail-value">${d.timestamp ? new Date(d.timestamp).toLocaleString() : '-'}</span></div></div><div class="action-buttons">${d.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveDeposit('${d.uid}', '${d.id}', ${d.jumlah})">Approve</button><button class="btn btn-danger btn-sm" onclick="rejectDeposit('${d.uid}', '${d.id}')">Reject</button>` : ''}<button class="btn btn-secondary btn-sm" onclick="deleteDeposit('${d.uid}', '${d.id}')">Delete</button></div></div>`; });
         document.getElementById('depositList').innerHTML = html || '<div class="no-data">No deposits found</div>';
     }
     function filterDeposit(filter) { if (filter) { currentDepositFilter = filter; document.querySelectorAll('#deposit_orders .filter-tab').forEach(t => t.classList.remove('active')); if (event?.currentTarget) event.currentTarget.classList.add('active'); } displayDeposits(); }
@@ -2437,9 +2606,7 @@
     // ==================== ACTIVITY LOGS ====================
     function loadActivityLogs() {
         const saved = localStorage.getItem('admin_activity_logs');
-        if (saved) {
-            try { adminLogs = JSON.parse(saved); } catch(e) { adminLogs = []; }
-        }
+        if (saved) { try { adminLogs = JSON.parse(saved); } catch(e) { adminLogs = []; } }
         displayActivityLogs();
     }
     function displayActivityLogs() {
@@ -2447,10 +2614,7 @@
         let filtered = adminLogs;
         if (search) filtered = filtered.filter(log => log.action.toLowerCase().includes(search) || (log.details && log.details.toLowerCase().includes(search)));
         let html = '';
-        filtered.slice(0, 100).forEach(log => {
-            const time = new Date(log.time).toLocaleString();
-            html += `<tr><td>${time}</td><td>${log.admin}</td><td>${log.action}</td><td>${log.details || '-'}</td><td>${log.ip}</td></tr>`;
-        });
+        filtered.slice(0, 100).forEach(log => { const time = new Date(log.time).toLocaleString(); html += `<tr><td>${time}</td><td>${log.admin}</td><td>${log.action}</td><td>${log.details || '-'}</td><td>${log.ip}</td></tr>`; });
         document.getElementById('logList').innerHTML = html || '<tr><td colspan="5" class="no-data">No logs found</td></tr>';
     }
     function filterLogs() { displayActivityLogs(); }
@@ -2472,14 +2636,15 @@
         loadActivityLogs();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
+        setInterval(() => checkNewNotifications(), 5000);
         const savedAvatar = localStorage.getItem('admin_avatar');
         if (savedAvatar) document.getElementById('adminAvatar').src = savedAvatar;
         renderVideoSelection();
         loadActiveVideo();
         addActivityLog('Admin Login', 'Admin logged into panel');
         console.log('🚀 Admin panel initialized - V1.0.0');
-        console.log('🎬 Background video dapat diatur di tab "Background Video"');
-        console.log('🛠 Maintenance mode dapat diaktifkan di tab "Maintenance"');
+        console.log('🎬 Background video hanya untuk admin (tidak ke user)');
+        console.log('🔔 Notifikasi real-time aktif');
     }
     init();
 </script>
