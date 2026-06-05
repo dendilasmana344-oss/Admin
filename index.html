@@ -1246,6 +1246,67 @@
             text-shadow: 0 0 20px var(--neon-cyan);
         }
 
+        /* Admin Video Background */
+        .admin-video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .admin-video-bg video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .admin-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1;
+        }
+
+        /* Tombol kontrol video background admin */
+        .admin-video-control {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 50px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .admin-video-control:hover {
+            border-color: #00ff88;
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        .admin-video-control i {
+            font-size: 16px;
+            color: var(--neon-cyan);
+        }
+
+        .admin-video-control span {
+            font-size: 12px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+        }
+
         /* VIDEO BACKGROUND SELECTION - DIPERBAIKI */
         .video-grid-select {
             display: grid;
@@ -1872,11 +1933,25 @@
 
 <div class="neon-bg"></div>
 
+<!-- VIDEO BACKGROUND ADMIN (berdasarkan pilihan) -->
+<div class="admin-video-bg" id="adminVideoBg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden;">
+    <video id="adminBgVideo" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+        <source src="video1.mp4" type="video/mp4">
+    </video>
+    <div class="admin-video-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7);"></div>
+</div>
+
 <!-- ADMIN STATUS -->
 <div class="admin-status">
     <div class="status-dot"></div>
     <span class="status-text">Admin Online</span>
     <div class="notification-badge" id="adminNotifBadge">0</div>
+</div>
+
+<!-- Tombol kontrol video background admin -->
+<div class="admin-video-control" id="adminVideoControl" onclick="toggleAdminBgMute()">
+    <i class="fas fa-volume-mute"></i>
+    <span>Mute</span>
 </div>
 
 <!-- MAIN CONTAINER -->
@@ -2297,6 +2372,8 @@
     let unreadDepositCount = 0;
     let unreadVIPCount = 0;
     let notificationInterval = null;
+    let adminBgVideo = null;
+    let isAdminBgMuted = true;
     
     // Video background list (8 videos) - ADMIN ONLY
     const videoList = [
@@ -2489,6 +2566,65 @@
         link.click();
         addActivityLog('Export Data', 'Exported deposits and VIP purchases to CSV');
         showToast('Data exported!');
+    }
+    
+    // ==================== ADMIN BACKGROUND VIDEO ====================
+    function loadAdminBackgroundVideo() {
+        adminBgVideo = document.getElementById('adminBgVideo');
+        if (!adminBgVideo) return;
+    
+        // Ambil video aktif dari Firebase
+        db.ref('admin_config/active_background_video').on('value', (snap) => {
+            let videoId = 1;
+            if (snap.exists()) {
+                videoId = snap.val();
+            }
+        
+            // Pilih file video berdasarkan ID
+            const videoFile = videoList.find(v => v.id === videoId)?.file || 'video1.mp4';
+        
+            if (adminBgVideo) {
+                // Ganti sumber video
+                const wasPlaying = !adminBgVideo.paused;
+                adminBgVideo.src = videoFile;
+                adminBgVideo.load();
+            
+                if (wasPlaying) {
+                    adminBgVideo.play().catch(e => console.log('Auto-play error:', e));
+                } else {
+                    adminBgVideo.play().catch(e => console.log('Auto-play error:', e));
+                }
+            
+                console.log(`🎬 Admin background video changed to: ${videoFile}`);
+            }
+        });
+    
+        // Set muted default
+        adminBgVideo.muted = true;
+    }
+
+    function toggleAdminBgMute() {
+        if (!adminBgVideo) return;
+    
+        adminBgVideo.muted = !adminBgVideo.muted;
+        isAdminBgMuted = adminBgVideo.muted;
+    
+        const control = document.getElementById('adminVideoControl');
+        const icon = control.querySelector('i');
+        const text = control.querySelector('span');
+    
+        if (adminBgVideo.muted) {
+            icon.className = 'fas fa-volume-mute';
+            text.textContent = 'Mute';
+        } else {
+            icon.className = 'fas fa-volume-up';
+            text.textContent = 'Unmute';
+        }
+    }
+
+    // Panggil fungsi ini di dalam init()
+    function initAdminBackground() {
+        loadAdminBackgroundVideo();
     }
     
     // ==================== VIDEO BACKGROUND FUNCTIONS ====================
@@ -2852,6 +2988,7 @@
         const savedAvatar = localStorage.getItem('admin_avatar');
         if (savedAvatar) document.getElementById('adminAvatar').src = savedAvatar;
         renderVideoSelection();
+        initAdminBackground();
         loadActiveVideo();
         addActivityLog('Admin Login', 'Admin logged into panel');
         console.log('🚀 Admin panel initialized - V1.0.0');
