@@ -1079,6 +1079,95 @@
             transform: translateY(-2px);
         }
 
+        /* ==================== CHAT DELETE FEATURE ==================== */
+        .chat-message-wrapper {
+            position: relative;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .chat-message-wrapper.selected {
+            background: rgba(0, 255, 255, 0.15);
+            border-radius: 15px;
+        }
+
+        .chat-checkbox {
+            position: absolute;
+            top: 10px;
+            left: -30px;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: var(--neon-cyan);
+            display: none;
+        }
+
+        .chat-delete-mode .chat-checkbox {
+            display: block;
+        }
+
+        .chat-delete-mode .message {
+            cursor: pointer;
+        }
+
+        .delete-mode-bar {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1a0a0a, #2a0a0a);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 50px;
+            padding: 12px 25px;
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            display: none;
+        }
+
+        .delete-mode-bar.active {
+            display: flex;
+        }
+
+        .delete-count {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+        }
+
+        .cancel-delete-btn {
+            background: #333;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cancel-delete-btn:hover {
+            background: #444;
+            transform: scale(1.05);
+        }
+
         /* ==================== MODAL STYLES YANG DIPERBAIKI ==================== */
 
         /* Modal Overlay */
@@ -2196,9 +2285,32 @@
     <!-- PUBLIC CHAT TAB -->
     <div id="public_chat" class="tab-content">
         <div class="card">
-            <div class="card-title"><i class="fas fa-globe"></i> Public Chat Management <button class="btn btn-primary btn-sm" onclick="loadPublicChat()" style="margin-left:auto;"><i class="fas fa-sync-alt"></i> Refresh</button></div>
-            <div class="chat-container" style="height:500px;"><div class="chat-messages" id="publicChatMessages"></div><div class="chat-input-area"><input type="text" class="chat-input" id="publicChatInput" placeholder="Send message as admin..."><button class="chat-send-btn" onclick="sendPublicMessageAsAdmin()"><i class="fas fa-paper-plane"></i></button></div></div>
+            <div class="card-title">
+                <i class="fas fa-globe"></i> Public Chat Management 
+                <button class="btn btn-danger btn-sm" id="deleteChatModeBtn" onclick="toggleDeleteMode()" style="margin-left: auto;">
+                    <i class="fas fa-trash-alt"></i> Hapus Pesan
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="loadPublicChat()" style="margin-left: 10px;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="chat-container" style="height: 500px; position: relative;">
+                <div class="chat-messages" id="publicChatMessages" style="font-size: 13px;"></div>
+                <div class="chat-input-area" style="margin-top: 15px;">
+                    <input type="text" class="chat-input" id="publicChatInput" placeholder="Send message as admin...">
+                    <button class="chat-send-btn" onclick="sendPublicMessageAsAdmin()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- Delete Mode Bar -->
+    <div class="delete-mode-bar" id="deleteModeBar">
+        <span class="delete-count"><i class="fas fa-check-circle"></i> <span id="selectedCount">0</span> pesan dipilih</span>
+        <button class="delete-btn" onclick="confirmDeleteSelectedMessages()"><i class="fas fa-trash"></i> Hapus</button>
+        <button class="cancel-delete-btn" onclick="cancelDeleteMode()"><i class="fas fa-times"></i> Batal</button>
     </div>
 
     <!-- USER FILES TAB -->
@@ -2315,16 +2427,32 @@
             </div>
             <div class="modal-form-group">
                 <label class="modal-label"><i class="fas fa-layer-group"></i> Package Type</label>
-                <select class="modal-select" id="packageType">
+                <select class="modal-select" id="packageType" onchange="togglePackageFields()">
                     <option value="quota">Quota (Limited Updates)</option>
                     <option value="unlimited">Unlimited (Time-based)</option>
                     <option value="lifetime">Lifetime</option>
                 </select>
             </div>
+        
+            <!-- Field khusus QUOTA -->
+            <div class="modal-form-group" id="quotaField" style="display: block;">
+                <label class="modal-label"><i class="fas fa-chart-bar"></i> Jumlah Update (Quota)</label>
+                <input type="number" class="modal-input" id="packageQuota" placeholder="5" min="1" value="5">
+                <small style="color: #888;">User akan mendapatkan update sebanyak angka ini. Setelah habis, user akan turun ke FREE.</small>
+            </div>
+        
+            <!-- Field khusus BULANAN (Unlimited Time-based) -->
+            <div class="modal-form-group" id="durationField" style="display: none;">
+                <label class="modal-label"><i class="fas fa-calendar-alt"></i> Durasi (Bulan)</label>
+                <input type="number" class="modal-input" id="packageDuration" placeholder="2" min="1" value="2">
+                <small style="color: #888;">User akan menjadi VIP selama X bulan. Setelah habis, user akan turun ke FREE.</small>
+            </div>
+        
             <div class="modal-form-group">
                 <label class="modal-label"><i class="fas fa-info-circle"></i> Description (Optional)</label>
                 <textarea class="modal-textarea" id="packageDesc" placeholder="Package description..."></textarea>
             </div>
+        
             <div class="modal-actions">
                 <button class="btn btn-primary" onclick="addPackage()"><i class="fas fa-save"></i> Add</button>
                 <button class="btn btn-danger" onclick="closePackageModal()"><i class="fas fa-times"></i> Cancel</button>
@@ -2436,6 +2564,10 @@
     let adminBgVideo = null;
     let isAdminBgMuted = true;
     let videoLoadAttempts = {};
+    let unreadCount = 0;
+    let notificationSound = null;
+    let deleteModeActive = false;
+    let selectedMessages = new Set();
     
     // Video background list (8 videos) - ADMIN ONLY
     const videoList = [
@@ -2952,6 +3084,66 @@
         }
     }
     
+    function checkNewNotifications() {    
+        Object.keys(allDeposits).forEach(uid => {
+            Object.keys(allDeposits[uid]).forEach(id => {
+                if (allDeposits[uid][id].status === 'pending' && (!localStorage.getItem(`deposit_notified_${id}`))) {
+                    newDeposits++;
+                    localStorage.setItem(`deposit_notified_${id}`, 'true');
+                    showDesktopNotification('💰 Deposit Baru', `${uid} melakukan deposit Rp ${formatRupiah(allDeposits[uid][id].jumlah)}`);
+                }
+            });
+        });
+    
+        Object.keys(allPurchases).forEach(uid => {
+            Object.keys(allPurchases[uid]).forEach(id => {
+                if (allPurchases[uid][id].status === 'pending' && (!localStorage.getItem(`vip_notified_${id}`))) {
+                    newVIP++;
+                    localStorage.setItem(`vip_notified_${id}`, 'true');
+                    showDesktopNotification('👑 VIP Order Baru', `${uid} memesan paket ${allPurchases[uid][id].package}`);
+                }
+            });
+        });
+    
+        const totalNotif = newDeposits + newVIP;
+        const badge = document.getElementById('adminNotifBadge');
+        if (totalNotif > 0) {
+            badge.textContent = totalNotif > 9 ? '9+' : totalNotif;
+            badge.classList.add('show');
+            playNotificationSound();
+        } else {
+            badge.classList.remove('show');
+        }
+    }
+
+    function showDesktopNotification(title, body) {
+        if (Notification.permission === 'granted') {
+            new Notification(title, { body: body, icon: 'https://via.placeholder.com/64/00ffff/000000?text=VIP' });
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    new Notification(title, { body: body });
+                }
+            });
+        }
+    }
+
+    function playNotificationSound() {
+        // Gunakan Web Audio API untuk bunyi notifikasi sederhana
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 880;
+            gainNode.gain.value = 0.3;
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        } catch(e) { console.log('Sound error:', e); }
+    }
+    
     // ==================== MAINTENANCE FUNCTIONS ====================
     async function loadMaintenanceStatus() {
         try {
@@ -3162,6 +3354,252 @@
     // ==================== PUBLIC CHAT ====================
     function loadPublicChat() { db.ref('all_comments').orderByChild('timestamp').limitToLast(100).on('value', snap => { const messages = snap.val() || {}; const chatBox = document.getElementById('publicChatMessages'); chatBox.innerHTML = ''; Object.keys(messages).sort((a,b) => (messages[a].timestamp||0) - (messages[b].timestamp||0)).forEach(key => { const msg = messages[key]; const isAdmin = msg.uid === 'ADMIN'; const div = document.createElement('div'); div.className = `message ${isAdmin ? 'admin' : 'customer'}`; let content = `<div class="message-sender">${msg.uid || 'Unknown'}</div><div>${escapeHtml(msg.text || '')}</div>`; if (msg.fileUrl) content += `<div><a href="${msg.fileUrl}" target="_blank">📎 File</a></div>`; content += `<div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`; div.innerHTML = content; chatBox.appendChild(div); }); chatBox.scrollTop = chatBox.scrollHeight; }); }
     async function sendPublicMessageAsAdmin() { const input = document.getElementById('publicChatInput'); const text = input.value.trim(); if (!text) return; await db.ref('all_comments').push({ uid: 'ADMIN', text, timestamp: Date.now() }); addActivityLog('Public Message', `Sent public message: ${text.substring(0, 50)}`); input.value = ''; showToast('Message sent!'); }
+    function toggleDeleteMode() {
+    deleteModeActive = !deleteModeActive;
+    const chatContainer = document.querySelector('#public_chat .chat-container');
+    const deleteBar = document.getElementById('deleteModeBar');
+    
+    if (deleteModeActive) {
+            chatContainer.classList.add('chat-delete-mode');
+            deleteBar.classList.add('active');
+            document.getElementById('deleteChatModeBtn').style.background = 'linear-gradient(135deg, #00ff88, #00cc66)';
+            document.getElementById('deleteChatModeBtn').innerHTML = '<i class="fas fa-check"></i> Mode Hapus Aktif';
+        } else {
+            chatContainer.classList.remove('chat-delete-mode');
+            deleteBar.classList.remove('active');
+            selectedMessages.clear();
+            updateSelectedCount();
+            document.getElementById('deleteChatModeBtn').style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
+            document.getElementById('deleteChatModeBtn').innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan';
+            // Hapus highlight
+            document.querySelectorAll('.chat-message-wrapper').forEach(wrapper => {
+                wrapper.classList.remove('selected');
+            });
+        }
+    }
+
+    function toggleSelectMessage(messageId) {
+        if (!deleteModeActive) return;
+    
+        if (selectedMessages.has(messageId)) {
+            selectedMessages.delete(messageId);
+            document.querySelector(`.chat-message-wrapper[data-id="${messageId}"]`).classList.remove('selected');
+        } else {
+            selectedMessages.add(messageId);
+            document.querySelector(`.chat-message-wrapper[data-id="${messageId}"]`).classList.add('selected');
+        }
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        document.getElementById('selectedCount').textContent = selectedMessages.size;
+    }
+
+    function confirmDeleteSelectedMessages() {
+        if (selectedMessages.size === 0) {
+            showToast('Pilih pesan yang akan dihapus terlebih dahulu!');
+            return;
+        }
+    
+        showConfirm('Hapus Pesan', `Yakin ingin menghapus ${selectedMessages.size} pesan?`, async () => {
+            showLoading();
+            try {
+                const promises = [];
+                selectedMessages.forEach(async (messageId) => {
+                    promises.push(db.ref(`all_comments/${messageId}`).remove());
+                });
+                await Promise.all(promises);
+                addActivityLog('Delete Messages', `Deleted ${selectedMessages.size} public messages`);
+                hideLoading();
+                showToast(`${selectedMessages.size} pesan berhasil dihapus!`);
+                cancelDeleteMode();
+                loadPublicChat();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+
+    function cancelDeleteMode() {
+        deleteModeActive = false;
+        selectedMessages.clear();
+        updateSelectedCount();
+        const chatContainer = document.querySelector('#public_chat .chat-container');
+        const deleteBar = document.getElementById('deleteModeBar');
+        chatContainer.classList.remove('chat-delete-mode');
+        deleteBar.classList.remove('active');
+        document.getElementById('deleteChatModeBtn').style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
+        document.getElementById('deleteChatModeBtn').innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan';
+        document.querySelectorAll('.chat-message-wrapper').forEach(wrapper => {
+            wrapper.classList.remove('selected');
+        });
+    }
+
+    // Modifikasi displayPublicChat untuk menambahkan checkbox
+    function displayPublicChat() {
+        const chatBox = document.getElementById('publicChatMessages');
+        if (!chatBox) return;
+    
+        db.ref('all_comments').orderByChild('timestamp').limitToLast(100).once('value', snap => {
+            const messages = snap.val() || {};
+            chatBox.innerHTML = '';
+            const sorted = Object.keys(messages).sort((a,b) => (messages[a].timestamp||0) - (messages[b].timestamp||0));
+        
+            sorted.forEach(key => {
+                const msg = messages[key];
+                const isAdmin = msg.uid === 'ADMIN';
+                const div = document.createElement('div');
+                div.className = `chat-message-wrapper${deleteModeActive ? ' delete-mode' : ''}`;
+                div.setAttribute('data-id', key);
+                div.onclick = () => toggleSelectMessage(key);
+            
+                div.innerHTML = `
+                    <div class="message ${isAdmin ? 'admin' : 'customer'}" style="position: relative;">
+                        ${deleteModeActive ? `<input type="checkbox" class="chat-checkbox" ${selectedMessages.has(key) ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelectMessage('${key}')">` : ''}
+                        <div class="message-sender"><i class="fas fa-user"></i> ${escapeHtml(msg.uid || 'Unknown')}</div>
+                        <div>${escapeHtml(msg.text || '')}</div>
+                        ${msg.fileUrl ? `<div><img src="${msg.fileUrl}" style="max-width:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileUrl}')"></div>` : ''}
+                        <div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>
+                    </div>
+                `;
+                chatBox.appendChild(div);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+    // Override loadPublicChat
+    function loadPublicChat() {
+        displayPublicChat();
+    }
+    
+    // ==================== PACKAGE FUNCTIONS WITH AUTO DOWNGRADE ====================
+
+    function togglePackageFields() {
+        const type = document.getElementById('packageType').value;
+        const quotaField = document.getElementById('quotaField');
+        const durationField = document.getElementById('durationField');
+    
+        if (type === 'quota') {
+            quotaField.style.display = 'block';
+            durationField.style.display = 'none';
+        } else if (type === 'unlimited') {
+            quotaField.style.display = 'none';
+            durationField.style.display = 'block';
+        } else {
+            quotaField.style.display = 'none';
+            durationField.style.display = 'none';
+        }
+    }
+
+    async function addPackage() {
+        const label = document.getElementById('packageLabel').value.trim();
+        const price = parseInt(document.getElementById('packagePrice').value);
+        const type = document.getElementById('packageType').value;
+        const description = document.getElementById('packageDesc').value.trim();
+        let quota = 0;
+        let durationMonths = 0;
+    
+        if (type === 'quota') {
+            quota = parseInt(document.getElementById('packageQuota').value) || 0;
+            if (quota <= 0) { showToast('Jumlah update harus lebih dari 0!'); return; }
+        } else if (type === 'unlimited') {
+            durationMonths = parseInt(document.getElementById('packageDuration').value) || 0;
+            if (durationMonths <= 0) { showToast('Durasi harus lebih dari 0 bulan!'); return; }
+        }
+    
+        if (!label || !price) { showToast('Please fill required fields!'); return; }
+    
+        showLoading();
+        try {
+            const snap = await db.ref('admin_config/premium_packages').once('value');
+            const packages = snap.val() || [];
+            packages.push({ 
+                label, price, type, description, 
+                quota: quota, 
+                durationMonths: durationMonths,
+                createdAt: new Date().toISOString()
+            });
+            await db.ref('admin_config/premium_packages').set(packages);
+            addActivityLog('Add Package', `Added premium package: ${label} - Rp ${formatRupiah(price)} (Type: ${type})`);
+            hideLoading();
+            showToast('Package added!');
+            closePackageModal();
+            loadPackages();
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+
+    // Sistem auto downgrade VIP - Jalankan setiap menit
+    async function checkAndDowngradeVIP() {
+        try {
+            const vipSnap = await db.ref('vip_members').once('value');
+            const allVIPs = vipSnap.val() || {};
+            const now = new Date();
+            let updatedCount = 0;
+        
+            for (const [uid, vip] of Object.entries(allVIPs)) {
+                if (vip.status !== 'active') continue;
+            
+                let shouldDowngrade = false;
+                let reason = '';
+            
+                // CEK JENIS VIP
+                if (vip.updateType === 'quota') {
+                    // CEK QUOTA
+                    const used = vip.updatesUsed || 0;
+                    const total = vip.updateQuota || 0;
+                    if (used >= total) {
+                        shouldDowngrade = true;
+                        reason = `Quota habis (${used}/${total})`;
+                    }
+                } 
+                else if (vip.updateType === 'unlimited' && vip.expiryDate && vip.expiryDate !== 'permanent') {
+                    // CEK EXPIRY DATE
+                    const expiryDate = new Date(vip.expiryDate);
+                    if (expiryDate <= now) {
+                        shouldDowngrade = true;
+                        reason = `Masa aktif berakhir pada ${expiryDate.toLocaleDateString()}`;
+                    }
+                }
+            
+                if (shouldDowngrade) {
+                    // DOWNGRADE KE FREE
+                    await db.ref(`vip_members/${uid}`).update({
+                        status: 'expired',
+                        expiredAt: Date.now(),
+                        expiredReason: reason
+                    });
+                
+                    // Kirim notifikasi ke user
+                    await db.ref(`chats/${uid}`).push({
+                        sender: 'system',
+                        text: `⚠️ *VIP STATUS EXPIRED*\n\n${reason}\n\nSilakan perpanjang VIP untuk mendapatkan akses kembali.`,
+                        timestamp: Date.now()
+                    });
+                
+                    updatedCount++;
+                    addActivityLog('Auto Downgrade VIP', `${uid} downgraded to FREE - ${reason}`);
+                    console.log(`📉 User ${uid} downgraded: ${reason}`);
+                }
+            }
+        
+            if (updatedCount > 0) {
+                showToast(`${updatedCount} user VIP telah turun ke FREE`);
+                loadVIPMembers(); // Refresh tampilan
+            }
+        } catch (error) {
+            console.error('Error checking VIP downgrade:', error);
+        }
+    }
+
+    // Panggil fungsi auto downgrade setiap 5 menit
+    setInterval(checkAndDowngradeVIP, 5 * 60 * 1000);
+    // Panggil sekali saat load
+    setTimeout(checkAndDowngradeVIP, 5000);
     
     // ==================== USER FILES ====================
     function loadUserFiles() { window.allFiles = []; db.ref('chats').once('value', snap => { const chats = snap.val() || {}; Object.keys(chats).forEach(uid => { Object.keys(chats[uid]).forEach(msgId => { const msg = chats[uid][msgId]; if (msg.fileUrl) window.allFiles.push({ id: msgId, uid, name: msg.fileName || 'file', url: msg.fileUrl, type: msg.fileType || 'unknown', timestamp: msg.timestamp || Date.now() }); }); }); window.allFiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); displayUserFiles(); }); }
@@ -3211,6 +3649,9 @@
         initAdminBackground();
         loadActiveVideo();
         addActivityLog('Admin Login', 'Admin logged into panel');
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
         console.log('🚀 Admin panel initialized - V1.0.0');
         console.log('🎬 Background video hanya untuk admin (tidak ke user)');
         console.log('🔔 Notifikasi real-time aktif');
