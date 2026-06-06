@@ -3607,26 +3607,62 @@
     async function sendAdminMessage() { const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text || !currentChatUser) return; await db.ref('chats/' + currentChatUser).push({ sender: 'admin', text, timestamp: Date.now() }); addActivityLog('Send Message', `Sent message to ${currentChatUser}`); input.value = ''; }
     
     // ==================== PUBLIC CHAT ====================
+    async function sendPublicMessageAsAdmin() {
+        const input = document.getElementById('publicChatInput');
+        if (!input) {
+            console.error('Element publicChatInput not found');
+            return;
+        }
+    
+        const text = input.value.trim();
+        if (!text) {
+            showToast('Pesan tidak boleh kosong!');
+            return;
+        }
+    
+        showLoading();
+        try {
+            await db.ref('all_comments').push({
+                uid: 'ADMIN',
+                text: text,
+                timestamp: Date.now()
+            });
+        
+            input.value = '';
+            addActivityLog('Public Message', `Sent: ${text.substring(0, 50)}`);
+            showToast('Pesan terkirim!');
+        
+            // Refresh chat
+            loadPublicChat();
+        } catch (error) {
+            console.error('Error sending message:', error);
+            showToast('Gagal mengirim pesan: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Load public chat (hanya 20 pesan terakhir)
     function loadPublicChat() {
-        // Ambil hanya 20 pesan terakhir (bukan 50 atau 100)
         db.ref('all_comments').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
             const messages = snap.val() || {};
-            displayPublicChat(messages);
+            displayPublicChatMessages(messages);
             updatePublicChatBadge();
         });
     }
 
-    function displayPublicChat(messages) {
+    // Tampilkan pesan public chat
+    function displayPublicChatMessages(messages) {
         const chatBox = document.getElementById('publicChatMessages');
         if (!chatBox) return;
     
         chatBox.innerHTML = '';
     
-        // Urutkan dari yang terlama ke terbaru (agar urutan benar)
-        const sorted = Object.keys(messages).sort((a, b) => (messages[a].timestamp || 0) - (messages[b].timestamp || 0));
+        // Urutkan dari yang terlama ke terbaru
+        const sorted = Object.keys(messages).sort((a, b) => (messages[a].timestamp || 0) -     (messages[b].timestamp || 0));
     
         if (sorted.length === 0) {
-            chatBox.innerHTML = '<div class="no-data" style="padding: 20px; text-align: center;">Belum ada pesan</div>';
+            chatBox.innerHTML = '<div class="no-data" style="padding: 30px; text-align: center; color: #aaa;">Belum ada pesan</div>';
             return;
         }
     
@@ -3637,7 +3673,6 @@
             div.className = `chat-message-wrapper${deleteModeActive ? ' delete-mode' : ''}`;
             div.setAttribute('data-id', key);
         
-            // Tambahkan onclick untuk mode delete
             if (deleteModeActive) {
                 div.onclick = (e) => {
                     e.stopPropagation();
@@ -3659,16 +3694,15 @@
             chatBox.appendChild(div);
         });
     
-        // Scroll ke bawah (pesan terbaru)
+        // Scroll ke bawah
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Update badge notifikasi public chat
+    // Update badge notifikasi
     function updatePublicChatBadge() {
         const fiveMinAgo = Date.now() - 300000;
         let newMessages = 0;
     
-        // Ambil dari Firebase untuk hitung pesan baru
         db.ref('all_comments').orderByChild('timestamp').limitToLast(20).once('value', (snap) => {
             const messages = snap.val() || {};
             Object.keys(messages).forEach(key => {
@@ -3681,7 +3715,7 @@
             const badge = document.getElementById('publicChatBadge');
             if (badge) {
                 if (newMessages > 0) {
-                    badge.innerHTML = newMessages > 9 ? '9+' : newMessages;
+                    badge.textContent = newMessages > 9 ? '9+' : newMessages;
                     badge.classList.add('show');
                 } else {
                     badge.classList.remove('show');
@@ -3693,7 +3727,7 @@
     // Listen untuk pesan baru (real-time)
     function listenPublicChatRealtime() {
         db.ref('all_comments').orderByChild('timestamp').limitToLast(1).on('child_added', () => {
-            loadPublicChat(); // Refresh tampilan
+            loadPublicChat();
         });
     }
     
@@ -3776,39 +3810,6 @@
         document.getElementById('deleteChatModeBtn').innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan';
         document.querySelectorAll('.chat-message-wrapper').forEach(wrapper => {
             wrapper.classList.remove('selected');
-        });
-    }
-
-    // Modifikasi displayPublicChat untuk menambahkan checkbox
-    function displayPublicChat() {
-        const chatBox = document.getElementById('publicChatMessages');
-        if (!chatBox) return;
-    
-        db.ref('all_comments').orderByChild('timestamp').limitToLast(100).once('value', snap => {
-            const messages = snap.val() || {};
-            chatBox.innerHTML = '';
-            const sorted = Object.keys(messages).sort((a,b) => (messages[a].timestamp||0) - (messages[b].timestamp||0));
-        
-            sorted.forEach(key => {
-                const msg = messages[key];
-                const isAdmin = msg.uid === 'ADMIN';
-                const div = document.createElement('div');
-                div.className = `chat-message-wrapper${deleteModeActive ? ' delete-mode' : ''}`;
-                div.setAttribute('data-id', key);
-                div.onclick = () => toggleSelectMessage(key);
-            
-                div.innerHTML = `
-                    <div class="message ${isAdmin ? 'admin' : 'customer'}" style="position: relative;">
-                        ${deleteModeActive ? `<input type="checkbox" class="chat-checkbox" ${selectedMessages.has(key) ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelectMessage('${key}')">` : ''}
-                        <div class="message-sender"><i class="fas fa-user"></i> ${escapeHtml(msg.uid || 'Unknown')}</div>
-                        <div>${escapeHtml(msg.text || '')}</div>
-                        ${msg.fileUrl ? `<div><img src="${msg.fileUrl}" style="max-width:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileUrl}')"></div>` : ''}
-                        <div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>
-                    </div>
-                `;
-                chatBox.appendChild(div);
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
         });
     }
 
