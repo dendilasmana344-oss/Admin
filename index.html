@@ -1649,6 +1649,88 @@
             color: #00ff88;
             font-weight: bold;
         }
+ 
+        /* NOTIFICATION BADGE - DIPERBAIKI */
+        .notification-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            min-width: 22px;
+            height: 22px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            display: none;
+            animation: pulse 1s infinite;
+            border: 2px solid white;
+            padding: 0 5px;
+        }
+
+        .notification-badge.show {
+            display: flex;
+        }
+
+        /* NOTIFICATION TOAST (popup notifikasi) */
+        .notification-toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            max-width: 350px;
+            background: linear-gradient(135deg, #1a0a0a, #2a0a0a);
+            border-left: 5px solid #00ffff;
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 10001;
+            animation: slideInRight 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .notification-toast.hide {
+            animation: slideOutRight 0.3s ease forwards;
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .notification-toast-title {
+            font-weight: bold;
+            color: #00ffff;
+            margin-bottom: 5px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .notification-toast-message {
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .notification-toast-time {
+            font-size: 10px;
+            color: #888;
+            margin-top: 8px;
+        }
+
+        .notification-toast-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .notification-toast-close:hover {
+            color: #ff4444;
+        }
 
         /* LOG ACTIVITY TABLE */
         .log-table {
@@ -1746,6 +1828,109 @@
             box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
         }
 
+        /* ==================== PUBLIC CHAT STYLE (RAPI & RINGKAS) ==================== */
+        #public_chat .chat-container {
+            height: auto;
+            min-height: 400px;
+            max-height: 500px;
+        }
+
+        #public_chat .chat-messages {
+            max-height: 400px;
+            min-height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        #public_chat .message {
+            max-width: 90%;
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        #public_chat .message.customer {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-left: 3px solid var(--neon-cyan);
+            margin-right: auto;
+        }
+
+        #public_chat .message.admin {
+            background: linear-gradient(135deg, #2a1a1a, #1a0a0a);
+            border-left: 3px solid #ff4444;
+            margin-left: auto;
+        }
+
+        #public_chat .message-sender {
+            font-size: 11px;
+            color: var(--neon-cyan);
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #public_chat .message-text {
+            font-size: 13px;
+            color: #fff;
+            line-height: 1.4;
+        }
+
+        #public_chat .message-time {
+            font-size: 9px;
+            color: #888;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        #public_chat .message-file {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        /* Chat input area */
+        #public_chat .chat-input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        #public_chat .chat-input {
+            flex: 1;
+            padding: 12px 18px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 30px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #public_chat .chat-input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        #public_chat .chat-send-btn {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            border: none;
+            border-radius: 50%;
+            color: #000;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        #public_chat .chat-send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ff88;
+        }
+
         /* CONFIRM MODAL */
         .confirm-modal {
             position: fixed;
@@ -1831,6 +2016,30 @@
         .confirm-btn-no:hover {
             background: #444;
             transform: translateY(-2px);
+        }
+
+        .chat-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            display: none;
+        }
+
+        .chat-badge.show {
+            display: flex;
+        }
+
+        .tab {
+            position: relative;
         }
 
         /* UPLOAD PROGRESS NEON */
@@ -2085,7 +2294,7 @@
         <div class="tab" onclick="openTab('background')"><i class="fas fa-video"></i> Background Video</div>
         <div class="tab" onclick="openTab('leaderboard')"><i class="fas fa-trophy"></i> Leaderboard</div>
         <div class="tab" onclick="openTab('chat')"><i class="fas fa-comments"></i> Private Chat</div>
-        <div class="tab" onclick="openTab('public_chat')"><i class="fas fa-globe"></i> Public Chat</div>
+        <div class="tab" onclick="openTab('public_chat')"><i class="fas fa-globe"></i> Public Chat<span class="chat-badge" id="publicChatBadge">0</span></div>
         <div class="tab" onclick="openTab('user_files')"><i class="fas fa-images"></i> User Files</div>
         <div class="tab" onclick="openTab('logs')"><i class="fas fa-history"></i> Activity Logs</div>
         <div class="tab" onclick="openTab('maintenance')"><i class="fas fa-tools"></i> Maintenance</div>
@@ -2537,6 +2746,8 @@
 
 <div class="loading" id="loading"><div class="loading-spinner"></div><div class="loading-text">LOADING...</div></div>
 <div class="toast-neon" id="toastNeon"></div>
+<!-- NOTIFICATION TOAST CONTAINER -->
+<div id="notificationToastContainer"></div>
 
 <script>
     // ==================== FIREBASE CONFIG ====================
@@ -2568,6 +2779,9 @@
     let notificationSound = null;
     let deleteModeActive = false;
     let selectedMessages = new Set();
+    let lastNotificationCheck = Date.now();
+    let notifiedDeposits = new Set();
+    let notifiedVIP = new Set();
     
     // Video background list (8 videos) - ADMIN ONLY
     const videoList = [
@@ -3084,52 +3298,93 @@
         }
     }
     
-    function checkNewNotifications() {    
+    function checkNewNotifications() {
+        // Cek deposit baru
         Object.keys(allDeposits).forEach(uid => {
             Object.keys(allDeposits[uid]).forEach(id => {
-                if (allDeposits[uid][id].status === 'pending' && (!localStorage.getItem(`deposit_notified_${id}`))) {
-                    newDeposits++;
-                    localStorage.setItem(`deposit_notified_${id}`, 'true');
-                    showDesktopNotification('💰 Deposit Baru', `${uid} melakukan deposit Rp ${formatRupiah(allDeposits[uid][id].jumlah)}`);
+                const deposit = allDeposits[uid][id];
+                if (deposit.status === 'pending' && !notifiedDeposits.has(id)) {
+                    notifiedDeposits.add(id);
+                    newNotifications.push({
+                        type: 'deposit',
+                        title: '💰 DEPOSIT BARU',
+                        message: `${uid} melakukan deposit Rp ${formatRupiah(deposit.jumlah)}`,
+                        uid: uid,
+                        amount: deposit.jumlah
+                    });
                 }
             });
         });
     
+        // Cek VIP order baru
         Object.keys(allPurchases).forEach(uid => {
             Object.keys(allPurchases[uid]).forEach(id => {
-                if (allPurchases[uid][id].status === 'pending' && (!localStorage.getItem(`vip_notified_${id}`))) {
-                    newVIP++;
-                    localStorage.setItem(`vip_notified_${id}`, 'true');
-                    showDesktopNotification('👑 VIP Order Baru', `${uid} memesan paket ${allPurchases[uid][id].package}`);
+                const purchase = allPurchases[uid][id];
+                if (purchase.status === 'pending' && !notifiedVIP.has(id)) {
+                    notifiedVIP.add(id);
+                    newNotifications.push({
+                        type: 'vip',
+                        title: '👑 VIP ORDER BARU',
+                        message: `${uid} memesan paket ${purchase.package}`,
+                        uid: uid,
+                        package: purchase.package
+                    });
                 }
             });
         });
     
-        const totalNotif = newDeposits + newVIP;
+        // Update badge
+        const totalNotif = newNotifications.length;
         const badge = document.getElementById('adminNotifBadge');
         if (totalNotif > 0) {
             badge.textContent = totalNotif > 9 ? '9+' : totalNotif;
             badge.classList.add('show');
-            playNotificationSound();
+        
+            // Tampilkan notifikasi satu per satu
+            newNotifications.forEach(notif => {
+                showNotificationToast(notif.title, notif.message, notif.type);
+                playNotificationSound();
+            });
         } else {
             badge.classList.remove('show');
         }
     }
 
-    function showDesktopNotification(title, body) {
-        if (Notification.permission === 'granted') {
-            new Notification(title, { body: body, icon: 'https://via.placeholder.com/64/00ffff/000000?text=VIP' });
-        } else if (Notification.permission !== 'denied') {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    new Notification(title, { body: body });
-                }
-            });
+    function showNotificationToast(title, message, type = 'info') {
+        const container = document.getElementById('notificationToastContainer');
+        if (!container) {
+            const newContainer = document.createElement('div');
+            newContainer.id = 'notificationToastContainer';
+            newContainer.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 10001; display: flex; flex-direction: column; gap: 10px;';
+            document.body.appendChild(newContainer);
         }
+    
+        const toastContainer = document.getElementById('notificationToastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'notification-toast';
+    
+        const borderColor = type === 'deposit' ? '#00ff88' : (type === 'vip' ? '#ffd700' : '#00ffff');
+        toast.style.borderLeftColor = borderColor;
+    
+        toast.innerHTML = `
+            <div class="notification-toast-title">${title}</div>
+            <div class="notification-toast-message">${message}</div>
+            <div class="notification-toast-time">${new Date().toLocaleTimeString()}</div>
+            <button class="notification-toast-close" onclick="this.parentElement.remove()">✕</button>
+        `;
+    
+        toastContainer.appendChild(toast);
+    
+        // Auto remove setelah 8 detik
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 400);
+            }
+        }, 8000);
     }
 
     function playNotificationSound() {
-        // Gunakan Web Audio API untuk bunyi notifikasi sederhana
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioCtx.createOscillator();
@@ -3137,7 +3392,7 @@
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
             oscillator.frequency.value = 880;
-            gainNode.gain.value = 0.3;
+            gainNode.gain.value = 0.2;
             oscillator.start();
             gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
             oscillator.stop(audioCtx.currentTime + 0.5);
@@ -3352,8 +3607,96 @@
     async function sendAdminMessage() { const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text || !currentChatUser) return; await db.ref('chats/' + currentChatUser).push({ sender: 'admin', text, timestamp: Date.now() }); addActivityLog('Send Message', `Sent message to ${currentChatUser}`); input.value = ''; }
     
     // ==================== PUBLIC CHAT ====================
-    function loadPublicChat() { db.ref('all_comments').orderByChild('timestamp').limitToLast(100).on('value', snap => { const messages = snap.val() || {}; const chatBox = document.getElementById('publicChatMessages'); chatBox.innerHTML = ''; Object.keys(messages).sort((a,b) => (messages[a].timestamp||0) - (messages[b].timestamp||0)).forEach(key => { const msg = messages[key]; const isAdmin = msg.uid === 'ADMIN'; const div = document.createElement('div'); div.className = `message ${isAdmin ? 'admin' : 'customer'}`; let content = `<div class="message-sender">${msg.uid || 'Unknown'}</div><div>${escapeHtml(msg.text || '')}</div>`; if (msg.fileUrl) content += `<div><a href="${msg.fileUrl}" target="_blank">📎 File</a></div>`; content += `<div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`; div.innerHTML = content; chatBox.appendChild(div); }); chatBox.scrollTop = chatBox.scrollHeight; }); }
-    async function sendPublicMessageAsAdmin() { const input = document.getElementById('publicChatInput'); const text = input.value.trim(); if (!text) return; await db.ref('all_comments').push({ uid: 'ADMIN', text, timestamp: Date.now() }); addActivityLog('Public Message', `Sent public message: ${text.substring(0, 50)}`); input.value = ''; showToast('Message sent!'); }
+    function loadPublicChat() {
+        // Ambil hanya 20 pesan terakhir (bukan 50 atau 100)
+        db.ref('all_comments').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
+            const messages = snap.val() || {};
+            displayPublicChat(messages);
+            updatePublicChatBadge();
+        });
+    }
+
+    function displayPublicChat(messages) {
+        const chatBox = document.getElementById('publicChatMessages');
+        if (!chatBox) return;
+    
+        chatBox.innerHTML = '';
+    
+        // Urutkan dari yang terlama ke terbaru (agar urutan benar)
+        const sorted = Object.keys(messages).sort((a, b) => (messages[a].timestamp || 0) - (messages[b].timestamp || 0));
+    
+        if (sorted.length === 0) {
+            chatBox.innerHTML = '<div class="no-data" style="padding: 20px; text-align: center;">Belum ada pesan</div>';
+            return;
+        }
+    
+        sorted.forEach(key => {
+            const msg = messages[key];
+            const isAdmin = msg.uid === 'ADMIN';
+            const div = document.createElement('div');
+            div.className = `chat-message-wrapper${deleteModeActive ? ' delete-mode' : ''}`;
+            div.setAttribute('data-id', key);
+        
+            // Tambahkan onclick untuk mode delete
+            if (deleteModeActive) {
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleSelectMessage(key);
+                };
+            }
+        
+            div.innerHTML = `
+                <div class="message ${isAdmin ? 'admin' : 'customer'}" style="position: relative;">
+                    ${deleteModeActive ? `<input type="checkbox" class="chat-checkbox" ${selectedMessages.has(key) ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelectMessage('${key}')">` : ''}
+                    <div class="message-sender">
+                        <i class="fas fa-user"></i> ${escapeHtml(msg.uid || 'Unknown')}
+                    </div>
+                    <div class="message-text">${escapeHtml(msg.text || '')}</div>
+                    ${msg.fileUrl ? `<div class="message-file" style="margin-top: 8px;"><a href="${msg.fileUrl}" target="_blank" style="color: #00ff88;"><i class="fas fa-file"></i> ${escapeHtml(msg.fileName || 'File')}</a></div>` : ''}
+                    <div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>
+                </div>
+            `;
+            chatBox.appendChild(div);
+        });
+    
+        // Scroll ke bawah (pesan terbaru)
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Update badge notifikasi public chat
+    function updatePublicChatBadge() {
+        const fiveMinAgo = Date.now() - 300000;
+        let newMessages = 0;
+    
+        // Ambil dari Firebase untuk hitung pesan baru
+        db.ref('all_comments').orderByChild('timestamp').limitToLast(20).once('value', (snap) => {
+            const messages = snap.val() || {};
+            Object.keys(messages).forEach(key => {
+                const msg = messages[key];
+                if (msg.uid !== 'ADMIN' && msg.timestamp && msg.timestamp > fiveMinAgo) {
+                    newMessages++;
+                }
+            });
+        
+            const badge = document.getElementById('publicChatBadge');
+            if (badge) {
+                if (newMessages > 0) {
+                    badge.innerHTML = newMessages > 9 ? '9+' : newMessages;
+                    badge.classList.add('show');
+                } else {
+                    badge.classList.remove('show');
+                }
+            }
+        });
+    }
+
+    // Listen untuk pesan baru (real-time)
+    function listenPublicChatRealtime() {
+        db.ref('all_comments').orderByChild('timestamp').limitToLast(1).on('child_added', () => {
+            loadPublicChat(); // Refresh tampilan
+        });
+    }
+    
     function toggleDeleteMode() {
     deleteModeActive = !deleteModeActive;
     const chatContainer = document.querySelector('#public_chat .chat-container');
@@ -3640,9 +3983,10 @@
         loadActivityLogs();
         loadDiscountHistory();
         loadGlobalDiscountStatus();
+        listenPublicChatRealtime();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
-        setInterval(() => checkNewNotifications(), 5000);
+        setInterval(() => checkNewNotifications(), 3000);
         const savedAvatar = localStorage.getItem('admin_avatar');
         if (savedAvatar) document.getElementById('adminAvatar').src = savedAvatar;
         renderVideoSelection();
