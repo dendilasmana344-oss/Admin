@@ -1246,7 +1246,7 @@
             text-shadow: 0 0 20px var(--neon-cyan);
         }
 
-        /* Admin Video Background */
+        /* Admin Video Background - OPTIMASI */
         .admin-video-bg {
             position: fixed;
             top: 0;
@@ -1261,6 +1261,10 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            /* Optimasi agar video lancar */
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
 
         .admin-video-overlay {
@@ -1269,7 +1273,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.75);
+            /* Kontras lebih cerah - kurangi kegelapan */
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%);
             z-index: 1;
         }
 
@@ -1278,31 +1283,32 @@
             position: fixed;
             bottom: 100px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             border: 2px solid var(--neon-cyan);
             border-radius: 50px;
-            padding: 8px 15px;
+            padding: 10px 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             z-index: 1000;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .admin-video-control:hover {
             border-color: #00ff88;
-            box-shadow: 0 0 15px var(--neon-cyan);
+            box-shadow: 0 0 20px var(--neon-cyan);
+            transform: scale(1.05);
         }
 
         .admin-video-control i {
-            font-size: 16px;
+            font-size: 18px;
             color: var(--neon-cyan);
         }
 
         .admin-video-control span {
-            font-size: 12px;
+            font-size: 13px;
             color: white;
             font-family: 'Orbitron', monospace;
         }
@@ -2049,6 +2055,61 @@
         </div>
     </div>
 
+    <!-- DISCOUNTS TAB - VERSI BARU (GLOBAL DISKON TANPA KODE) -->
+    <div id="discounts" class="tab-content">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-tags"></i> Global Discount Settings</div>
+        
+            <!-- Status Diskon Saat Ini -->
+            <div id="currentDiscountStatus" style="margin-bottom: 20px; display: none;">
+                <div style="background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,255,136,0.05)); border: 2px solid #00ff88; border-radius: 20px; padding: 20px;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                        <i class="fas fa-percent" style="font-size: 28px; color: #00ff88;"></i>
+                        <span style="font-weight: bold; color: #00ff88; font-size: 18px;">DISKON AKTIF</span>
+                    </div>
+                    <div id="currentDiscountDetails"></div>
+                    <button class="btn btn-danger btn-sm" onclick="deactivateGlobalDiscount()" style="margin-top: 15px;">
+                        <i class="fas fa-stop"></i> Nonaktifkan Diskon
+                    </button>
+                </div>
+            </div>
+        
+            <!-- Form Setting Diskon -->
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-percent"></i> Persentase Diskon (%)</label>
+                <input type="number" class="modal-input" id="discountPercentage" placeholder="0" min="0" max="100" value="0">
+                <small style="color: #888;">Masukkan angka 0-100. Contoh: 50 = diskon 50%</small>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-calendar-alt"></i> Masa Berlaku (Hari)</label>
+                <input type="number" class="modal-input" id="discountDuration" placeholder="7" min="1" value="7">
+                <small style="color: #888;">Diskon akan berakhir setelah jumlah hari ini</small>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-money-bill"></i> Minimal Pembelian (Opsional)</label>
+                <input type="number" class="modal-input" id="discountMinPurchase" placeholder="0" min="0" value="0">
+                <small style="color: #888;">Minimal harga paket agar diskon berlaku. 0 = tanpa batas</small>
+            </div>
+        
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="activateGlobalDiscount()">
+                    <i class="fas fa-play"></i> Aktifkan Diskon Global
+                </button>
+                <button class="btn btn-danger" onclick="deactivateGlobalDiscount()">
+                    <i class="fas fa-stop"></i> Nonaktifkan Diskon
+                </button>
+            </div>
+        
+            <!-- History Diskon -->
+            <div style="margin-top: 30px;">
+                <h3 style="color: #ffaa00; margin-bottom: 15px;"><i class="fas fa-history"></i> Riwayat Diskon</h3>
+                <div id="discountHistoryList"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- FILE UPDATES TAB -->
     <div id="updates" class="tab-content">
         <div class="card">
@@ -2374,6 +2435,7 @@
     let notificationInterval = null;
     let adminBgVideo = null;
     let isAdminBgMuted = true;
+    let videoLoadAttempts = {};
     
     // Video background list (8 videos) - ADMIN ONLY
     const videoList = [
@@ -2573,6 +2635,10 @@
         adminBgVideo = document.getElementById('adminBgVideo');
         if (!adminBgVideo) return;
     
+        // Set properti untuk performa optimal
+        adminBgVideo.preload = 'auto';
+        adminBgVideo.playsInline = true;
+    
         // Ambil video aktif dari Firebase
         db.ref('admin_config/active_background_video').on('value', (snap) => {
             let videoId = 1;
@@ -2584,19 +2650,38 @@
             const videoFile = videoList.find(v => v.id === videoId)?.file || 'video1.mp4';
         
             if (adminBgVideo) {
-                // Ganti sumber video
+                // Simpan status play
                 const wasPlaying = !adminBgVideo.paused;
+            
+                // Ganti sumber video
                 adminBgVideo.src = videoFile;
                 adminBgVideo.load();
             
-                if (wasPlaying) {
-                    adminBgVideo.play().catch(e => console.log('Auto-play error:', e));
-                } else {
-                    adminBgVideo.play().catch(e => console.log('Auto-play error:', e));
+                // Play video dengan penanganan error
+                const playPromise = adminBgVideo.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log('Auto-play error:', error);
+                        // Coba play lagi setelah 1 detik
+                        setTimeout(() => {
+                            adminBgVideo.play().catch(e => console.log('Retry play failed:', e));
+                        }, 1000);
+                    });
                 }
             
                 console.log(`🎬 Admin background video changed to: ${videoFile}`);
             }
+        });
+    
+        // Event listener untuk video error - coba reload
+        adminBgVideo.addEventListener('error', (e) => {
+            console.log('Video error, reloading...');
+            setTimeout(() => {
+                const currentSrc = adminBgVideo.src;
+                adminBgVideo.src = currentSrc;
+                adminBgVideo.load();
+                adminBgVideo.play().catch(err => console.log('Reload play error:', err));
+            }, 500);
         });
     
         // Set muted default
@@ -2621,11 +2706,144 @@
             text.textContent = 'Unmute';
         }
     }
+    
+    // ==================== GLOBAL DISCOUNT FUNCTIONS (TANPA KODE) ====================
 
-    // Panggil fungsi ini di dalam init()
-    function initAdminBackground() {
-        loadAdminBackgroundVideo();
+    async function loadGlobalDiscountStatus() {
+        try {
+            const snap = await db.ref('global_discount').once('value');
+            const discount = snap.val();
+        
+            if (discount && discount.active === true) {
+                const expiryDate = new Date(discount.expiryDate);
+                const now = new Date();
+                const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+            
+                if (expiryDate > now) {
+                    document.getElementById('currentDiscountStatus').style.display = 'block';
+                    document.getElementById('currentDiscountDetails').innerHTML = `
+                        <div><strong>Diskon:</strong> <span style="color: #00ff88; font-size: 20px;">${discount.percentage}%</span></div>
+                        <div><strong>Berlaku hingga:</strong> ${expiryDate.toLocaleDateString('id-ID')}</div>
+                        <div><strong>Sisa waktu:</strong> ${daysLeft} hari</div>
+                        ${discount.minPurchase > 0 ? `<div><strong>Minimal pembelian:</strong> Rp ${formatRupiah(discount.minPurchase)}</div>` : '<div><strong>Minimal pembelian:</strong> Tidak ada</div>'}
+                    `;
+                    document.getElementById('discountPercentage').value = discount.percentage;
+                    document.getElementById('discountMinPurchase').value = discount.minPurchase || 0;
+                } else {
+                    // Diskon sudah expired
+                    await db.ref('global_discount').update({ active: false });
+                    document.getElementById('currentDiscountStatus').style.display = 'none';
+                }
+            } else {
+                document.getElementById('currentDiscountStatus').style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error loading discount:', error);
+        }
     }
+
+    async function activateGlobalDiscount() {
+        const percentage = parseInt(document.getElementById('discountPercentage').value);
+        const duration = parseInt(document.getElementById('discountDuration').value);
+        const minPurchase = parseInt(document.getElementById('discountMinPurchase').value) || 0;
+    
+        if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+            showToast('Persentase diskon harus antara 0-100!');
+            return;
+        }
+    
+        if (isNaN(duration) || duration < 1) {
+            showToast('Durasi minimal 1 hari!');
+            return;
+        }
+    
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + duration);
+    
+        showLoading();
+        try {
+            const discountData = {
+                active: true,
+                percentage: percentage,
+                minPurchase: minPurchase,
+                expiryDate: expiryDate.toISOString(),
+                startedAt: new Date().toISOString(),
+                updatedBy: 'admin'
+            };
+        
+            await db.ref('global_discount').set(discountData);
+        
+            // Simpan ke history
+            const historyData = {
+                ...discountData,
+                id: Date.now(),
+                activatedAt: new Date().toISOString()
+            };
+            await db.ref('discount_history').push(historyData);
+        
+            addActivityLog('Activate Global Discount', `${percentage}% discount activated for ${duration} days`);
+            hideLoading();
+            showToast(`✅ Diskon ${percentage}% berhasil diaktifkan selama ${duration} hari!`);
+            loadGlobalDiscountStatus();
+            loadDiscountHistory();
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+
+    async function deactivateGlobalDiscount() {
+        showConfirm('Nonaktifkan Diskon', 'Yakin ingin menonaktifkan diskon global?', async () => {
+            showLoading();
+            try {
+                await db.ref('global_discount').update({ active: false, deactivatedAt: new Date().toISOString() });
+                addActivityLog('Deactivate Global Discount', 'Global discount deactivated');
+                hideLoading();
+                showToast('✅ Diskon global dinonaktifkan!');
+                loadGlobalDiscountStatus();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+
+    async function loadDiscountHistory() {
+        try {
+            const snap = await db.ref('discount_history').orderByChild('activatedAt').limitToLast(20).once('value');
+            const history = snap.val() || {};
+            let html = '';
+        
+            const sorted = Object.keys(history).map(key => ({ id: key, ...history[key] })).sort((a,b) => new Date(b.activatedAt) - new Date(a.activatedAt));
+        
+            sorted.forEach(item => {
+                const isActive = item.active === true && new Date(item.expiryDate) > new Date();
+                const statusHtml = isActive ? '<span style="color: #00ff88;">Aktif</span>' : '<span style="color: #ff4444;">Kadaluarsa</span>';
+                const date = new Date(item.activatedAt).toLocaleString('id-ID');
+            
+                html += `
+                    <div class="discount-card" style="border-color: #00ff88;">
+                        <div class="discount-header">
+                            <span class="discount-code" style="color: #00ff88;">${item.percentage}% DISKON</span>
+                            <span class="discount-percent" style="background: #00ff88;">GLOBAL</span>
+                        </div>
+                        <div class="discount-details">
+                            <div><span class="detail-label">Berlaku hingga:</span> <span class="detail-value">${new Date(item.expiryDate).toLocaleDateString('id-ID')}</span></div>
+                            <div><span class="detail-label">Minimal belanja:</span> <span class="detail-value">${item.minPurchase > 0 ? 'Rp ' + formatRupiah(item.minPurchase) : 'Tidak ada'}</span></div>
+                            <div><span class="detail-label">Status:</span> <span class="detail-value">${statusHtml}</span></div>
+                            <div><span class="detail-label">Diaktifkan:</span> <span class="detail-value">${date}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+        
+            document.getElementById('discountHistoryList').innerHTML = html || '<div class="no-data">Belum ada riwayat diskon</div>';
+        } catch (error) {
+            console.error('Error loading discount history:', error);
+        }
+    }
+
+    // Update fungsi loadDiscounts yang lama (jika ada) jangan dihapus, cukup tambahkan ini
     
     // ==================== VIDEO BACKGROUND FUNCTIONS ====================
     function renderVideoSelection() {
@@ -2982,6 +3200,8 @@
         updateAdminStatus(); 
         loadAllData(); 
         loadActivityLogs();
+        loadDiscountHistory();
+        loadGlobalDiscountStatus();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 5000);
