@@ -684,6 +684,25 @@
         .badge.offline { background: rgba(158, 158, 158, 0.2); color: #9e9e9e; border: 1px solid #9e9e9e; }
         .badge.banned { background: rgba(244, 67, 54, 0.2); color: #ff4444; border: 1px solid #ff4444; }
         .badge.vip { background: rgba(255, 215, 0, 0.2); color: #ffd700; border: 1px solid #ffd700; animation: pulse 1.5s infinite; }
+        .badge.multi-ip { background: rgba(255, 68, 68, 0.3); color: #ff8888; border: 1px solid #ff4444; animation: pulse 0.5s infinite; }
+
+        /* Multi-IP Alert Card */
+        .multi-ip-alert {
+            background: rgba(255, 68, 68, 0.15);
+            border: 2px solid #ff4444;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+            animation: borderGlow 1s infinite;
+        }
+
+        .multi-ip-alert .alert-title {
+            color: #ff4444;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
         /* VIP CARD */
         .vip-card {
@@ -2369,6 +2388,11 @@
             <div class="search-box"><input type="text" class="search-input" id="customerSearch" placeholder="🔍 Search by UID..." onkeyup="filterCustomers()"></div>
             <div id="customerList"></div>
         </div>
+        <!-- Multi-IP Detection Alerts -->
+        <div class="card" id="multiIpAlertsCard" style="display:none;">
+            <div class="card-title"><i class="fas fa-exclamation-triangle"></i> Multi-IP Detection Alerts <span style="color:#ff4444; font-size:12px;">REAL-TIME</span></div>
+            <div id="multiIpAlertsList"></div>
+        </div>
     </div>
 
     <!-- VIP LIST TAB -->
@@ -2699,6 +2723,7 @@
     let selectedMessages = new Set();
     let notifiedDeposits = new Set();
     let notifiedVIP = new Set();
+    let multiIpAlerts = [];
     
     const videoList = [
         { id: 1, name: '🎬 Video Background 1', file: 'video1.mp4' },
@@ -3196,6 +3221,100 @@
         }).catch(error => { hideLoading(); showToast('Error loading data'); });
     }
     
+    // ==================== REAL-TIME SESSIONS LISTENER FOR MULTI-IP DETECTION ====================
+    function setupRealtimeSessionsListener() {
+        db.ref('sessions').on('value', (snap) => {
+            const sessions = snap.val() || {};
+            
+            // Deteksi multi-IP untuk setiap user
+            const ipMap = {};
+            Object.keys(sessions).forEach(uid => {
+                const session = sessions[uid];
+                if (session && session.ipAddress) {
+                    if (!ipMap[uid]) ipMap[uid] = [];
+                    ipMap[uid].push({
+                        ip: session.ipAddress,
+                        timestamp: session.timestamp,
+                        sessionId: session.sessionId
+                    });
+                }
+            });
+            
+            // Cek multi-IP (lebih dari 1 IP berbeda dalam 5 menit)
+            const newAlerts = [];
+            Object.keys(ipMap).forEach(uid => {
+                const ips = ipMap[uid];
+                const uniqueIps = [...new Set(ips.map(i => i.ip))];
+                if (uniqueIps.length > 1) {
+                    // Deteksi multi-IP
+                    const alert = {
+                        uid: uid,
+                        ips: uniqueIps,
+                        count: uniqueIps.length,
+                        timestamp: Date.now(),
+                        details: ips
+                    };
+                    newAlerts.push(alert);
+                    
+                    // Kirim notifikasi ke chat user
+                    db.ref(`chats/${uid}`).push({
+                        sender: 'system',
+                        text: `⚠️ DETEKSI MULTI-IP!\nAkun Anda terdeteksi login dari ${uniqueIps.length} IP berbeda.\nAkses akan dibatasi demi keamanan.`,
+                        timestamp: Date.now()
+                    });
+                    
+                    addActivityLog('Multi-IP Detection', `${uid} terdeteksi login dari ${uniqueIps.length} IP: ${uniqueIps.join(', ')}`);
+                }
+            });
+            
+            multiIpAlerts = newAlerts;
+            displayMultiIpAlerts();
+            
+            // Update allSessions
+            allSessions = sessions;
+        });
+    }
+    
+    function displayMultiIpAlerts() {
+        const alertsCard = document.getElementById('multiIpAlertsCard');
+        const alertsList = document.getElementById('multiIpAlertsList');
+        
+        if (!alertsCard || !alertsList) return;
+        
+        if (multiIpAlerts.length > 0) {
+            alertsCard.style.display = 'block';
+            let html = '';
+            multiIpAlerts.forEach(alert => {
+                html += `
+                    <div class="multi-ip-alert">
+                        <div class="alert-title">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            <span onclick="copyUID('${alert.uid}')" style="cursor:pointer;">${alert.uid}</span>
+                        </div>
+                        <div style="font-size:12px; margin-top:10px;">
+                            <div>⚠️ Terdeteksi ${alert.count} IP berbeda:</div>
+                            <div style="color:#ff8888; margin-top:5px;">${alert.ips.join(' → ')}</div>
+                            <div style="color:#888; margin-top:5px;">Waktu: ${new Date(alert.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div class="action-buttons" style="margin-top:10px;">
+                            <button class="btn btn-danger btn-sm" onclick="forceLogout('${alert.uid}')">Force Logout</button>
+                            <button class="btn btn-warning btn-sm" onclick="clearMultiIpAlert('${alert.uid}')">Abaikan</button>
+                        </div>
+                    </div>
+                `;
+            });
+            alertsList.innerHTML = html;
+        } else {
+            alertsCard.style.display = 'none';
+        }
+    }
+    
+    function clearMultiIpAlert(uid) {
+        multiIpAlerts = multiIpAlerts.filter(a => a.uid !== uid);
+        displayMultiIpAlerts();
+        showToast(`Alert untuk ${uid} diabaikan`);
+    }
+    
     // ==================== DASHBOARD ====================
     function loadDashboard() {
         let totalDeposit = 0, pendingDeposit = 0, totalVIP = 0, pendingVIP = 0, revenue = 0;
@@ -3258,22 +3377,18 @@
         showConfirm('Approve VIP', `Approve VIP for ${uid}?`, async () => {
             showLoading();
             try {
-                // 1. Ambil data purchase untuk mendapatkan detail package
                 const purchaseSnap = await db.ref(`purchases/${uid}/${id}`).once('value');
                 const purchase = purchaseSnap.val();
                 
-                // 2. Update status purchase
                 await db.ref(`purchases/${uid}/${id}`).update({ 
                     status: 'approved', 
                     approved_at: Date.now() 
                 });
                 
-                // 3. Dapatkan detail package dari admin_config
                 const packagesSnap = await db.ref('admin_config/premium_packages').once('value');
                 const packages = packagesSnap.val() || [];
                 let packageDetail = null;
                 
-                // Cari package yang sesuai
                 for (let pkg of packages) {
                     if (pkg.label === packageName || pkg.price === price) {
                         packageDetail = pkg;
@@ -3281,7 +3396,6 @@
                     }
                 }
                 
-                // 4. Siapkan data VIP member
                 let vipData = {
                     uid: uid,
                     status: 'active',
@@ -3291,7 +3405,6 @@
                     lastUpdate: new Date().toISOString()
                 };
                 
-                // 5. Tentukan tipe paket dari packageDetail atau dari harga
                 if (packageDetail) {
                     switch (packageDetail.type) {
                         case 'quota':
@@ -3318,10 +3431,8 @@
                     setDefaultVIP(vipData, price, packageName);
                 }
                 
-                // 6. Simpan ke database
                 await db.ref(`vip_members/${uid}`).set(vipData);
                 
-                // 7. Kirim notifikasi ke user
                 let message = `✅ VIP APPROVED!\nPackage: ${packageName}\nAmount: Rp ${formatRupiah(price)}\n`;
                 if (vipData.updateType === 'quota') {
                     message += `Quota: ${vipData.updateQuota} updates`;
@@ -3351,7 +3462,6 @@
     }
 
     function setDefaultVIP(vipData, price, packageName) {
-        // Fallback berdasarkan harga
         if (price === 35000 || packageName.includes('4X') || packageName.includes('QUOTA')) {
             vipData.updateType = 'quota';
             vipData.updateQuota = 4;
@@ -3394,18 +3504,49 @@
     function loadCustomers() {
         let customers = [];
         const allUids = new Set([...Object.keys(allUsers), ...Object.keys(allDeposits), ...Object.keys(allPurchases)]);
-        allUids.forEach(uid => { const user = allUsers[uid] || {}; const banned = !!allBanned[uid]; const isVip = !!(allVIPs[uid] && allVIPs[uid].status === 'active'); const hasSession = !!(allSessions[uid] && allSessions[uid].sessionId); const saldo = allSaldo[uid]?.amount || 0; customers.push({ uid, status: user.status || (banned ? 'banned' : 'offline'), banned, isVip, hasSession, saldo, registered: user.registeredAt || '-', lastLogin: user.lastLogin || '-', pin: user.pin || '-' }); });
-        customers.sort((a, b) => { if (a.lastLogin !== '-' && b.lastLogin !== '-') return new Date(b.lastLogin) - new Date(a.lastLogin); return 0; });
+        
+        allUids.forEach(uid => { 
+            const user = allUsers[uid] || {}; 
+            const banned = !!allBanned[uid]; 
+            const isVip = !!(allVIPs[uid] && allVIPs[uid].status === 'active'); 
+            const session = allSessions[uid];
+            const isOnline = session && session.timestamp && (Date.now() - session.timestamp < 300000);
+            const saldo = allSaldo[uid]?.amount || 0; 
+            
+            customers.push({ 
+                uid, 
+                status: banned ? 'banned' : (isOnline ? 'online' : 'offline'), 
+                banned, 
+                isVip, 
+                isOnline,
+                saldo, 
+                registered: user.registeredAt || '-', 
+                lastLogin: user.lastLogin || '-', 
+                pin: user.pin || '-' 
+            }); 
+        });
+        
+        customers.sort((a, b) => { 
+            if (a.lastLogin !== '-' && b.lastLogin !== '-') 
+                return new Date(b.lastLogin) - new Date(a.lastLogin); 
+            return 0; 
+        });
+        
         window.allCustomers = customers;
         displayCustomers();
     }
+    
     function displayCustomers() {
         let filtered = window.allCustomers || [];
         const search = document.getElementById('customerSearch')?.value.toLowerCase() || '';
         if (search) filtered = filtered.filter(c => c.uid.toLowerCase().includes(search));
         let html = '';
-        filtered.forEach(c => { const statusClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline'); const statusText = c.banned ? 'BANNED' : (c.status === 'online' ? 'Online' : 'Offline');
-            html += `<div class="customer-item"><div class="customer-header"><span class="customer-uid" onclick="copyUID('${c.uid}')">${c.uid}</span><div><span class="badge ${statusClass}">${statusText}</span>${c.isVip ? '<span class="badge vip">VIP</span>' : ''}</div></div><div class="customer-details"><div><span class="detail-label">Saldo:</span> <span style="color:#00ff88;">Rp ${formatRupiah(c.saldo)}</span></div><div><span class="detail-label">PIN:</span> ${c.pin}</div><div><span class="detail-label">Registered:</span> ${c.registered !== '-' ? new Date(c.registered).toLocaleDateString() : '-'}</div><div><span class="detail-label">Last Login:</span> ${c.lastLogin !== '-' ? new Date(c.lastLogin).toLocaleString() : '-'}</div></div><div class="action-buttons"><button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')">Reset PIN</button>${c.banned ? `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')">Unban</button>` : `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')">Ban</button>`}<button class="btn btn-info btn-sm" onclick="forceLogout('${c.uid}')">Logout</button><button class="btn btn-primary btn-sm" onclick="openSaldoModal('${c.uid}')">Add Saldo</button><button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.uid}')">Delete</button></div></div>`;
+        filtered.forEach(c => { 
+            const statusClass = c.banned ? 'banned' : (c.isOnline ? 'online' : 'offline'); 
+            const statusText = c.banned ? 'BANNED' : (c.isOnline ? 'Online' : 'Offline');
+            const multiIpDetected = multiIpAlerts.some(a => a.uid === c.uid);
+            
+            html += `<div class="customer-item"><div class="customer-header"><span class="customer-uid" onclick="copyUID('${c.uid}')">${c.uid}</span><div><span class="badge ${statusClass}">${statusText}</span>${c.isVip ? '<span class="badge vip">VIP</span>' : ''}${multiIpDetected ? '<span class="badge multi-ip">MULTI-IP</span>' : ''}</div></div><div class="customer-details"><div><span class="detail-label">Saldo:</span> <span style="color:#00ff88;">Rp ${formatRupiah(c.saldo)}</span></div><div><span class="detail-label">PIN:</span> ${c.pin}</div><div><span class="detail-label">Registered:</span> ${c.registered !== '-' ? new Date(c.registered).toLocaleDateString() : '-'}</div><div><span class="detail-label">Last Login:</span> ${c.lastLogin !== '-' ? new Date(c.lastLogin).toLocaleString() : '-'}</div></div><div class="action-buttons"><button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')">Reset PIN</button>${c.banned ? `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')">Unban</button>` : `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')">Ban</button>`}<button class="btn btn-info btn-sm" onclick="forceLogout('${c.uid}')">Force Logout</button><button class="btn btn-primary btn-sm" onclick="openSaldoModal('${c.uid}')">Add Saldo</button><button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.uid}')">Delete</button></div></div>`;
         });
         document.getElementById('customerList').innerHTML = html || '<div class="no-data">No customers found</div>';
     }
@@ -3413,9 +3554,82 @@
     function openResetPin(uid) { document.getElementById('resetUID').value = uid; document.getElementById('newPin').value = ''; document.getElementById('resetPinModal').classList.add('active'); }
     function closeResetPinModal() { document.getElementById('resetPinModal').classList.remove('active'); }
     async function resetUserPin() { const uid = document.getElementById('resetUID').value; const newPin = document.getElementById('newPin').value.trim(); if (!newPin || newPin.length !== 6) { showToast('PIN must be 6 digits!'); return; } showLoading(); try { await db.ref(`users/${uid}`).update({ pin: newPin }); addActivityLog('Reset PIN', `Reset PIN for ${uid}`); hideLoading(); showToast(`PIN for ${uid} reset`); closeResetPinModal(); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
-    async function banUser(uid) { showConfirm('Ban User', `Ban user ${uid}?`, async () => { showLoading(); try { await db.ref(`banned_users/${uid}`).set({ status: 'banned', bannedAt: Date.now() }); await db.ref(`users/${uid}/status`).set('banned'); addActivityLog('Ban User', `Banned user ${uid}`); hideLoading(); showToast(`User ${uid} banned!`); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
-    async function unbanUser(uid) { showConfirm('Unban User', `Unban user ${uid}?`, async () => { showLoading(); try { await db.ref(`banned_users/${uid}`).remove(); await db.ref(`users/${uid}/status`).set('active'); addActivityLog('Unban User', `Unbanned user ${uid}`); hideLoading(); showToast(`User ${uid} unbanned!`); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
-    async function forceLogout(uid) { showConfirm('Force Logout', `Force logout ${uid}?`, async () => { showLoading(); try { await db.ref(`sessions/${uid}`).remove(); await db.ref(`users/${uid}/status`).set('offline'); addActivityLog('Force Logout', `Force logged out ${uid}`); hideLoading(); showToast(`User ${uid} logged out!`); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+    
+    async function banUser(uid) { 
+        showConfirm('Ban User', `Ban user ${uid}?`, async () => { 
+            showLoading(); 
+            try { 
+                await db.ref(`banned_users/${uid}`).set({ 
+                    status: 'banned', 
+                    bannedAt: Date.now(),
+                    bannedBy: 'Admin'
+                }); 
+                await db.ref(`users/${uid}/status`).set('banned');
+                await db.ref(`sessions/${uid}`).remove();
+                await db.ref(`chats/${uid}`).push({
+                    sender: 'system',
+                    text: `⚠️ AKUN ANDA DIBAN!\nHubungi admin untuk informasi lebih lanjut.`,
+                    timestamp: Date.now()
+                });
+                addActivityLog('Ban User', `Banned user ${uid}`); 
+                hideLoading(); 
+                showToast(`User ${uid} banned!`); 
+                await loadAllData();
+                loadCustomers();
+            } catch (error) { 
+                hideLoading(); 
+                showToast('Error: ' + error.message); 
+            } 
+        }); 
+    }
+    
+    async function unbanUser(uid) { 
+        showConfirm('Unban User', `Unban user ${uid}?`, async () => { 
+            showLoading(); 
+            try { 
+                await db.ref(`banned_users/${uid}`).remove(); 
+                await db.ref(`users/${uid}/status`).set('active');
+                await db.ref(`chats/${uid}`).push({
+                    sender: 'system',
+                    text: `✅ AKUN ANDA TELAH DIUNBAN!\nSilakan login kembali.`,
+                    timestamp: Date.now()
+                });
+                addActivityLog('Unban User', `Unbanned user ${uid}`); 
+                hideLoading(); 
+                showToast(`User ${uid} unbanned!`); 
+                await loadAllData();
+                loadCustomers();
+            } catch (error) { 
+                hideLoading(); 
+                showToast('Error: ' + error.message); 
+            } 
+        }); 
+    }
+    
+    async function forceLogout(uid) { 
+        showConfirm('Force Logout', `Force logout ${uid}?`, async () => { 
+            showLoading(); 
+            try { 
+                await db.ref(`sessions/${uid}`).remove(); 
+                await db.ref(`users/${uid}/status`).set('offline');
+                await db.ref(`users/${uid}/lastLogout`).set(Date.now());
+                await db.ref(`chats/${uid}`).push({
+                    sender: 'system',
+                    text: `🔒 Anda telah di-logout paksa oleh admin. Silakan login kembali.`,
+                    timestamp: Date.now()
+                });
+                addActivityLog('Force Logout', `Force logged out ${uid}`); 
+                hideLoading(); 
+                showToast(`User ${uid} logged out!`); 
+                await loadAllData();
+                loadCustomers();
+            } catch (error) { 
+                hideLoading(); 
+                showToast('Error: ' + error.message); 
+            } 
+        }); 
+    }
+    
     async function deleteCustomer(uid) { showConfirm('Delete Customer', `Delete all data for ${uid}?`, async () => { showLoading(); try { await Promise.all([db.ref(`users/${uid}`).remove(), db.ref(`deposits/${uid}`).remove(), db.ref(`purchases/${uid}`).remove(), db.ref(`vip_members/${uid}`).remove(), db.ref(`banned_users/${uid}`).remove(), db.ref(`sessions/${uid}`).remove(), db.ref(`saldo/${uid}`).remove(), db.ref(`chats/${uid}`).remove()]); addActivityLog('Delete Customer', `Deleted user ${uid} and all data`); hideLoading(); showToast(`User ${uid} deleted!`); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     function openSaldoModal(uid) { document.getElementById('saldoUID').value = uid; document.getElementById('saldoAmount').value = ''; document.getElementById('saldoModal').classList.add('active'); }
     function closeSaldoModal() { document.getElementById('saldoModal').classList.remove('active'); }
@@ -3427,7 +3641,6 @@
     function filterVIPMembers() { displayVIPMembers(); }
     async function removeVIP(uid) { showConfirm('Remove VIP', `Remove VIP from ${uid}?`, async () => { showLoading(); try { await db.ref(`vip_members/${uid}`).remove(); addActivityLog('Remove VIP', `Removed VIP status from ${uid}`); hideLoading(); showToast(`VIP removed from ${uid}`); loadVIPMembers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     
-    // Reset VIP Quota function
     async function resetVIPQuota(uid) {
         showConfirm('Reset Quota', `Reset quota untuk ${uid}?`, async () => {
             showLoading();
@@ -3532,7 +3745,6 @@
                     let content = msg.sender ? `<div class="message-sender">${msg.sender === 'customer' ? '👤 Customer' : msg.sender === 'admin' ? '👑 Admin' : '📢 System'}</div>` : ''; 
                     content += `<div>${escapeHtml(msg.text || '')}</div>`; 
                 
-                    // TAMPILKAN FILE DENGAN TOMBOL DOWNLOAD
                     if (msg.fileData && msg.fileData.url) {
                         const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
                         if (isImage) {
@@ -3599,7 +3811,6 @@
         const uploadBtn = document.getElementById('chatUploadBtnAdmin');
         if (!uploadBtn) return;
     
-        // Hapus event listener lama jika ada
         const newBtn = uploadBtn.cloneNode(true);
         uploadBtn.parentNode.replaceChild(newBtn, uploadBtn);
     
@@ -3830,6 +4041,7 @@
         loadDiscountHistory();
         listenPublicChatRealtime();
         setupChatFileUpload();
+        setupRealtimeSessionsListener();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
@@ -3840,7 +4052,7 @@
         loadActiveVideo();
         addActivityLog('Admin Login', 'Admin logged into panel');
         if (Notification.permission === 'default') Notification.requestPermission();
-        console.log('🚀 Admin panel initialized - V1.0.0');
+        console.log('🚀 Admin panel initialized - V1.0.0 with Real-Time Multi-IP Detection');
     }
     init();
 </script>
