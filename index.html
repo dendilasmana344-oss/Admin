@@ -684,25 +684,6 @@
         .badge.offline { background: rgba(158, 158, 158, 0.2); color: #9e9e9e; border: 1px solid #9e9e9e; }
         .badge.banned { background: rgba(244, 67, 54, 0.2); color: #ff4444; border: 1px solid #ff4444; }
         .badge.vip { background: rgba(255, 215, 0, 0.2); color: #ffd700; border: 1px solid #ffd700; animation: pulse 1.5s infinite; }
-        .badge.multi-ip { background: rgba(255, 68, 68, 0.3); color: #ff8888; border: 1px solid #ff4444; animation: pulse 0.5s infinite; }
-
-        /* Multi-IP Alert Card */
-        .multi-ip-alert {
-            background: rgba(255, 68, 68, 0.15);
-            border: 2px solid #ff4444;
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 15px;
-            animation: borderGlow 1s infinite;
-        }
-
-        .multi-ip-alert .alert-title {
-            color: #ff4444;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
 
         /* VIP CARD */
         .vip-card {
@@ -977,7 +958,7 @@
             box-shadow: 0 10px 20px rgba(0, 255, 136, 0.4);
         }
 
-        /* CHAT UPLOAD FEATURE */
+        /* ==================== CHAT UPLOAD FEATURE ==================== */
         .chat-upload-btn {
             width: 48px;
             height: 48px;
@@ -1162,7 +1143,7 @@
             transform: translateY(-2px);
         }
 
-        /* CHAT DELETE FEATURE */
+        /* ==================== CHAT DELETE FEATURE ==================== */
         .chat-message-wrapper {
             position: relative;
             margin-bottom: 10px;
@@ -1251,7 +1232,9 @@
             transform: scale(1.05);
         }
 
-        /* MODAL STYLES */
+        /* ==================== MODAL STYLES YANG DIPERBAIKI ==================== */
+
+        /* Modal Overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -1275,6 +1258,7 @@
             visibility: visible;
         }
 
+        /* Modal Content */
         .modal-content {
             max-width: 520px;
             width: 100%;
@@ -1302,6 +1286,7 @@
             border-radius: 10px;
         }
 
+        /* Modal Header */
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -1341,6 +1326,7 @@
             transform: rotate(90deg);
         }
 
+        /* Modal Form Group */
         .modal-form-group {
             margin-bottom: 22px;
         }
@@ -1388,6 +1374,7 @@
             color: white;
         }
 
+        /* Modal Actions (Buttons) */
         .modal-actions {
             display: flex;
             gap: 15px;
@@ -1400,6 +1387,7 @@
             justify-content: center;
         }
 
+        /* Ikon dalam modal */
         .modal-icon {
             text-align: center;
             margin-bottom: 20px;
@@ -1411,7 +1399,7 @@
             text-shadow: 0 0 20px var(--neon-cyan);
         }
 
-        /* Admin Video Background */
+        /* Admin Video Background - OPTIMASI */
         .admin-video-bg {
             position: fixed;
             top: 0;
@@ -1441,6 +1429,7 @@
             z-index: 1;
         }
 
+        /* Tombol kontrol video background admin */
         .admin-video-control {
             position: fixed;
             bottom: 100px;
@@ -1720,6 +1709,31 @@
         .user-views {
             color: #00ff88;
             font-weight: bold;
+        }
+ 
+        /* NOTIFICATION BADGE */
+        .notification-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            min-width: 22px;
+            height: 22px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            display: none;
+            animation: pulse 1s infinite;
+            border: 2px solid white;
+            padding: 0 5px;
+        }
+
+        .notification-badge.show {
+            display: flex;
         }
 
         /* NOTIFICATION TOAST */
@@ -2388,11 +2402,6 @@
             <div class="search-box"><input type="text" class="search-input" id="customerSearch" placeholder="🔍 Search by UID..." onkeyup="filterCustomers()"></div>
             <div id="customerList"></div>
         </div>
-        <!-- Multi-IP Detection Alerts -->
-        <div class="card" id="multiIpAlertsCard" style="display:none;">
-            <div class="card-title"><i class="fas fa-exclamation-triangle"></i> Multi-IP Detection Alerts <span style="color:#ff4444; font-size:12px;">REAL-TIME</span></div>
-            <div id="multiIpAlertsList"></div>
-        </div>
     </div>
 
     <!-- VIP LIST TAB -->
@@ -2460,7 +2469,9 @@
     <div id="updates" class="tab-content">
         <div class="card">
             <div class="card-title"><i class="fas fa-file-upload"></i> VIP Updates Management</div>
-            <div class="action-buttons"><button class="btn btn-primary" onclick="openUpdateModal()"><i class="fas fa-plus-circle"></i> Create VIP Update</button></div>
+            <div class="action-buttons">
+            <button class="btn btn-primary" onclick="openUpdateModal()"><i class="fas fa-plus-circle"></i> Create VIP Update</button>
+            <button class="btn btn-warning" onclick="openBroadcastVIPModal()"><i class="fas fa-broadcast-tower"></i> Kirim ke Semua VIP</button></div>
             <div id="fileUpdatesList" style="margin-top:20px;"></div>
         </div>
     </div>
@@ -2620,6 +2631,80 @@
             <div class="modal-actions"><button class="btn btn-primary" onclick="createFileUpdate()"><i class="fas fa-save"></i> Create</button><button class="btn btn-danger" onclick="closeUpdateModal()"><i class="fas fa-times"></i> Cancel</button></div>
         </div>
     </div>
+    
+    <!-- BROADCAST VIP MODAL - KIRIM UPDATE KE SEMUA USER VIP -->
+    <div class="modal-overlay" id="broadcastVIPModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-broadcast-tower"></i> Kirim Update ke Semua VIP</h2>
+                <button class="modal-close" onclick="closeBroadcastVIPModal()">✕</button>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-info-circle"></i> Informasi</label>
+                <div style="background: rgba(0,255,255,0.1); border-radius:15px; padding:15px; margin-bottom:10px;">
+                    <p style="font-size:13px; color:#00ff88;">
+                        <i class="fas fa-crown"></i> Update ini akan dikirim ke SEMUA user VIP aktif.
+                    </p>
+                    <p style="font-size:12px; color:#ffaa00; margin-top:8px;">
+                        <i class="fas fa-exclamation-triangle"></i> PERINGATAN: Untuk user dengan tipe QUOTA, update ini akan MENGURANGI quota mereka!
+                    </p>
+                </div>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-heading"></i> Title Update</label>
+                <input type="text" class="modal-input" id="broadcastTitle" placeholder="e.g., VIP Update v2.0">
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-align-left"></i> Description</label>
+                <textarea class="modal-textarea" id="broadcastDescription" placeholder="Update description..."></textarea>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-link"></i> Download Link</label>
+                <input type="text" class="modal-input" id="broadcastLink" placeholder="https://...">
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-code-branch"></i> Version</label>
+                <input type="text" class="modal-input" id="broadcastVersion" placeholder="v2.0.0">
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-calendar-day"></i> Expiry Days</label>
+                <input type="number" class="modal-input" id="broadcastExpiry" value="7" min="1">
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label">
+                    <i class="fas fa-arrow-down"></i> Kurangi Quota untuk User VIP Tipe Quota?
+                </label>
+                <select class="modal-select" id="broadcastReduceQuota">
+                    <option value="yes">✅ YA - Kurangi quota 1 untuk setiap user VIP tipe quota</option>
+                    <option value="no">❌ TIDAK - Hanya kirim notifikasi (tidak kurangi quota)</option>
+                </select>
+                <small style="color:#888;">Jika dipilih YA, user VIP tipe quota akan berkurang 1 quota setiap kali update dikirim.</small>
+            </div>
+        
+            <div id="broadcastPreview" style="background:rgba(0,0,0,0.5); border-radius:20px; padding:15px; margin:15px 0;">
+                <div style="color:var(--neon-cyan); font-size:14px; margin-bottom:10px;"><i class="fas fa-eye"></i> Preview Update:</div>
+                <div style="font-weight:bold; color:#ffd700;" id="previewTitle">-</div>
+                <div style="font-size:12px; color:#ccc;" id="previewDesc">-</div>
+                <div style="font-size:11px; color:#888; margin-top:8px;" id="previewVersion">-</div>
+            </div>
+        
+            <div class="modal-actions">
+                <button class="btn btn-warning" onclick="sendBroadcastToAllVIP()" id="sendBroadcastBtn">
+                    <i class="fas fa-paper-plane"></i> Kirim ke Semua VIP
+                </button>
+                <button class="btn btn-danger" onclick="closeBroadcastVIPModal()">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="discountModal">
         <div class="modal-content">
@@ -2719,11 +2804,11 @@
     let adminLogs = [];
     let adminBgVideo = null;
     let isAdminBgMuted = true;
+    let broadcastUpdateData = null;
     let deleteModeActive = false;
     let selectedMessages = new Set();
     let notifiedDeposits = new Set();
     let notifiedVIP = new Set();
-    let multiIpAlerts = [];
     
     const videoList = [
         { id: 1, name: '🎬 Video Background 1', file: 'video1.mp4' },
@@ -3221,100 +3306,6 @@
         }).catch(error => { hideLoading(); showToast('Error loading data'); });
     }
     
-    // ==================== REAL-TIME SESSIONS LISTENER FOR MULTI-IP DETECTION ====================
-    function setupRealtimeSessionsListener() {
-        db.ref('sessions').on('value', (snap) => {
-            const sessions = snap.val() || {};
-            
-            // Deteksi multi-IP untuk setiap user
-            const ipMap = {};
-            Object.keys(sessions).forEach(uid => {
-                const session = sessions[uid];
-                if (session && session.ipAddress) {
-                    if (!ipMap[uid]) ipMap[uid] = [];
-                    ipMap[uid].push({
-                        ip: session.ipAddress,
-                        timestamp: session.timestamp,
-                        sessionId: session.sessionId
-                    });
-                }
-            });
-            
-            // Cek multi-IP (lebih dari 1 IP berbeda dalam 5 menit)
-            const newAlerts = [];
-            Object.keys(ipMap).forEach(uid => {
-                const ips = ipMap[uid];
-                const uniqueIps = [...new Set(ips.map(i => i.ip))];
-                if (uniqueIps.length > 1) {
-                    // Deteksi multi-IP
-                    const alert = {
-                        uid: uid,
-                        ips: uniqueIps,
-                        count: uniqueIps.length,
-                        timestamp: Date.now(),
-                        details: ips
-                    };
-                    newAlerts.push(alert);
-                    
-                    // Kirim notifikasi ke chat user
-                    db.ref(`chats/${uid}`).push({
-                        sender: 'system',
-                        text: `⚠️ DETEKSI MULTI-IP!\nAkun Anda terdeteksi login dari ${uniqueIps.length} IP berbeda.\nAkses akan dibatasi demi keamanan.`,
-                        timestamp: Date.now()
-                    });
-                    
-                    addActivityLog('Multi-IP Detection', `${uid} terdeteksi login dari ${uniqueIps.length} IP: ${uniqueIps.join(', ')}`);
-                }
-            });
-            
-            multiIpAlerts = newAlerts;
-            displayMultiIpAlerts();
-            
-            // Update allSessions
-            allSessions = sessions;
-        });
-    }
-    
-    function displayMultiIpAlerts() {
-        const alertsCard = document.getElementById('multiIpAlertsCard');
-        const alertsList = document.getElementById('multiIpAlertsList');
-        
-        if (!alertsCard || !alertsList) return;
-        
-        if (multiIpAlerts.length > 0) {
-            alertsCard.style.display = 'block';
-            let html = '';
-            multiIpAlerts.forEach(alert => {
-                html += `
-                    <div class="multi-ip-alert">
-                        <div class="alert-title">
-                            <i class="fas fa-exclamation-triangle"></i> 
-                            <span onclick="copyUID('${alert.uid}')" style="cursor:pointer;">${alert.uid}</span>
-                        </div>
-                        <div style="font-size:12px; margin-top:10px;">
-                            <div>⚠️ Terdeteksi ${alert.count} IP berbeda:</div>
-                            <div style="color:#ff8888; margin-top:5px;">${alert.ips.join(' → ')}</div>
-                            <div style="color:#888; margin-top:5px;">Waktu: ${new Date(alert.timestamp).toLocaleString()}</div>
-                        </div>
-                        <div class="action-buttons" style="margin-top:10px;">
-                            <button class="btn btn-danger btn-sm" onclick="forceLogout('${alert.uid}')">Force Logout</button>
-                            <button class="btn btn-warning btn-sm" onclick="clearMultiIpAlert('${alert.uid}')">Abaikan</button>
-                        </div>
-                    </div>
-                `;
-            });
-            alertsList.innerHTML = html;
-        } else {
-            alertsCard.style.display = 'none';
-        }
-    }
-    
-    function clearMultiIpAlert(uid) {
-        multiIpAlerts = multiIpAlerts.filter(a => a.uid !== uid);
-        displayMultiIpAlerts();
-        showToast(`Alert untuk ${uid} diabaikan`);
-    }
-    
     // ==================== DASHBOARD ====================
     function loadDashboard() {
         let totalDeposit = 0, pendingDeposit = 0, totalVIP = 0, pendingVIP = 0, revenue = 0;
@@ -3372,30 +3363,12 @@
         document.getElementById('vipList').innerHTML = html || '<div class="no-data">No VIP orders found</div>';
     }
     function filterVIP(filter) { if (filter) { currentVIPFilter = filter; document.querySelectorAll('#vip_orders .filter-tab').forEach(t => t.classList.remove('active')); if (event?.currentTarget) event.currentTarget.classList.add('active'); } displayVIPOrders(); }
-    
-    async function approveVIP(uid, id, price, packageName) {
+        async function approveVIP(uid, id, price, packageName) {
         showConfirm('Approve VIP', `Approve VIP for ${uid}?`, async () => {
             showLoading();
             try {
-                const purchaseSnap = await db.ref(`purchases/${uid}/${id}`).once('value');
-                const purchase = purchaseSnap.val();
-                
-                await db.ref(`purchases/${uid}/${id}`).update({ 
-                    status: 'approved', 
-                    approved_at: Date.now() 
-                });
-                
-                const packagesSnap = await db.ref('admin_config/premium_packages').once('value');
-                const packages = packagesSnap.val() || [];
-                let packageDetail = null;
-                
-                for (let pkg of packages) {
-                    if (pkg.label === packageName || pkg.price === price) {
-                        packageDetail = pkg;
-                        break;
-                    }
-                }
-                
+                await db.ref(`purchases/${uid}/${id}`).update({ status: 'approved', approved_at: Date.now() });
+            
                 let vipData = {
                     uid: uid,
                     status: 'active',
@@ -3404,99 +3377,71 @@
                     purchaseDate: new Date().toISOString(),
                     lastUpdate: new Date().toISOString()
                 };
-                
-                if (packageDetail) {
-                    switch (packageDetail.type) {
-                        case 'quota':
-                            vipData.updateType = 'quota';
-                            vipData.updateQuota = packageDetail.quota || 4;
-                            vipData.updatesUsed = 0;
-                            break;
-                        case 'unlimited':
-                            vipData.updateType = 'unlimited';
-                            vipData.packageMonths = packageDetail.durationMonths || 2;
-                            const expiryDate = new Date();
-                            expiryDate.setMonth(expiryDate.getMonth() + (packageDetail.durationMonths || 2));
-                            vipData.expiryDate = expiryDate.toISOString();
-                            break;
-                        case 'lifetime':
-                            vipData.updateType = 'lifetime';
-                            vipData.isPermanent = true;
-                            vipData.expiryDate = new Date(2099, 11, 31).toISOString();
-                            break;
-                        default:
-                            setDefaultVIP(vipData, price, packageName);
-                    }
-                } else {
-                    setDefaultVIP(vipData, price, packageName);
+            
+                // DETEKSI JENIS PAKET BERDASARKAN HARGA ATAU NAMA
+                if (price === 35000 || packageName.includes('4X') || packageName.includes('QUOTA')) {
+                    vipData.updateType = 'quota';
+                    vipData.updateQuota = 4;
+                    vipData.updatesUsed = 0;
                 }
-                
+                else if (price === 50000 || packageName.includes('7X')) {
+                    vipData.updateType = 'quota';
+                    vipData.updateQuota = 7;
+                    vipData.updatesUsed = 0;
+                }
+                else if (price === 80000 || packageName.includes('15X')) {
+                    vipData.updateType = 'quota';
+                    vipData.updateQuota = 15;
+                    vipData.updatesUsed = 0;
+                }
+                else if (price === 150000 || packageName.includes('2 BULAN') || packageName.toLowerCase().includes('season') || packageName.toLowerCase().includes('bulan')) {
+                    vipData.updateType = 'unlimited';
+                    // Extract angka dari package name jika ada
+                    let months = 2;
+                    const match = packageName.match(/\d+/);
+                    if (match) months = parseInt(match[0]);
+                    vipData.packageMonths = months;
+                    const expiryDate = new Date();
+                    expiryDate.setMonth(expiryDate.getMonth() + months);
+                    vipData.expiryDate = expiryDate.toISOString();
+                }
+                else if (price === 250000 || packageName.includes('4 BULAN')) {
+                    vipData.updateType = 'unlimited';
+                    vipData.packageMonths = 4;
+                    const expiryDate = new Date();
+                    expiryDate.setMonth(expiryDate.getMonth() + 4);
+                    vipData.expiryDate = expiryDate.toISOString();
+                }
+                else if (price === 350000 || packageName.includes('PERMANENT') || packageName.includes('SEUMUR')) {
+                    vipData.updateType = 'unlimited';
+                    vipData.isPermanent = true;
+                    vipData.expiryDate = new Date(2099, 11, 31).toISOString();
+                }
+                else {
+                    // FALLBACK: default ke quota 1
+                    vipData.updateType = 'quota';
+                    vipData.updateQuota = 1;
+                    vipData.updatesUsed = 0;
+                }
+            
                 await db.ref(`vip_members/${uid}`).set(vipData);
-                
-                let message = `✅ VIP APPROVED!\nPackage: ${packageName}\nAmount: Rp ${formatRupiah(price)}\n`;
-                if (vipData.updateType === 'quota') {
-                    message += `Quota: ${vipData.updateQuota} updates`;
-                } else if (vipData.updateType === 'unlimited') {
-                    message += `Duration: ${vipData.packageMonths} months\nExpires: ${new Date(vipData.expiryDate).toLocaleDateString()}`;
-                } else {
-                    message += `PERMANENT VIP - Lifetime access`;
-                }
-                
+            
                 await db.ref(`chats/${uid}`).push({
                     sender: 'system',
-                    text: message,
+                    text: `✅ VIP APPROVED!\nPackage: ${packageName}\nAmount: Rp ${formatRupiah(price)}`,
                     timestamp: Date.now()
                 });
-                
-                addActivityLog('Approve VIP', `Approved VIP for ${uid} - ${packageName} (${vipData.updateType})`);
+            
+                addActivityLog('Approve VIP', `Approved VIP for ${uid} - ${packageName}`);
                 hideLoading();
-                showToast('VIP approved successfully!');
+                showToast('VIP approved!');
                 loadAllData();
-                
             } catch (error) {
-                console.error('Approve VIP error:', error);
                 hideLoading();
                 showToast('Error: ' + error.message);
             }
         });
     }
-
-    function setDefaultVIP(vipData, price, packageName) {
-        if (price === 35000 || packageName.includes('4X') || packageName.includes('QUOTA')) {
-            vipData.updateType = 'quota';
-            vipData.updateQuota = 4;
-            vipData.updatesUsed = 0;
-        } else if (price === 50000 || packageName.includes('7X')) {
-            vipData.updateType = 'quota';
-            vipData.updateQuota = 7;
-            vipData.updatesUsed = 0;
-        } else if (price === 80000 || packageName.includes('15X')) {
-            vipData.updateType = 'quota';
-            vipData.updateQuota = 15;
-            vipData.updatesUsed = 0;
-        } else if (price === 150000 || packageName.includes('2 BULAN')) {
-            vipData.updateType = 'unlimited';
-            vipData.packageMonths = 2;
-            const expiryDate = new Date();
-            expiryDate.setMonth(expiryDate.getMonth() + 2);
-            vipData.expiryDate = expiryDate.toISOString();
-        } else if (price === 250000 || packageName.includes('4 BULAN')) {
-            vipData.updateType = 'unlimited';
-            vipData.packageMonths = 4;
-            const expiryDate = new Date();
-            expiryDate.setMonth(expiryDate.getMonth() + 4);
-            vipData.expiryDate = expiryDate.toISOString();
-        } else if (price === 350000 || packageName.includes('PERMANENT')) {
-            vipData.updateType = 'lifetime';
-            vipData.isPermanent = true;
-            vipData.expiryDate = new Date(2099, 11, 31).toISOString();
-        } else {
-            vipData.updateType = 'quota';
-            vipData.updateQuota = 1;
-            vipData.updatesUsed = 0;
-        }
-    }
-    
     async function rejectVIP(uid, id, price) { showConfirm('Reject VIP', `Reject VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).update({ status: 'rejected' }); const snap = await db.ref(`saldo/${uid}`).once('value'); const current = snap.val()?.amount || 0; await db.ref(`saldo/${uid}`).set({ amount: current + price }); await db.ref(`chats/${uid}`).push({ sender: 'system', text: `❌ VIP REJECTED\nBalance returned: Rp ${formatRupiah(price)}`, timestamp: Date.now() }); addActivityLog('Reject VIP', `Rejected VIP for ${uid}`); hideLoading(); showToast('VIP rejected!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     async function deleteVIP(uid, id) { showConfirm('Delete VIP', `Delete VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).remove(); addActivityLog('Delete VIP', `Deleted VIP for ${uid}`); hideLoading(); showToast('VIP deleted!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     
@@ -3504,49 +3449,18 @@
     function loadCustomers() {
         let customers = [];
         const allUids = new Set([...Object.keys(allUsers), ...Object.keys(allDeposits), ...Object.keys(allPurchases)]);
-        
-        allUids.forEach(uid => { 
-            const user = allUsers[uid] || {}; 
-            const banned = !!allBanned[uid]; 
-            const isVip = !!(allVIPs[uid] && allVIPs[uid].status === 'active'); 
-            const session = allSessions[uid];
-            const isOnline = session && session.timestamp && (Date.now() - session.timestamp < 300000);
-            const saldo = allSaldo[uid]?.amount || 0; 
-            
-            customers.push({ 
-                uid, 
-                status: banned ? 'banned' : (isOnline ? 'online' : 'offline'), 
-                banned, 
-                isVip, 
-                isOnline,
-                saldo, 
-                registered: user.registeredAt || '-', 
-                lastLogin: user.lastLogin || '-', 
-                pin: user.pin || '-' 
-            }); 
-        });
-        
-        customers.sort((a, b) => { 
-            if (a.lastLogin !== '-' && b.lastLogin !== '-') 
-                return new Date(b.lastLogin) - new Date(a.lastLogin); 
-            return 0; 
-        });
-        
+        allUids.forEach(uid => { const user = allUsers[uid] || {}; const banned = !!allBanned[uid]; const isVip = !!(allVIPs[uid] && allVIPs[uid].status === 'active'); const hasSession = !!(allSessions[uid] && allSessions[uid].sessionId); const saldo = allSaldo[uid]?.amount || 0; customers.push({ uid, status: user.status || (banned ? 'banned' : 'offline'), banned, isVip, hasSession, saldo, registered: user.registeredAt || '-', lastLogin: user.lastLogin || '-', pin: user.pin || '-' }); });
+        customers.sort((a, b) => { if (a.lastLogin !== '-' && b.lastLogin !== '-') return new Date(b.lastLogin) - new Date(a.lastLogin); return 0; });
         window.allCustomers = customers;
         displayCustomers();
     }
-    
     function displayCustomers() {
         let filtered = window.allCustomers || [];
         const search = document.getElementById('customerSearch')?.value.toLowerCase() || '';
         if (search) filtered = filtered.filter(c => c.uid.toLowerCase().includes(search));
         let html = '';
-        filtered.forEach(c => { 
-            const statusClass = c.banned ? 'banned' : (c.isOnline ? 'online' : 'offline'); 
-            const statusText = c.banned ? 'BANNED' : (c.isOnline ? 'Online' : 'Offline');
-            const multiIpDetected = multiIpAlerts.some(a => a.uid === c.uid);
-            
-            html += `<div class="customer-item"><div class="customer-header"><span class="customer-uid" onclick="copyUID('${c.uid}')">${c.uid}</span><div><span class="badge ${statusClass}">${statusText}</span>${c.isVip ? '<span class="badge vip">VIP</span>' : ''}${multiIpDetected ? '<span class="badge multi-ip">MULTI-IP</span>' : ''}</div></div><div class="customer-details"><div><span class="detail-label">Saldo:</span> <span style="color:#00ff88;">Rp ${formatRupiah(c.saldo)}</span></div><div><span class="detail-label">PIN:</span> ${c.pin}</div><div><span class="detail-label">Registered:</span> ${c.registered !== '-' ? new Date(c.registered).toLocaleDateString() : '-'}</div><div><span class="detail-label">Last Login:</span> ${c.lastLogin !== '-' ? new Date(c.lastLogin).toLocaleString() : '-'}</div></div><div class="action-buttons"><button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')">Reset PIN</button>${c.banned ? `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')">Unban</button>` : `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')">Ban</button>`}<button class="btn btn-info btn-sm" onclick="forceLogout('${c.uid}')">Force Logout</button><button class="btn btn-primary btn-sm" onclick="openSaldoModal('${c.uid}')">Add Saldo</button><button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.uid}')">Delete</button></div></div>`;
+        filtered.forEach(c => { const statusClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline'); const statusText = c.banned ? 'BANNED' : (c.status === 'online' ? 'Online' : 'Offline');
+            html += `<div class="customer-item"><div class="customer-header"><span class="customer-uid" onclick="copyUID('${c.uid}')">${c.uid}</span><div><span class="badge ${statusClass}">${statusText}</span>${c.isVip ? '<span class="badge vip">VIP</span>' : ''}</div></div><div class="customer-details"><div><span class="detail-label">Saldo:</span> <span style="color:#00ff88;">Rp ${formatRupiah(c.saldo)}</span></div><div><span class="detail-label">PIN:</span> ${c.pin}</div><div><span class="detail-label">Registered:</span> ${c.registered !== '-' ? new Date(c.registered).toLocaleDateString() : '-'}</div><div><span class="detail-label">Last Login:</span> ${c.lastLogin !== '-' ? new Date(c.lastLogin).toLocaleString() : '-'}</div></div><div class="action-buttons"><button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')">Reset PIN</button>${c.banned ? `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')">Unban</button>` : `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')">Ban</button>`}<button class="btn btn-info btn-sm" onclick="forceLogout('${c.uid}')">Logout</button><button class="btn btn-primary btn-sm" onclick="openSaldoModal('${c.uid}')">Add Saldo</button><button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.uid}')">Delete</button></div></div>`;
         });
         document.getElementById('customerList').innerHTML = html || '<div class="no-data">No customers found</div>';
     }
@@ -3554,82 +3468,9 @@
     function openResetPin(uid) { document.getElementById('resetUID').value = uid; document.getElementById('newPin').value = ''; document.getElementById('resetPinModal').classList.add('active'); }
     function closeResetPinModal() { document.getElementById('resetPinModal').classList.remove('active'); }
     async function resetUserPin() { const uid = document.getElementById('resetUID').value; const newPin = document.getElementById('newPin').value.trim(); if (!newPin || newPin.length !== 6) { showToast('PIN must be 6 digits!'); return; } showLoading(); try { await db.ref(`users/${uid}`).update({ pin: newPin }); addActivityLog('Reset PIN', `Reset PIN for ${uid}`); hideLoading(); showToast(`PIN for ${uid} reset`); closeResetPinModal(); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
-    
-    async function banUser(uid) { 
-        showConfirm('Ban User', `Ban user ${uid}?`, async () => { 
-            showLoading(); 
-            try { 
-                await db.ref(`banned_users/${uid}`).set({ 
-                    status: 'banned', 
-                    bannedAt: Date.now(),
-                    bannedBy: 'Admin'
-                }); 
-                await db.ref(`users/${uid}/status`).set('banned');
-                await db.ref(`sessions/${uid}`).remove();
-                await db.ref(`chats/${uid}`).push({
-                    sender: 'system',
-                    text: `⚠️ AKUN ANDA DIBAN!\nHubungi admin untuk informasi lebih lanjut.`,
-                    timestamp: Date.now()
-                });
-                addActivityLog('Ban User', `Banned user ${uid}`); 
-                hideLoading(); 
-                showToast(`User ${uid} banned!`); 
-                await loadAllData();
-                loadCustomers();
-            } catch (error) { 
-                hideLoading(); 
-                showToast('Error: ' + error.message); 
-            } 
-        }); 
-    }
-    
-    async function unbanUser(uid) { 
-        showConfirm('Unban User', `Unban user ${uid}?`, async () => { 
-            showLoading(); 
-            try { 
-                await db.ref(`banned_users/${uid}`).remove(); 
-                await db.ref(`users/${uid}/status`).set('active');
-                await db.ref(`chats/${uid}`).push({
-                    sender: 'system',
-                    text: `✅ AKUN ANDA TELAH DIUNBAN!\nSilakan login kembali.`,
-                    timestamp: Date.now()
-                });
-                addActivityLog('Unban User', `Unbanned user ${uid}`); 
-                hideLoading(); 
-                showToast(`User ${uid} unbanned!`); 
-                await loadAllData();
-                loadCustomers();
-            } catch (error) { 
-                hideLoading(); 
-                showToast('Error: ' + error.message); 
-            } 
-        }); 
-    }
-    
-    async function forceLogout(uid) { 
-        showConfirm('Force Logout', `Force logout ${uid}?`, async () => { 
-            showLoading(); 
-            try { 
-                await db.ref(`sessions/${uid}`).remove(); 
-                await db.ref(`users/${uid}/status`).set('offline');
-                await db.ref(`users/${uid}/lastLogout`).set(Date.now());
-                await db.ref(`chats/${uid}`).push({
-                    sender: 'system',
-                    text: `🔒 Anda telah di-logout paksa oleh admin. Silakan login kembali.`,
-                    timestamp: Date.now()
-                });
-                addActivityLog('Force Logout', `Force logged out ${uid}`); 
-                hideLoading(); 
-                showToast(`User ${uid} logged out!`); 
-                await loadAllData();
-                loadCustomers();
-            } catch (error) { 
-                hideLoading(); 
-                showToast('Error: ' + error.message); 
-            } 
-        }); 
-    }
-    
+    async function banUser(uid) { showConfirm('Ban User', `Ban user ${uid}?`, async () => { showLoading(); try { await db.ref(`banned_users/${uid}`).set({ status: 'banned', bannedAt: Date.now() }); await db.ref(`users/${uid}/status`).set('banned'); addActivityLog('Ban User', `Banned user ${uid}`); hideLoading(); showToast(`User ${uid} banned!`); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+    async function unbanUser(uid) { showConfirm('Unban User', `Unban user ${uid}?`, async () => { showLoading(); try { await db.ref(`banned_users/${uid}`).remove(); await db.ref(`users/${uid}/status`).set('active'); addActivityLog('Unban User', `Unbanned user ${uid}`); hideLoading(); showToast(`User ${uid} unbanned!`); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+    async function forceLogout(uid) { showConfirm('Force Logout', `Force logout ${uid}?`, async () => { showLoading(); try { await db.ref(`sessions/${uid}`).remove(); await db.ref(`users/${uid}/status`).set('offline'); addActivityLog('Force Logout', `Force logged out ${uid}`); hideLoading(); showToast(`User ${uid} logged out!`); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     async function deleteCustomer(uid) { showConfirm('Delete Customer', `Delete all data for ${uid}?`, async () => { showLoading(); try { await Promise.all([db.ref(`users/${uid}`).remove(), db.ref(`deposits/${uid}`).remove(), db.ref(`purchases/${uid}`).remove(), db.ref(`vip_members/${uid}`).remove(), db.ref(`banned_users/${uid}`).remove(), db.ref(`sessions/${uid}`).remove(), db.ref(`saldo/${uid}`).remove(), db.ref(`chats/${uid}`).remove()]); addActivityLog('Delete Customer', `Deleted user ${uid} and all data`); hideLoading(); showToast(`User ${uid} deleted!`); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     function openSaldoModal(uid) { document.getElementById('saldoUID').value = uid; document.getElementById('saldoAmount').value = ''; document.getElementById('saldoModal').classList.add('active'); }
     function closeSaldoModal() { document.getElementById('saldoModal').classList.remove('active'); }
@@ -3637,41 +3478,9 @@
     
     // ==================== VIP MEMBERS ====================
     function loadVIPMembers() { let members = []; Object.keys(allVIPs).forEach(uid => { if (allVIPs[uid].status === 'active') members.push({ uid, ...allVIPs[uid] }); }); members.sort((a, b) => (b.purchaseDate || 0) - (a.purchaseDate || 0)); window.allVIPMembers = members; displayVIPMembers(); }
-    function displayVIPMembers() { let filtered = window.allVIPMembers || []; const search = document.getElementById('vipMemberSearch')?.value.toLowerCase() || ''; if (search) filtered = filtered.filter(m => m.uid.toLowerCase().includes(search)); let html = ''; filtered.forEach(m => { const isPermanent = m.isPermanent; let progress = 0, statusText = 'Active', statusColor = '#4caf50'; if (m.updateType === 'quota') { const used = m.updatesUsed || 0, total = m.updateQuota || 0; progress = total > 0 ? (used / total) * 100 : 0; const remaining = total - used; if (used >= total) { statusText = 'Habis'; statusColor = '#f44336'; } else if (remaining <= 2) { statusText = `Sisa ${remaining}`; statusColor = '#ff9800'; } } html += `<div class="vip-card ${isPermanent ? 'permanent' : ''}"><div class="vip-card-header"><span class="vip-card-uid" onclick="copyUID('${m.uid}')">${m.uid}</span>${isPermanent ? '<span class="vip-badge">PERMANENT</span>' : ''}</div><div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:15px 0;"><div><span class="detail-label">Package:</span> ${m.package || 'VIP'}</div><div><span class="detail-label">Price:</span> Rp ${formatRupiah(m.price)}</div><div><span class="detail-label">Updates:</span> ${m.updateType === 'quota' ? `${m.updatesUsed || 0}/${m.updateQuota}` : '∞'}</div><div><span class="detail-label">Status:</span> <span style="color:${statusColor}">${statusText}</span></div></div><div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div><div class="action-buttons"><button class="btn btn-danger btn-sm" onclick="removeVIP('${m.uid}')">Remove VIP</button><button class="btn btn-warning btn-sm" onclick="resetVIPQuota('${m.uid}')">Reset Quota</button></div></div>`; }); document.getElementById('vipMemberList').innerHTML = html || '<div class="no-data">No active VIP members</div>'; }
+    function displayVIPMembers() { let filtered = window.allVIPMembers || []; const search = document.getElementById('vipMemberSearch')?.value.toLowerCase() || ''; if (search) filtered = filtered.filter(m => m.uid.toLowerCase().includes(search)); let html = ''; filtered.forEach(m => { const isPermanent = m.isPermanent; let progress = 0, statusText = 'Active', statusColor = '#4caf50'; if (m.updateType === 'quota') { const used = m.updatesUsed || 0, total = m.updateQuota || 0; progress = total > 0 ? (used / total) * 100 : 0; const remaining = total - used; if (used >= total) { statusText = 'Habis'; statusColor = '#f44336'; } else if (remaining <= 2) { statusText = `Sisa ${remaining}`; statusColor = '#ff9800'; } } html += `<div class="vip-card ${isPermanent ? 'permanent' : ''}"><div class="vip-card-header"><span class="vip-card-uid" onclick="copyUID('${m.uid}')">${m.uid}</span>${isPermanent ? '<span class="vip-badge">PERMANENT</span>' : ''}</div><div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:15px 0;"><div><span class="detail-label">Package:</span> ${m.package || 'VIP'}</div><div><span class="detail-label">Price:</span> Rp ${formatRupiah(m.price)}</div><div><span class="detail-label">Updates:</span> ${m.updateType === 'quota' ? `${m.updatesUsed || 0}/${m.updateQuota}` : '∞'}</div><div><span class="detail-label">Status:</span> <span style="color:${statusColor}">${statusText}</span></div></div><div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div><div class="action-buttons"><button class="btn btn-danger btn-sm" onclick="removeVIP('${m.uid}')">Remove VIP</button></div></div>`; }); document.getElementById('vipMemberList').innerHTML = html || '<div class="no-data">No active VIP members</div>'; }
     function filterVIPMembers() { displayVIPMembers(); }
     async function removeVIP(uid) { showConfirm('Remove VIP', `Remove VIP from ${uid}?`, async () => { showLoading(); try { await db.ref(`vip_members/${uid}`).remove(); addActivityLog('Remove VIP', `Removed VIP status from ${uid}`); hideLoading(); showToast(`VIP removed from ${uid}`); loadVIPMembers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
-    
-    async function resetVIPQuota(uid) {
-        showConfirm('Reset Quota', `Reset quota untuk ${uid}?`, async () => {
-            showLoading();
-            try {
-                const vipSnap = await db.ref(`vip_members/${uid}`).once('value');
-                const vip = vipSnap.val();
-                if (vip && vip.updateType === 'quota') {
-                    await db.ref(`vip_members/${uid}`).update({
-                        updatesUsed: 0,
-                        lastReset: Date.now()
-                    });
-                    
-                    await db.ref(`chats/${uid}`).push({
-                        sender: 'system',
-                        text: `🔄 QUOTA RESET!\nQuota Anda telah direset ke ${vip.updateQuota} update.`,
-                        timestamp: Date.now()
-                    });
-                    
-                    addActivityLog('Reset VIP Quota', `Reset quota for ${uid}`);
-                    showToast(`Quota reset untuk ${uid}`);
-                    loadVIPMembers();
-                } else {
-                    showToast('User bukan tipe quota VIP');
-                }
-            } catch (error) {
-                showToast('Error: ' + error.message);
-            } finally {
-                hideLoading();
-            }
-        });
-    }
     
     // ==================== FILE UPDATES ====================
     function loadFileUpdates() { db.ref('global_updates').orderByChild('created_at').once('value', snap => { const updates = snap.val() || {}; let html = ''; Object.keys(updates).sort((a,b) => (updates[b].created_at||0) - (updates[a].created_at||0)).forEach(key => { const u = updates[key]; html += `<div class="update-item"><div class="update-title">👑 ${u.title || 'VIP Update'}</div><div class="update-desc">${u.description || ''}</div><div class="update-meta"><span>${u.version || 'v2.0'}</span><span>${u.created_at ? new Date(u.created_at).toLocaleString() : '-'}</span><span>Expiry: ${u.expiry_days || 7} hari</span></div><div class="action-buttons"><button class="btn btn-danger btn-sm" onclick="deleteFileUpdate('${key}')">Delete</button></div></div>`; }); document.getElementById('fileUpdatesList').innerHTML = html || '<div class="no-data">No file updates</div>'; }); }
@@ -3679,6 +3488,248 @@
     function closeUpdateModal() { document.getElementById('updateModal').classList.remove('active'); }
     async function createFileUpdate() { const title = document.getElementById('updateTitle').value.trim(); const desc = document.getElementById('updateDescription').value.trim(); const link = document.getElementById('updateLink').value.trim(); const version = document.getElementById('updateVersion').value.trim(); const expiry = parseInt(document.getElementById('updateExpiry').value) || 7; if (!title || !desc || !link) { showToast('Please fill all fields!'); return; } showLoading(); try { await db.ref('global_updates').push({ title, description: desc, link, version, expiry_days: expiry, created_at: new Date().toISOString(), status: 'active' }); addActivityLog('Create VIP Update', `Created update: ${title}`); hideLoading(); showToast('Update created!'); closeUpdateModal(); loadFileUpdates(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
     async function deleteFileUpdate(updateId) { showConfirm('Delete Update', 'Delete this update?', async () => { showLoading(); try { await db.ref(`global_updates/${updateId}`).remove(); addActivityLog('Delete VIP Update', `Deleted update ${updateId}`); hideLoading(); showToast('Update deleted!'); loadFileUpdates(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+    
+    // ==================== BROADCAST VIP UPDATE ====================
+    // Buka modal broadcast
+    function openBroadcastVIPModal() {
+        // Reset form
+        document.getElementById('broadcastTitle').value = '';
+        document.getElementById('broadcastDescription').value = '';
+        document.getElementById('broadcastLink').value = '';
+        document.getElementById('broadcastVersion').value = '';
+        document.getElementById('broadcastExpiry').value = '7';
+        document.getElementById('broadcastReduceQuota').value = 'yes';
+    
+        // Reset preview
+        updateBroadcastPreview();
+    
+        // Tambahkan event listener untuk live preview
+        const inputs = ['broadcastTitle', 'broadcastDescription', 'broadcastVersion'];
+        inputs.forEach(id => {
+            document.getElementById(id).oninput = updateBroadcastPreview;
+        });
+    
+        document.getElementById('broadcastVIPModal').classList.add('active');
+    }
+
+    // Tutup modal broadcast
+    function closeBroadcastVIPModal() {
+        document.getElementById('broadcastVIPModal').classList.remove('active');
+    }
+
+    // Update live preview
+    function updateBroadcastPreview() {
+        const title = document.getElementById('broadcastTitle').value.trim();
+        const desc = document.getElementById('broadcastDescription').value.trim();
+        const version = document.getElementById('broadcastVersion').value.trim();
+    
+        document.getElementById('previewTitle').innerHTML = title || '(Belum diisi)';
+        document.getElementById('previewDesc').innerHTML = desc || '(Belum diisi)';
+        document.getElementById('previewVersion').innerHTML = version ? `Version: ${version}` : 'Version: -';
+    }
+
+    // Fungsi utama: Kirim broadcast ke semua user VIP
+    async function sendBroadcastToAllVIP() {
+        const title = document.getElementById('broadcastTitle').value.trim();
+        const desc = document.getElementById('broadcastDescription').value.trim();
+        const link = document.getElementById('broadcastLink').value.trim();
+        const version = document.getElementById('broadcastVersion').value.trim();
+        const expiry = parseInt(document.getElementById('broadcastExpiry').value) || 7;
+        const reduceQuota = document.getElementById('broadcastReduceQuota').value === 'yes';
+    
+        // Validasi
+        if (!title || !desc || !link) {
+            showToast('Mohon isi semua field (Title, Description, Link)!');
+            return;
+        }
+    
+        // Konfirmasi
+        showConfirm('Kirim ke Semua VIP', 
+            `⚠️ PERINGATAN!\n\n` +
+            `Anda akan mengirim update ke SEMUA user VIP aktif.\n\n` +
+            `Title: ${title}\n` +
+            `Version: ${version}\n\n` +
+            `${reduceQuota ? '✅ User VIP tipe QUOTA akan berkurang 1 quota!' : '❌ Quota user VIP tipe QUOTA TIDAK akan berkurang'}\n\n` +
+            `Lanjutkan?`, 
+            async () => {
+                await executeBroadcastToAllVIP(title, desc, link, version, expiry, reduceQuota);
+            }
+        );
+    }
+
+    // Eksekusi broadcast
+    async function executeBroadcastToAllVIP(title, desc, link, version, expiry, reduceQuota) {
+        showLoading();
+        let successCount = 0;
+        let errorCount = 0;
+        let quotaReducedCount = 0;
+        let vipList = [];
+    
+        try {
+            // 1. Ambil semua user VIP yang statusnya ACTIVE
+            const vipSnap = await db.ref('vip_members').once('value');
+            const allVIPs = vipSnap.val() || {};
+        
+            // Filter hanya yang status active
+            Object.keys(allVIPs).forEach(uid => {
+                if (allVIPs[uid].status === 'active') {
+                    vipList.push({
+                        uid: uid,
+                        vipData: allVIPs[uid]
+                    });
+                }
+            });
+        
+            if (vipList.length === 0) {
+                showToast('Tidak ada user VIP aktif!');
+                hideLoading();
+                closeBroadcastVIPModal();
+                return;
+            }
+        
+            // 2. Simpan update ke global_updates (untuk history)
+            const updateRef = await db.ref('global_updates').push({
+                title: title,
+                description: desc,
+                link: link,
+                version: version,
+                expiry_days: expiry,
+                created_at: new Date().toISOString(),
+                status: 'active',
+                is_broadcast: true,
+                broadcast_to: vipList.length
+            });
+        
+            const updateId = updateRef.key;
+        
+            // 3. Kirim ke setiap user VIP
+            for (const vip of vipList) {
+                try {
+                    const uid = vip.uid;
+                    const vipData = vip.vipData;
+                
+                    // Simpan update ke user's personal updates
+                    await db.ref(`user_updates/${uid}/${updateId}`).set({
+                        title: title,
+                        description: desc,
+                        link: link,
+                        version: version,
+                        expiry_days: expiry,
+                        received_at: Date.now(),
+                        is_broadcast: true
+                    });
+                
+                    // Kirim notifikasi ke chat user
+                    await db.ref(`chats/${uid}`).push({
+                        sender: 'system',
+                        text: `📢 *VIP UPDATE BARU!*\n\n` +
+                              `Title: ${title}\n` +
+                              `Version: ${version}\n` +
+                              `Description: ${desc}\n\n` +
+                              `⬇️ Download: ${link}\n\n` +
+                              `${reduceQuota && vipData.updateType === 'quota' ? '⚠️ Quota update Anda akan berkurang 1 setelah ini.' : ''}`,
+                        timestamp: Date.now()
+                    });
+                
+                    // 4. KURANGI QUOTA jika user tipe quota dan reduceQuota = true
+                    if (reduceQuota && vipData.updateType === 'quota') {
+                        const currentUsed = vipData.updatesUsed || 0;
+                        const totalQuota = vipData.updateQuota || 0;
+                        const newUsed = currentUsed + 1;
+                    
+                        await db.ref(`vip_members/${uid}`).update({
+                            updatesUsed: newUsed,
+                            lastUpdateUsed: Date.now(),
+                            lastUpdateTitle: title
+                        });
+                    
+                        quotaReducedCount++;
+                    
+                        // Kirim notifikasi khusus tentang quota
+                        await db.ref(`chats/${uid}`).push({
+                            sender: 'system',
+                            text: `📊 *QUOTA UPDATE*\n\n` +
+                                  `Anda telah menggunakan 1 quota untuk update: "${title}"\n` +
+                                  `Sisa quota: ${totalQuota - newUsed}/${totalQuota}`,
+                            timestamp: Date.now()
+                        });
+                    
+                        // Cek jika quota habis
+                        if (newUsed >= totalQuota) {
+                            await db.ref(`vip_members/${uid}`).update({
+                                status: 'expired',
+                                expiredReason: 'Quota habis setelah broadcast update'
+                            });
+                        
+                            await db.ref(`chats/${uid}`).push({
+                                sender: 'system',
+                                text: `⚠️ *QUOTA HABIS!*\n\n` +
+                                      `Quota update Anda telah habis. Status VIP Anda akan diturunkan menjadi FREE.\n` +
+                                      `Silakan perpanjang VIP untuk mendapatkan akses kembali.`,
+                                timestamp: Date.now()
+                            });
+                        }
+                    }
+                
+                    successCount++;
+                
+                } catch (userError) {
+                    console.error(`Error sending to ${vip.uid}:`, userError);
+                    errorCount++;
+                }
+            }
+        
+            // 5. Catat aktivitas admin
+            addActivityLog('Broadcast VIP Update', 
+                `Sent "${title}" to ${successCount} VIP users (Quota reduced: ${quotaReducedCount}, Errors: ${errorCount})`
+            );
+        
+            // 6. Tampilkan hasil
+            let resultMessage = `✅ Broadcast selesai!\n\n`;
+            resultMessage += `📨 Berhasil dikirim ke: ${successCount} user VIP\n`;
+            resultMessage += `⚠️ Gagal: ${errorCount} user\n`;
+            if (reduceQuota) {
+                resultMessage += `📊 Quota berkurang: ${quotaReducedCount} user\n`;
+            }
+            resultMessage += `\nUpdate ID: ${updateId}`;
+        
+            showNeonModal('Broadcast Selesai', resultMessage, false);
+        
+            // Refresh file updates list
+            loadFileUpdates();
+        
+            // Refresh VIP members list untuk melihat quota terbaru
+            loadVIPMembers();
+        
+            closeBroadcastVIPModal();
+        
+        } catch (error) {
+            console.error('Broadcast error:', error);
+            showToast('Error: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Fungsi untuk melihat status quota user VIP (opsional, untuk debugging)
+    async function checkVIPQuotaStatus(uid) {
+        try {
+            const vipSnap = await db.ref(`vip_members/${uid}`).once('value');
+            const vip = vipSnap.val();
+            if (vip && vip.updateType === 'quota') {
+                console.log(`User ${uid}: Used ${vip.updatesUsed || 0}/${vip.updateQuota || 0}`);
+                return {
+                    used: vip.updatesUsed || 0,
+                    total: vip.updateQuota || 0,
+                    remaining: (vip.updateQuota || 0) - (vip.updatesUsed || 0)
+                };
+            }
+            return null;
+        } catch(e) {
+            console.error(e);
+            return null;
+        }
+    }
     
     // ==================== FREE UPDATE ====================
     async function loadFreeUpdateStats() { const viewsSnap = await db.ref('free_updates/views').once('value'); const views = viewsSnap.val() || {}; const users = Object.keys(views).length; let totalViews = 0, userList = []; Object.keys(views).forEach(uid => { const count = Object.keys(views[uid] || {}).length; totalViews += count; userList.push({ uid, views: count }); }); document.getElementById('freeStatsUsers').innerHTML = users; document.getElementById('freeStatsViews').innerHTML = totalViews; document.getElementById('freeStatsAvg').innerHTML = users ? (totalViews / users).toFixed(1) : '0'; let userHtml = ''; userList.sort((a,b) => b.views - a.views).forEach(u => { userHtml += `<div class="user-item"><span class="user-uid">${u.uid}</span><span class="user-views">${u.views} views</span></div>`; }); document.getElementById('freeUsersList').innerHTML = userHtml || '<div class="no-data">No views yet</div>'; }
@@ -3745,6 +3796,7 @@
                     let content = msg.sender ? `<div class="message-sender">${msg.sender === 'customer' ? '👤 Customer' : msg.sender === 'admin' ? '👑 Admin' : '📢 System'}</div>` : ''; 
                     content += `<div>${escapeHtml(msg.text || '')}</div>`; 
                 
+                    // TAMPILKAN FILE DENGAN TOMBOL DOWNLOAD
                     if (msg.fileData && msg.fileData.url) {
                         const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
                         if (isImage) {
@@ -3788,8 +3840,74 @@
     }
     
     async function sendAdminMessage() { const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text || !currentChatUser) return; await db.ref('chats/' + currentChatUser).push({ sender: 'admin', text, timestamp: Date.now() }); addActivityLog('Send Message', `Sent message to ${currentChatUser}`); input.value = ''; }
+    // ==================== CHAT FILE UPLOAD ====================
+    function setupChatFileUpload() {
+        const uploadBtn = document.getElementById('chatUploadBtnAdmin');
+        if (!uploadBtn) return;
     
-    // ==================== CHAT FILE UPLOAD FUNCTIONS ====================
+        uploadBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (!currentChatUser) {
+                    showToast('Pilih customer terlebih dahulu!');
+                    return;
+                }
+            
+                showLoading();
+                try {
+                    // Upload ke Imgbb
+                    const fileUrl = await uploadToImgbb(file);
+                    const fileSize = formatFileSize(file.size);
+                
+                    // Kirim pesan dengan file
+                    await db.ref('chats/' + currentChatUser).push({
+                        sender: 'admin',
+                        text: `📎 Mengirim file: ${file.name}`,
+                        fileData: {
+                            name: file.name,
+                            url: fileUrl,
+                            size: file.size,
+                            sizeFormatted: fileSize,
+                            type: file.type,
+                            timestamp: Date.now()
+                        },
+                        timestamp: Date.now()
+                    });
+                
+                    hideLoading();
+                    showToast('File terkirim!');
+                } catch (error) {
+                    hideLoading();
+                    showToast('Gagal upload: ' + error.message);
+                }
+            };
+            input.click();
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Fungsi untuk mendownload file
+    function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    // ==================== CHAT FILE UPLOAD ====================
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -3811,6 +3929,7 @@
         const uploadBtn = document.getElementById('chatUploadBtnAdmin');
         if (!uploadBtn) return;
     
+        // Hapus event listener lama jika ada
         const newBtn = uploadBtn.cloneNode(true);
         uploadBtn.parentNode.replaceChild(newBtn, uploadBtn);
     
@@ -3859,7 +3978,7 @@
     
     // ==================== PUBLIC CHAT ====================
     function loadPublicChat() {
-        db.ref('all_comments').orderByChild('timestamp').limitToLast(50).on('value', (snap) => {
+        db.ref('all_comments').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
             const messages = snap.val() || {};
             displayPublicChatMessages(messages);
             updatePublicChatBadge();
@@ -3998,9 +4117,9 @@
     setInterval(async () => {
         try {
             const vipSnap = await db.ref('vip_members').once('value');
-            const allVIPsNow = vipSnap.val() || {};
+            const allVIPs = vipSnap.val() || {};
             const now = new Date();
-            for (const [uid, vip] of Object.entries(allVIPsNow)) {
+            for (const [uid, vip] of Object.entries(allVIPs)) {
                 if (vip.status !== 'active') continue;
                 let shouldDowngrade = false, reason = '';
                 if (vip.updateType === 'quota') {
@@ -4026,7 +4145,7 @@
     
     // ==================== ACTIVITY LOGS ====================
     function loadActivityLogs() { const saved = localStorage.getItem('admin_activity_logs'); if (saved) { try { adminLogs = JSON.parse(saved); } catch(e) { adminLogs = []; } } displayActivityLogs(); }
-    function displayActivityLogs() { const search = document.getElementById('logSearch')?.value.toLowerCase() || ''; let filtered = adminLogs; if (search) filtered = filtered.filter(log => log.action.toLowerCase().includes(search) || (log.details && log.details.toLowerCase().includes(search))); let html = ''; filtered.slice(0, 100).forEach(log => { const time = new Date(log.time).toLocaleString(); html += `<tr><td>${time}</td><td>${log.admin}</td><td>${log.action}</td><td>${log.details || '-'}</td><td>${log.ip}</td></tr>`; }); document.getElementById('logList').innerHTML = html || '<tr><td colspan="5" class="no-data">No logs found</td></tr>'; }
+    function displayActivityLogs() { const search = document.getElementById('logSearch')?.value.toLowerCase() || ''; let filtered = adminLogs; if (search) filtered = filtered.filter(log => log.action.toLowerCase().includes(search) || (log.details && log.details.toLowerCase().includes(search))); let html = ''; filtered.slice(0, 100).forEach(log => { const time = new Date(log.time).toLocaleString(); html += `<tr><td>${time}</td><td>${log.admin}</td><td>${log.action}</td><td>${log.details || '-'}</td><td>${log.ip}</td>`; }); document.getElementById('logList').innerHTML = html || '<tr><td colspan="5" class="no-data">No logs found</td></tr>'; }
     function filterLogs() { displayActivityLogs(); }
     function clearActivityLogs() { showConfirm('Clear Logs', 'Delete all activity logs?', () => { adminLogs = []; localStorage.setItem('admin_activity_logs', JSON.stringify(adminLogs)); displayActivityLogs(); showToast('All logs cleared!'); }); }
     
@@ -4041,7 +4160,6 @@
         loadDiscountHistory();
         listenPublicChatRealtime();
         setupChatFileUpload();
-        setupRealtimeSessionsListener();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
@@ -4052,7 +4170,7 @@
         loadActiveVideo();
         addActivityLog('Admin Login', 'Admin logged into panel');
         if (Notification.permission === 'default') Notification.requestPermission();
-        console.log('🚀 Admin panel initialized - V1.0.0 with Real-Time Multi-IP Detection');
+        console.log('🚀 Admin panel initialized - V1.0.0');
     }
     init();
 </script>
