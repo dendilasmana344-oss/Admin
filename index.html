@@ -958,6 +958,75 @@
             box-shadow: 0 10px 20px rgba(0, 255, 136, 0.4);
         }
 
+        /* ==================== CHAT UPLOAD FEATURE ==================== */
+        .chat-upload-btn {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            border: none;
+            border-radius: 50%;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+
+        .chat-upload-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        .file-preview-item {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--neon-cyan);
+        }
+
+        .file-preview-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .file-preview-item .file-info {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .file-preview-item .file-name {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        .file-preview-item .file-size {
+            color: #aaa;
+            font-size: 10px;
+        }
+
+        .file-download-btn {
+            background: none;
+            border: none;
+            color: #00ff88;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            transition: all 0.3s;
+        }
+
+        .file-download-btn:hover {
+            transform: scale(1.2);
+            color: #00ffff;
+        }
+
         /* GALLERY */
         .gallery {
             display: grid;
@@ -2464,12 +2533,21 @@
     <!-- PRIVATE CHAT TAB -->
     <div id="chat" class="tab-content">
         <div class="chat-container">
-            <div class="chat-selector"><select class="chat-select" id="chatUserSelect" onchange="loadUserChat()"><option value="">Select Customer UID</option></select><button class="btn btn-primary btn-sm" onclick="loadChatUsers()"><i class="fas fa-sync-alt"></i></button></div>
+            <div class="chat-selector">
+                <select class="chat-select" id="chatUserSelect" onchange="loadUserChat()">
+                    <option value="">Select Customer UID</option>
+                </select>
+                <button class="btn btn-primary btn-sm" onclick="loadChatUsers()"><i class="fas fa-sync-alt"></i></button>
+            </div>
             <div class="chat-messages" id="chatMessages"></div>
-            <div class="chat-input-area"><input type="text" class="chat-input" id="chatInput" placeholder="Type message..." disabled><button class="chat-send-btn" onclick="sendAdminMessage()" id="chatSendBtn" disabled><i class="fas fa-paper-plane"></i></button></div>
+            <div class="chat-input-area">
+                <button class="chat-upload-btn" id="chatUploadBtnAdmin"><i class="fas fa-paperclip"></i></button>
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type message..." disabled>
+                <button class="chat-send-btn" onclick="sendAdminMessage()" id="chatSendBtn" disabled><i class="fas fa-paper-plane"></i></button>
+            </div>
         </div>
     </div>
-
+    
     <!-- PUBLIC CHAT TAB -->
     <div id="public_chat" class="tab-content">
         <div class="card">
@@ -3208,7 +3286,93 @@
         document.getElementById('vipList').innerHTML = html || '<div class="no-data">No VIP orders found</div>';
     }
     function filterVIP(filter) { if (filter) { currentVIPFilter = filter; document.querySelectorAll('#vip_orders .filter-tab').forEach(t => t.classList.remove('active')); if (event?.currentTarget) event.currentTarget.classList.add('active'); } displayVIPOrders(); }
-    async function approveVIP(uid, id, price, packageName) { showConfirm('Approve VIP', `Approve VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).update({ status: 'approved' }); let vipData = { uid, status: 'active', package: packageName, price, purchaseDate: new Date().toISOString() }; if (price === 35000) { vipData.updateType = 'quota'; vipData.updateQuota = 4; vipData.updatesUsed = 0; } else if (price === 50000) { vipData.updateType = 'quota'; vipData.updateQuota = 7; } else if (price === 80000) { vipData.updateType = 'quota'; vipData.updateQuota = 15; } else if (price === 150000) { vipData.updateType = 'unlimited'; vipData.packageMonths = 2; const expiry = new Date(); expiry.setMonth(expiry.getMonth() + 2); vipData.expiryDate = expiry.toISOString(); } else if (price === 250000) { vipData.updateType = 'unlimited'; vipData.packageMonths = 4; const expiry = new Date(); expiry.setMonth(expiry.getMonth() + 4); vipData.expiryDate = expiry.toISOString(); } else if (price === 350000) { vipData.updateType = 'unlimited'; vipData.isPermanent = true; vipData.expiryDate = new Date(2099, 11, 31).toISOString(); } await db.ref(`vip_members/${uid}`).set(vipData); await db.ref(`chats/${uid}`).push({ sender: 'system', text: `✅ VIP APPROVED!\nPackage: ${packageName}\nAmount: Rp ${formatRupiah(price)}`, timestamp: Date.now() }); addActivityLog('Approve VIP', `Approved VIP for ${uid} - ${packageName}`); hideLoading(); showToast('VIP approved!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+        async function approveVIP(uid, id, price, packageName) {
+        showConfirm('Approve VIP', `Approve VIP for ${uid}?`, async () => {
+            showLoading();
+            try {
+                await db.ref(`purchases/${uid}/${id}`).update({ status: 'approved', approved_at: Date.now() });
+            
+                let vipData = {
+                    uid: uid,
+                    status: 'active',
+                    package: packageName,
+                    price: price,
+                    purchaseDate: new Date().toISOString(),
+                    lastUpdate: new Date().toISOString()
+                };
+            
+                // Tentukan jenis paket berdasarkan harga atau nama package
+                if (price === 35000 || packageName.includes('4X') || packageName.includes('QUOTA')) {
+                    vipData.updateType = 'quota';
+                    vipData.updateQuota = 4;
+                    vipData.updatesUsed = 0;
+                }
+                else if (price === 50000 || packageName.includes('7X')) {
+                    vipData.updateType = 'quota';
+                    vipData.updateQuota = 7;
+                    vipData.updatesUsed = 0;
+                }
+                else if (price === 80000 || packageName.includes('15X')) {
+                    vipData.updateType = 'quota';
+                    vipData.updateQuota = 15;
+                    vipData.updatesUsed = 0;
+                }
+                else if (price === 150000 || packageName.includes('2 BULAN') || packageName.includes('season') || packageName.toLowerCase().includes('bulan')) {
+                    vipData.updateType = 'unlimited';
+                    vipData.packageMonths = 2;
+                    const expiryDate = new Date();
+                    expiryDate.setMonth(expiryDate.getMonth() + 2);
+                    vipData.expiryDate = expiryDate.toISOString();
+                }
+                else if (price === 250000 || packageName.includes('4 BULAN')) {
+                    vipData.updateType = 'unlimited';
+                    vipData.packageMonths = 4;
+                    const expiryDate = new Date();
+                    expiryDate.setMonth(expiryDate.getMonth() + 4);
+                    vipData.expiryDate = expiryDate.toISOString();
+                }
+                else if (price === 350000 || packageName.includes('PERMANENT') || packageName.includes('SEUMUR')) {
+                    vipData.updateType = 'unlimited';
+                    vipData.isPermanent = true;
+                    vipData.expiryDate = new Date(2099, 11, 31).toISOString();
+                }
+                else {
+                    // FALLBACK: cek dari nama package
+                    if (packageName.toLowerCase().includes('season') || packageName.toLowerCase().includes('bulan')) {
+                        // Extract angka dari package name
+                        const match = packageName.match(/\d+/);
+                        const months = match ? parseInt(match[0]) : 1;
+                        vipData.updateType = 'unlimited';
+                        vipData.packageMonths = months;
+                        const expiryDate = new Date();
+                        expiryDate.setMonth(expiryDate.getMonth() + months);
+                        vipData.expiryDate = expiryDate.toISOString();
+                    } else {
+                        // Default ke quota 1
+                        vipData.updateType = 'quota';
+                        vipData.updateQuota = 1;
+                        vipData.updatesUsed = 0;
+                    }
+                }
+            
+                await db.ref(`vip_members/${uid}`).set(vipData);
+            
+                await db.ref(`chats/${uid}`).push({
+                    sender: 'system',
+                    text: `✅ VIP APPROVED!\nPackage: ${packageName}\nAmount: Rp ${formatRupiah(price)}`,
+                    timestamp: Date.now()
+                });
+            
+                addActivityLog('Approve VIP', `Approved VIP for ${uid} - ${packageName}`);
+                hideLoading();
+                showToast('VIP approved!');
+                loadAllData();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
     async function rejectVIP(uid, id, price) { showConfirm('Reject VIP', `Reject VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).update({ status: 'rejected' }); const snap = await db.ref(`saldo/${uid}`).once('value'); const current = snap.val()?.amount || 0; await db.ref(`saldo/${uid}`).set({ amount: current + price }); await db.ref(`chats/${uid}`).push({ sender: 'system', text: `❌ VIP REJECTED\nBalance returned: Rp ${formatRupiah(price)}`, timestamp: Date.now() }); addActivityLog('Reject VIP', `Rejected VIP for ${uid}`); hideLoading(); showToast('VIP rejected!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     async function deleteVIP(uid, id) { showConfirm('Delete VIP', `Delete VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).remove(); addActivityLog('Delete VIP', `Deleted VIP for ${uid}`); hideLoading(); showToast('VIP deleted!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     
@@ -3288,8 +3452,218 @@
     
     // ==================== CHAT PRIVATE ====================
     async function loadChatUsers() { const usersSnap = await db.ref('users').once('value'); const users = usersSnap.val() || {}; const select = document.getElementById('chatUserSelect'); select.innerHTML = '<option value="">Select Customer UID</option>'; Object.keys(users).forEach(uid => { const option = document.createElement('option'); option.value = uid; option.textContent = uid; select.appendChild(option); }); }
-    function loadUserChat() { const select = document.getElementById('chatUserSelect'); currentChatUser = select.value; const input = document.getElementById('chatInput'); const sendBtn = document.getElementById('chatSendBtn'); if (!currentChatUser) { input.disabled = true; sendBtn.disabled = true; document.getElementById('chatMessages').innerHTML = '<div class="no-data">Select a customer</div>'; if (chatListener) db.ref('chats/' + currentChatUser).off('value', chatListener); return; } input.disabled = false; sendBtn.disabled = false; if (chatListener) db.ref('chats/' + currentChatUser).off('value', chatListener); chatListener = db.ref('chats/' + currentChatUser).limitToLast(50).on('value', snap => { const messages = snap.val(); const chatBox = document.getElementById('chatMessages'); chatBox.innerHTML = ''; if (messages) { Object.keys(messages).sort((a,b) => messages[a].timestamp - messages[b].timestamp).forEach(key => { const msg = messages[key]; const div = document.createElement('div'); div.className = `message ${msg.sender === 'customer' ? 'customer' : msg.sender === 'admin' ? 'admin' : 'system'}`; let content = msg.sender ? `<div class="message-sender">${msg.sender === 'customer' ? '👤 Customer' : msg.sender === 'admin' ? '👑 Admin' : '📢 System'}</div>` : ''; content += `<div>${escapeHtml(msg.text || '')}</div>`; if (msg.fileUrl) content += `<div><a href="${msg.fileUrl}" target="_blank">📎 File</a></div>`; content += `<div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`; div.innerHTML = content; chatBox.appendChild(div); }); chatBox.scrollTop = chatBox.scrollHeight; } else { chatBox.innerHTML = '<div class="no-data">No messages</div>'; } }); }
+    function loadUserChat() { 
+        const select = document.getElementById('chatUserSelect'); 
+        currentChatUser = select.value; 
+        const input = document.getElementById('chatInput'); 
+        const sendBtn = document.getElementById('chatSendBtn'); 
+    
+        if (!currentChatUser) { 
+            input.disabled = true; 
+            sendBtn.disabled = true; 
+            document.getElementById('chatMessages').innerHTML = '<div class="no-data">Select a customer</div>'; 
+            if (chatListener) db.ref('chats/' + currentChatUser).off('value', chatListener); 
+            return; 
+        } 
+    
+        input.disabled = false; 
+        sendBtn.disabled = false; 
+    
+        if (chatListener) db.ref('chats/' + currentChatUser).off('value', chatListener); 
+    
+        chatListener = db.ref('chats/' + currentChatUser).limitToLast(50).on('value', snap => { 
+            const messages = snap.val(); 
+            const chatBox = document.getElementById('chatMessages'); 
+            chatBox.innerHTML = ''; 
+        
+            if (messages) { 
+                Object.keys(messages).sort((a,b) => messages[a].timestamp - messages[b].timestamp).forEach(key => { 
+                    const msg = messages[key]; 
+                    const div = document.createElement('div'); 
+                    div.className = `message ${msg.sender === 'customer' ? 'customer' : msg.sender === 'admin' ? 'admin' : 'system'}`; 
+                
+                    let content = msg.sender ? `<div class="message-sender">${msg.sender === 'customer' ? '👤 Customer' : msg.sender === 'admin' ? '👑 Admin' : '📢 System'}</div>` : ''; 
+                    content += `<div>${escapeHtml(msg.text || '')}</div>`; 
+                
+                    // TAMPILKAN FILE DENGAN TOMBOL DOWNLOAD
+                    if (msg.fileData && msg.fileData.url) {
+                        const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
+                        if (isImage) {
+                            content += `
+                                <div class="file-preview-item" style="margin-top: 10px;">
+                                    <img src="${msg.fileData.url}" onclick="window.open('${msg.fileData.url}')" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 10px;">
+                                    <div class="file-info">
+                                        <div class="file-name">${escapeHtml(msg.fileData.name || 'Image')}</div>
+                                        <div class="file-size">${msg.fileData.sizeFormatted || formatFileSize(msg.fileData.size || 0)}</div>
+                                    </div>
+                                    <button class="file-download-btn" onclick="downloadFile('${msg.fileData.url}', '${escapeHtml(msg.fileData.name || 'file')}')">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            content += `
+                                <div class="file-preview-item" style="margin-top: 10px;">
+                                    <i class="fas fa-file" style="font-size: 30px; color: #ffaa00;"></i>
+                                    <div class="file-info">
+                                        <div class="file-name">${escapeHtml(msg.fileData.name || 'File')}</div>
+                                        <div class="file-size">${msg.fileData.sizeFormatted || formatFileSize(msg.fileData.size || 0)}</div>    
+                                    </div>
+                                    <button class="file-download-btn" onclick="downloadFile('${msg.fileData.url}', '${escapeHtml(msg.fileData.name || 'file')}')">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                
+                    content += `<div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`; 
+                    div.innerHTML = content; 
+                    chatBox.appendChild(div); 
+                }); 
+                chatBox.scrollTop = chatBox.scrollHeight; 
+            } else { 
+                chatBox.innerHTML = '<div class="no-data">No messages</div>'; 
+            } 
+        }); 
+    }
+    
     async function sendAdminMessage() { const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text || !currentChatUser) return; await db.ref('chats/' + currentChatUser).push({ sender: 'admin', text, timestamp: Date.now() }); addActivityLog('Send Message', `Sent message to ${currentChatUser}`); input.value = ''; }
+    // ==================== CHAT FILE UPLOAD ====================
+    function setupChatFileUpload() {
+        const uploadBtn = document.getElementById('chatUploadBtnAdmin');
+        if (!uploadBtn) return;
+    
+        uploadBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (!currentChatUser) {
+                    showToast('Pilih customer terlebih dahulu!');
+                    return;
+                }
+            
+                showLoading();
+                try {
+                    // Upload ke Imgbb
+                    const fileUrl = await uploadToImgbb(file);
+                    const fileSize = formatFileSize(file.size);
+                
+                    // Kirim pesan dengan file
+                    await db.ref('chats/' + currentChatUser).push({
+                        sender: 'admin',
+                        text: `📎 Mengirim file: ${file.name}`,
+                        fileData: {
+                            name: file.name,
+                            url: fileUrl,
+                            size: file.size,
+                            sizeFormatted: fileSize,
+                            type: file.type,
+                            timestamp: Date.now()
+                        },
+                        timestamp: Date.now()
+                    });
+                
+                    hideLoading();
+                    showToast('File terkirim!');
+                } catch (error) {
+                    hideLoading();
+                    showToast('Gagal upload: ' + error.message);
+                }
+            };
+            input.click();
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Fungsi untuk mendownload file
+    function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    // ==================== CHAT FILE UPLOAD ====================
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function setupChatFileUpload() {
+        const uploadBtn = document.getElementById('chatUploadBtnAdmin');
+        if (!uploadBtn) return;
+    
+        // Hapus event listener lama jika ada
+        const newBtn = uploadBtn.cloneNode(true);
+        uploadBtn.parentNode.replaceChild(newBtn, uploadBtn);
+    
+        newBtn.addEventListener('click', () => {
+            if (!currentChatUser) {
+                showToast('Pilih customer terlebih dahulu!');
+                return;
+            }
+        
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+            
+                showLoading();
+                try {
+                    const fileUrl = await uploadToImgbb(file);
+                    const fileSize = formatFileSize(file.size);
+                
+                    await db.ref('chats/' + currentChatUser).push({
+                        sender: 'admin',
+                        text: `📎 Mengirim file: ${file.name}`,
+                        fileData: {
+                            name: file.name,
+                            url: fileUrl,
+                            size: file.size,
+                            sizeFormatted: fileSize,
+                            type: file.type,
+                            timestamp: Date.now()
+                        },
+                        timestamp: Date.now()
+                    });
+                
+                    hideLoading();
+                    showToast('File terkirim!');
+                } catch (error) {
+                    hideLoading();
+                    showToast('Gagal upload: ' + error.message);
+                }
+            };
+            input.click();
+        });
+    }
     
     // ==================== PUBLIC CHAT ====================
     function loadPublicChat() {
@@ -3474,6 +3848,7 @@
         loadGlobalDiscountStatus();
         loadDiscountHistory();
         listenPublicChatRealtime();
+        setupChatFileUpload();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
