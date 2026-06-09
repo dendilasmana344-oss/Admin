@@ -10,6 +10,13 @@
     <meta name="theme-color" content="#00ffff">
     <meta name="version" content="V1.0.0">
     
+    <!-- Push Notification Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('Service Worker error:', err));
+        }
+    </script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -76,6 +83,11 @@
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan); }
+            100% { box-shadow: 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-cyan); }
         }
 
         html, body {
@@ -958,7 +970,7 @@
             box-shadow: 0 10px 20px rgba(0, 255, 136, 0.4);
         }
 
-        /* ==================== CHAT UPLOAD FEATURE ==================== */
+        /* CHAT UPLOAD FEATURE */
         .chat-upload-btn {
             width: 48px;
             height: 48px;
@@ -1143,7 +1155,7 @@
             transform: translateY(-2px);
         }
 
-        /* ==================== CHAT DELETE FEATURE ==================== */
+        /* CHAT DELETE FEATURE */
         .chat-message-wrapper {
             position: relative;
             margin-bottom: 10px;
@@ -1232,9 +1244,7 @@
             transform: scale(1.05);
         }
 
-        /* ==================== MODAL STYLES YANG DIPERBAIKI ==================== */
-
-        /* Modal Overlay */
+        /* MODAL STYLES - NEON DESIGN */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -1258,7 +1268,6 @@
             visibility: visible;
         }
 
-        /* Modal Content */
         .modal-content {
             max-width: 520px;
             width: 100%;
@@ -1270,6 +1279,19 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 0 60px rgba(0, 255, 255, 0.3);
+            position: relative;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+            animation: spin 20s linear infinite;
+            z-index: -1;
         }
 
         .modal-content::-webkit-scrollbar {
@@ -1286,7 +1308,6 @@
             border-radius: 10px;
         }
 
-        /* Modal Header */
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -1307,9 +1328,9 @@
         }
 
         .modal-close {
-            background: rgba(255, 68, 68, 0.1);
+            background: rgba(0, 255, 255, 0.1);
             border: none;
-            color: #ff4444;
+            color: var(--neon-cyan);
             font-size: 22px;
             cursor: pointer;
             width: 40px;
@@ -1322,11 +1343,11 @@
         }
 
         .modal-close:hover {
-            background: rgba(255, 68, 68, 0.3);
+            background: rgba(0, 255, 255, 0.3);
             transform: rotate(90deg);
+            box-shadow: 0 0 15px var(--neon-cyan);
         }
 
-        /* Modal Form Group */
         .modal-form-group {
             margin-bottom: 22px;
         }
@@ -1374,7 +1395,6 @@
             color: white;
         }
 
-        /* Modal Actions (Buttons) */
         .modal-actions {
             display: flex;
             gap: 15px;
@@ -1387,19 +1407,7 @@
             justify-content: center;
         }
 
-        /* Ikon dalam modal */
-        .modal-icon {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-icon i {
-            font-size: 55px;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 20px var(--neon-cyan);
-        }
-
-        /* Admin Video Background - OPTIMASI */
+        /* Admin Video Background */
         .admin-video-bg {
             position: fixed;
             top: 0;
@@ -1429,7 +1437,6 @@
             z-index: 1;
         }
 
-        /* Tombol kontrol video background admin */
         .admin-video-control {
             position: fixed;
             bottom: 100px;
@@ -1710,31 +1717,6 @@
             color: #00ff88;
             font-weight: bold;
         }
- 
-        /* NOTIFICATION BADGE */
-        .notification-badge {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #ff4444;
-            color: white;
-            border-radius: 50%;
-            min-width: 22px;
-            height: 22px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            display: none;
-            animation: pulse 1s infinite;
-            border: 2px solid white;
-            padding: 0 5px;
-        }
-
-        .notification-badge.show {
-            display: flex;
-        }
 
         /* NOTIFICATION TOAST */
         .notification-toast {
@@ -1815,7 +1797,7 @@
             background: rgba(0, 255, 255, 0.05);
         }
 
-        /* NEON MODAL */
+        /* NEON MODAL - DESAIN KEREN */
         .neon-modal {
             position: fixed;
             top: 0;
@@ -1849,6 +1831,20 @@
             box-shadow: 0 0 60px rgba(0, 255, 255, 0.4);
             animation: fadeIn 0.3s ease;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .neon-modal-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+            animation: spin 20s linear infinite;
+            z-index: -1;
         }
 
         .neon-modal-icon {
@@ -1856,6 +1852,15 @@
             color: var(--neon-cyan);
             margin-bottom: 20px;
             text-shadow: 0 0 20px var(--neon-cyan);
+            animation: neonPulse 2s infinite;
+        }
+
+        .neon-modal-icon.warning {
+            color: #ff4444;
+        }
+
+        .neon-modal-icon.success {
+            color: #00ff88;
         }
 
         .neon-modal-title {
@@ -1864,6 +1869,16 @@
             font-weight: 900;
             color: var(--neon-cyan);
             margin-bottom: 15px;
+        }
+
+        .neon-modal-title.warning {
+            color: #ff4444;
+            text-shadow: 0 0 10px #ff4444;
+        }
+
+        .neon-modal-title.success {
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
         }
 
         .neon-modal-message {
@@ -1887,6 +1902,11 @@
         .neon-modal-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .neon-modal-btn.warning {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
         }
 
         /* PUBLIC CHAT STYLE */
@@ -1991,7 +2011,7 @@
             box-shadow: 0 0 15px #00ff88;
         }
 
-        /* CONFIRM MODAL */
+        /* CONFIRM MODAL - NEON DESIGN */
         .confirm-modal {
             position: fixed;
             top: 0;
@@ -2018,24 +2038,42 @@
             max-width: 400px;
             width: 100%;
             background: linear-gradient(145deg, #0a0a0a, #0f0f0f);
-            border: 2px solid #ff4444;
+            border: 2px solid var(--neon-orange);
             border-radius: 40px;
             padding: 35px;
             text-align: center;
             animation: fadeIn 0.3s;
+            box-shadow: 0 0 50px rgba(255, 170, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .confirm-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 170, 0, 0.1) 0%, transparent 70%);
+            animation: spin 20s linear infinite;
+            z-index: -1;
         }
 
         .confirm-icon {
             font-size: 60px;
-            color: #ff4444;
+            color: var(--neon-orange);
             margin-bottom: 20px;
+            text-shadow: 0 0 20px var(--neon-orange);
+            animation: neonPulse 2s infinite;
         }
 
         .confirm-title {
             font-family: 'Orbitron', monospace;
             font-size: 24px;
-            color: #ff4444;
+            color: var(--neon-orange);
             margin-bottom: 15px;
+            text-shadow: 0 0 5px var(--neon-orange);
         }
 
         .confirm-message {
@@ -2059,23 +2097,25 @@
         }
 
         .confirm-btn-yes {
-            background: linear-gradient(135deg, #ff4444, #cc0000);
-            color: white;
+            background: linear-gradient(135deg, var(--neon-orange), #ff8800);
+            color: #000;
         }
 
         .confirm-btn-yes:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.4);
         }
 
         .confirm-btn-no {
-            background: #333;
+            background: linear-gradient(135deg, #333, #222);
             color: white;
+            border: 1px solid var(--neon-cyan);
         }
 
         .confirm-btn-no:hover {
             background: #444;
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2);
         }
 
         .chat-badge {
@@ -2774,7 +2814,7 @@
         </div>
     </div>
 
-<div class="confirm-modal" id="confirmModal"><div class="confirm-content"><div class="confirm-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="confirm-title" id="confirmTitle">Confirm</div><div class="confirm-message" id="confirmMessage">Are you sure?</div><div class="confirm-actions"><button class="confirm-btn confirm-btn-yes" id="confirmYesBtn">Yes</button><button class="confirm-btn confirm-btn-no" onclick="closeConfirm()">No</button></div></div></div>
+<div class="confirm-modal" id="confirmModal"><div class="confirm-content"><div class="confirm-icon"><i class="fas fa-question-circle"></i></div><div class="confirm-title" id="confirmTitle">Confirm</div><div class="confirm-message" id="confirmMessage">Are you sure?</div><div class="confirm-actions"><button class="confirm-btn confirm-btn-yes" id="confirmYesBtn">Yes</button><button class="confirm-btn confirm-btn-no" onclick="closeConfirm()">No</button></div></div></div>
 
 <div class="upload-progress-neon" id="uploadProgressNeon"><div class="upload-progress-icon"><i class="fas fa-cloud-upload-alt"></i></div><div class="upload-progress-title">UPLOADING...</div><div class="upload-progress-filename" id="uploadNeonFilename">file.jpg</div><div class="upload-progress-bar-container"><div class="upload-progress-fill" id="uploadNeonFill"></div></div><div class="upload-progress-percent" id="uploadNeonPercent">0%</div></div>
 
@@ -2810,6 +2850,57 @@
     let notifiedDeposits = new Set();
     let notifiedVIP = new Set();
     
+    // Push Notification Setup
+    let notificationPermissionGranted = false;
+    let adminIcon = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
+    
+    async function requestNotificationPermission() {
+        if ('Notification' in window) {
+            const permission = await Notification.requestPermission();
+            notificationPermissionGranted = permission === 'granted';
+            if (notificationPermissionGranted) {
+                console.log('Notifikasi diizinkan');
+                // Register service worker
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registration = await navigator.serviceWorker.register('/sw.js');
+                        console.log('Service Worker registered');
+                    } catch(err) {
+                        console.log('Service Worker error:', err);
+                    }
+                }
+            }
+        }
+    }
+    
+    function sendAdminNotification(title, message, tag = null) {
+        if (!notificationPermissionGranted) return;
+        
+        try {
+            const options = {
+                body: message,
+                icon: adminIcon,
+                badge: adminIcon,
+                vibrate: [200, 100, 200],
+                silent: false,
+                requireInteraction: true
+            };
+            if (tag) options.tag = tag;
+            
+            const notification = new Notification(title, options);
+            
+            notification.onclick = function() {
+                window.focus();
+                notification.close();
+            };
+            
+            setTimeout(() => notification.close(), 8000);
+        } catch(e) { console.log('Notifikasi error:', e); }
+    }
+    
+    // Panggil request izin saat load
+    requestNotificationPermission();
+    
     const videoList = [
         { id: 1, name: '🎬 Video Background 1', file: 'video1.mp4' },
         { id: 2, name: '🎬 Video Background 2', file: 'video2.mp4' },
@@ -2838,12 +2929,13 @@
     function showNeonModal(title, message, isError = false) {
         const modal = document.createElement('div');
         modal.className = 'neon-modal active';
+        const iconClass = isError ? 'warning' : 'success';
         modal.innerHTML = `
             <div class="neon-modal-content">
-                <div class="neon-modal-icon"><i class="fas fa-${isError ? 'exclamation-triangle' : 'check-circle'}"></i></div>
-                <div class="neon-modal-title" style="color: ${isError ? '#ff4444' : '#00ffff'};">${title}</div>
+                <div class="neon-modal-icon ${iconClass}"><i class="fas fa-${isError ? 'exclamation-triangle' : 'check-circle'}"></i></div>
+                <div class="neon-modal-title ${iconClass}">${title}</div>
                 <div class="neon-modal-message">${message}</div>
-                <button class="neon-modal-btn" onclick="this.closest('.neon-modal').remove()">OK</button>
+                <button class="neon-modal-btn ${iconClass}" onclick="this.closest('.neon-modal').remove()">OK</button>
             </div>
         `;
         document.body.appendChild(modal);
@@ -2877,6 +2969,7 @@
     function checkNewNotifications() {
         let newDeposits = 0;
         let newVIP = 0;
+        let newMessages = 0;
         let newNotifications = [];
         
         Object.keys(allDeposits).forEach(uid => {
@@ -2889,6 +2982,7 @@
                         title: '💰 DEPOSIT BARU',
                         message: `${uid} melakukan deposit Rp ${formatRupiah(allDeposits[uid][id].jumlah)}`
                     });
+                    sendAdminNotification('💰 DEPOSIT BARU', `${uid} - Rp ${formatRupiah(allDeposits[uid][id].jumlah)}`, `deposit_${id}`);
                 }
             });
         });
@@ -2902,6 +2996,24 @@
                         type: 'vip',
                         title: '👑 VIP ORDER BARU',
                         message: `${uid} memesan paket ${allPurchases[uid][id].package}`
+                    });
+                    sendAdminNotification('👑 VIP ORDER BARU', `${uid} - ${allPurchases[uid][id].package}`, `vip_${id}`);
+                }
+            });
+        });
+        
+        // Cek pesan chat baru dalam 30 detik terakhir
+        const thirtySecAgo = Date.now() - 30000;
+        Object.keys(allUsers).forEach(uid => {
+            db.ref(`chats/${uid}`).limitToLast(1).once('value', snap => {
+                const msgs = snap.val();
+                if (msgs) {
+                    Object.keys(msgs).forEach(key => {
+                        const msg = msgs[key];
+                        if (msg.sender === 'customer' && msg.timestamp && msg.timestamp > thirtySecAgo && (!localStorage.getItem(`chat_notified_${key}`))) {
+                            localStorage.setItem(`chat_notified_${key}`, 'true');
+                            sendAdminNotification('💬 PESAN BARU', `${uid}: ${msg.text.substring(0, 50)}`, `chat_${key}`);
+                        }
                     });
                 }
             });
@@ -3492,7 +3604,6 @@
     // ==================== BROADCAST VIP UPDATE ====================
     // Buka modal broadcast
     function openBroadcastVIPModal() {
-        // Reset form
         document.getElementById('broadcastTitle').value = '';
         document.getElementById('broadcastDescription').value = '';
         document.getElementById('broadcastLink').value = '';
@@ -3500,10 +3611,8 @@
         document.getElementById('broadcastExpiry').value = '7';
         document.getElementById('broadcastReduceQuota').value = 'yes';
     
-        // Reset preview
         updateBroadcastPreview();
     
-        // Tambahkan event listener untuk live preview
         const inputs = ['broadcastTitle', 'broadcastDescription', 'broadcastVersion'];
         inputs.forEach(id => {
             document.getElementById(id).oninput = updateBroadcastPreview;
@@ -3512,12 +3621,10 @@
         document.getElementById('broadcastVIPModal').classList.add('active');
     }
 
-    // Tutup modal broadcast
     function closeBroadcastVIPModal() {
         document.getElementById('broadcastVIPModal').classList.remove('active');
     }
 
-    // Update live preview
     function updateBroadcastPreview() {
         const title = document.getElementById('broadcastTitle').value.trim();
         const desc = document.getElementById('broadcastDescription').value.trim();
@@ -3528,7 +3635,6 @@
         document.getElementById('previewVersion').innerHTML = version ? `Version: ${version}` : 'Version: -';
     }
 
-    // Fungsi utama: Kirim broadcast ke semua user VIP
     async function sendBroadcastToAllVIP() {
         const title = document.getElementById('broadcastTitle').value.trim();
         const desc = document.getElementById('broadcastDescription').value.trim();
@@ -3537,13 +3643,11 @@
         const expiry = parseInt(document.getElementById('broadcastExpiry').value) || 7;
         const reduceQuota = document.getElementById('broadcastReduceQuota').value === 'yes';
     
-        // Validasi
         if (!title || !desc || !link) {
             showToast('Mohon isi semua field (Title, Description, Link)!');
             return;
         }
     
-        // Konfirmasi
         showConfirm('Kirim ke Semua VIP', 
             `⚠️ PERINGATAN!\n\n` +
             `Anda akan mengirim update ke SEMUA user VIP aktif.\n\n` +
@@ -3557,7 +3661,6 @@
         );
     }
 
-    // Eksekusi broadcast
     async function executeBroadcastToAllVIP(title, desc, link, version, expiry, reduceQuota) {
         showLoading();
         let successCount = 0;
@@ -3566,11 +3669,9 @@
         let vipList = [];
     
         try {
-            // 1. Ambil semua user VIP yang statusnya ACTIVE
             const vipSnap = await db.ref('vip_members').once('value');
             const allVIPs = vipSnap.val() || {};
         
-            // Filter hanya yang status active
             Object.keys(allVIPs).forEach(uid => {
                 if (allVIPs[uid].status === 'active') {
                     vipList.push({
@@ -3587,7 +3688,6 @@
                 return;
             }
         
-            // 2. Simpan update ke global_updates (untuk history)
             const updateRef = await db.ref('global_updates').push({
                 title: title,
                 description: desc,
@@ -3602,13 +3702,11 @@
         
             const updateId = updateRef.key;
         
-            // 3. Kirim ke setiap user VIP
             for (const vip of vipList) {
                 try {
                     const uid = vip.uid;
                     const vipData = vip.vipData;
                 
-                    // Simpan update ke user's personal updates
                     await db.ref(`user_updates/${uid}/${updateId}`).set({
                         title: title,
                         description: desc,
@@ -3619,19 +3717,12 @@
                         is_broadcast: true
                     });
                 
-                    // Kirim notifikasi ke chat user
                     await db.ref(`chats/${uid}`).push({
                         sender: 'system',
-                        text: `📢 *VIP UPDATE BARU!*\n\n` +
-                              `Title: ${title}\n` +
-                              `Version: ${version}\n` +
-                              `Description: ${desc}\n\n` +
-                              `⬇️ Download: ${link}\n\n` +
-                              `${reduceQuota && vipData.updateType === 'quota' ? '⚠️ Quota update Anda akan berkurang 1 setelah ini.' : ''}`,
+                        text: `📢 *VIP UPDATE BARU!\n\nTitle: ${title}\nVersion: ${version}\nDescription: ${desc}\n\n⬇️ Download: ${link}\n\n${reduceQuota && vipData.updateType === 'quota' ? '⚠️ Quota update Anda akan berkurang 1 setelah ini.' : ''}`,
                         timestamp: Date.now()
                     });
                 
-                    // 4. KURANGI QUOTA jika user tipe quota dan reduceQuota = true
                     if (reduceQuota && vipData.updateType === 'quota') {
                         const currentUsed = vipData.updatesUsed || 0;
                         const totalQuota = vipData.updateQuota || 0;
@@ -3645,16 +3736,12 @@
                     
                         quotaReducedCount++;
                     
-                        // Kirim notifikasi khusus tentang quota
                         await db.ref(`chats/${uid}`).push({
                             sender: 'system',
-                            text: `📊 *QUOTA UPDATE*\n\n` +
-                                  `Anda telah menggunakan 1 quota untuk update: "${title}"\n` +
-                                  `Sisa quota: ${totalQuota - newUsed}/${totalQuota}`,
+                            text: `📊 *QUOTA UPDATE*\n\nAnda telah menggunakan 1 quota untuk update: "${title}"\nSisa quota: ${totalQuota - newUsed}/${totalQuota}`,
                             timestamp: Date.now()
                         });
                     
-                        // Cek jika quota habis
                         if (newUsed >= totalQuota) {
                             await db.ref(`vip_members/${uid}`).update({
                                 status: 'expired',
@@ -3663,9 +3750,7 @@
                         
                             await db.ref(`chats/${uid}`).push({
                                 sender: 'system',
-                                text: `⚠️ *QUOTA HABIS!*\n\n` +
-                                      `Quota update Anda telah habis. Status VIP Anda akan diturunkan menjadi FREE.\n` +
-                                      `Silakan perpanjang VIP untuk mendapatkan akses kembali.`,
+                                text: `⚠️ *QUOTA HABIS!\n\nQuota update Anda telah habis. Status VIP Anda akan diturunkan menjadi FREE.\nSilakan perpanjang VIP untuk mendapatkan akses kembali.`,
                                 timestamp: Date.now()
                             });
                         }
@@ -3679,12 +3764,10 @@
                 }
             }
         
-            // 5. Catat aktivitas admin
             addActivityLog('Broadcast VIP Update', 
                 `Sent "${title}" to ${successCount} VIP users (Quota reduced: ${quotaReducedCount}, Errors: ${errorCount})`
             );
         
-            // 6. Tampilkan hasil
             let resultMessage = `✅ Broadcast selesai!\n\n`;
             resultMessage += `📨 Berhasil dikirim ke: ${successCount} user VIP\n`;
             resultMessage += `⚠️ Gagal: ${errorCount} user\n`;
@@ -3695,10 +3778,7 @@
         
             showNeonModal('Broadcast Selesai', resultMessage, false);
         
-            // Refresh file updates list
             loadFileUpdates();
-        
-            // Refresh VIP members list untuk melihat quota terbaru
             loadVIPMembers();
         
             closeBroadcastVIPModal();
@@ -3708,26 +3788,6 @@
             showToast('Error: ' + error.message);
         } finally {
             hideLoading();
-        }
-    }
-
-    // Fungsi untuk melihat status quota user VIP (opsional, untuk debugging)
-    async function checkVIPQuotaStatus(uid) {
-        try {
-            const vipSnap = await db.ref(`vip_members/${uid}`).once('value');
-            const vip = vipSnap.val();
-            if (vip && vip.updateType === 'quota') {
-                console.log(`User ${uid}: Used ${vip.updatesUsed || 0}/${vip.updateQuota || 0}`);
-                return {
-                    used: vip.updatesUsed || 0,
-                    total: vip.updateQuota || 0,
-                    remaining: (vip.updateQuota || 0) - (vip.updatesUsed || 0)
-                };
-            }
-            return null;
-        } catch(e) {
-            console.error(e);
-            return null;
         }
     }
     
@@ -3845,91 +3905,6 @@
         const uploadBtn = document.getElementById('chatUploadBtnAdmin');
         if (!uploadBtn) return;
     
-        uploadBtn.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                if (!currentChatUser) {
-                    showToast('Pilih customer terlebih dahulu!');
-                    return;
-                }
-            
-                showLoading();
-                try {
-                    // Upload ke Imgbb
-                    const fileUrl = await uploadToImgbb(file);
-                    const fileSize = formatFileSize(file.size);
-                
-                    // Kirim pesan dengan file
-                    await db.ref('chats/' + currentChatUser).push({
-                        sender: 'admin',
-                        text: `📎 Mengirim file: ${file.name}`,
-                        fileData: {
-                            name: file.name,
-                            url: fileUrl,
-                            size: file.size,
-                            sizeFormatted: fileSize,
-                            type: file.type,
-                            timestamp: Date.now()
-                        },
-                        timestamp: Date.now()
-                    });
-                
-                    hideLoading();
-                    showToast('File terkirim!');
-                } catch (error) {
-                    hideLoading();
-                    showToast('Gagal upload: ' + error.message);
-                }
-            };
-            input.click();
-        });
-    }
-
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    // Fungsi untuk mendownload file
-    function downloadFile(url, filename) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-    
-    // ==================== CHAT FILE UPLOAD ====================
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    function downloadFile(url, filename) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function setupChatFileUpload() {
-        const uploadBtn = document.getElementById('chatUploadBtnAdmin');
-        if (!uploadBtn) return;
-    
-        // Hapus event listener lama jika ada
         const newBtn = uploadBtn.cloneNode(true);
         uploadBtn.parentNode.replaceChild(newBtn, uploadBtn);
     
@@ -3974,6 +3949,23 @@
             };
             input.click();
         });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
     
     // ==================== PUBLIC CHAT ====================
@@ -4145,7 +4137,7 @@
     
     // ==================== ACTIVITY LOGS ====================
     function loadActivityLogs() { const saved = localStorage.getItem('admin_activity_logs'); if (saved) { try { adminLogs = JSON.parse(saved); } catch(e) { adminLogs = []; } } displayActivityLogs(); }
-    function displayActivityLogs() { const search = document.getElementById('logSearch')?.value.toLowerCase() || ''; let filtered = adminLogs; if (search) filtered = filtered.filter(log => log.action.toLowerCase().includes(search) || (log.details && log.details.toLowerCase().includes(search))); let html = ''; filtered.slice(0, 100).forEach(log => { const time = new Date(log.time).toLocaleString(); html += `<tr><td>${time}</td><td>${log.admin}</td><td>${log.action}</td><td>${log.details || '-'}</td><td>${log.ip}</td>`; }); document.getElementById('logList').innerHTML = html || '<tr><td colspan="5" class="no-data">No logs found</td></tr>'; }
+    function displayActivityLogs() { const search = document.getElementById('logSearch')?.value.toLowerCase() || ''; let filtered = adminLogs; if (search) filtered = filtered.filter(log => log.action.toLowerCase().includes(search) || (log.details && log.details.toLowerCase().includes(search))); let html = ''; filtered.slice(0, 100).forEach(log => { const time = new Date(log.time).toLocaleString(); html += `</table><td>${time}</td><td>${log.admin}</td><td>${log.action}</td><td>${log.details || '-'}</td><td>${log.ip}</td>`; }); document.getElementById('logList').innerHTML = html || '<tr><td colspan="5" class="no-data">No logs found</td></tr>'; }
     function filterLogs() { displayActivityLogs(); }
     function clearActivityLogs() { showConfirm('Clear Logs', 'Delete all activity logs?', () => { adminLogs = []; localStorage.setItem('admin_activity_logs', JSON.stringify(adminLogs)); displayActivityLogs(); showToast('All logs cleared!'); }); }
     
