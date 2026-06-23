@@ -855,6 +855,57 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             animation: shimmer 1.5s infinite;
         }
+        
+        .video-popup-type-select {
+            display: flex;
+            gap: 12px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        
+        .video-popup-type-option {
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            font-size: 13px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            color: #aaa;
+        }
+        
+        .video-popup-type-option:hover {
+            transform: translateY(-2px);
+        }
+        
+        .video-popup-type-option.selected {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: rgba(0, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+        
+        .video-popup-type-option.tutorial.selected {
+            border-color: #00ff88;
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.15);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+        
+        .video-popup-type-option.promo.selected {
+            border-color: #ffd700;
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.15);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+        
+        .video-popup-type-option.announcement.selected {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: rgba(0, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
 
         /* UPDATE ITEM */
         .update-item {
@@ -2854,9 +2905,9 @@
         <div class="card">
             <div class="card-title"><i class="fas fa-play-circle"></i> Video Popup Settings</div>
             <p style="color:#aaa; margin-bottom:20px;">
-                <i class="fas fa-info-circle"></i> Video popup akan tampil di halaman user saat pertama kali login.
+                <i class="fas fa-info-circle"></i> Video popup akan tampil di halaman login user (sebelum login) dengan pilihan type tutorial, promo, atau pengumuman.
             </p>
-
+    
             <div id="currentVideoPopupStatus" style="margin-bottom:20px; display:none;">
                 <div style="background:linear-gradient(135deg, rgba(0,255,255,0.1), rgba(0,255,255,0.05)); border:2px solid var(--neon-cyan); border-radius:20px; padding:20px;">
                     <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
@@ -2869,24 +2920,40 @@
                     </button>
                 </div>
             </div>
-
+    
             <div class="modal-form-group">
                 <label class="modal-label"><i class="fas fa-heading"></i> Title</label>
-                <input type="text" class="modal-input" id="videoPopupTitle" placeholder="e.g., 🎬 Video Update">
+                <input type="text" class="modal-input" id="videoPopupTitle" placeholder="e.g., 🎬 Tutorial Registrasi">
             </div>
-
+    
             <div class="modal-form-group">
                 <label class="modal-label"><i class="fas fa-align-left"></i> Description</label>
                 <textarea class="modal-textarea" id="videoPopupDesc" placeholder="Deskripsi video..."></textarea>
             </div>
-
+    
             <div class="modal-form-group">
                 <label class="modal-label"><i class="fas fa-tag"></i> Badge Text</label>
                 <input type="text" class="modal-input" id="videoPopupBadge" placeholder="📢 PENGUMUMAN">
             </div>
-
+    
             <div class="modal-form-group">
-                <label class="modal-label"><i class="fas fa-video"></i> Pilih Video</label>
+                <label class="modal-label"><i class="fas fa-tag"></i> Type Popup</label>
+                <div class="video-popup-type-select">
+                    <div class="video-popup-type-option tutorial" data-type="tutorial" onclick="selectVideoPopupType('tutorial', this)">
+                        <i class="fas fa-graduation-cap"></i> Tutorial
+                    </div>
+                    <div class="video-popup-type-option promo" data-type="promo" onclick="selectVideoPopupType('promo', this)">
+                        <i class="fas fa-gift"></i> Promo
+                    </div>
+                    <div class="video-popup-type-option announcement selected" data-type="announcement" onclick="selectVideoPopupType('announcement', this)">
+                        <i class="fas fa-bullhorn"></i> Pengumuman
+                    </div>
+                </div>
+                <small style="color:#888;">Pilih type untuk menentukan tampilan badge di user</small>
+            </div>
+    
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-video"></i> Pilih Video (game1.mp4 - game5.mp4)</label>
                 <select class="modal-select" id="videoPopupSelect">
                     <option value="1">Video 1 (game1.mp4)</option>
                     <option value="2">Video 2 (game2.mp4)</option>
@@ -2894,15 +2961,18 @@
                     <option value="4">Video 4 (game4.mp4)</option>
                     <option value="5">Video 5 (game5.mp4)</option>
                 </select>
-                <small style="color:#888;">Video akan diputar di popup user</small>
+                <small style="color:#888;">Video akan diputar di popup user sebelum login</small>
             </div>
-
+    
             <div class="video-popup-admin-preview">
                 <video id="videoPopupAdminPreview" autoplay loop muted playsinline>
                     <source src="game1.mp4" type="video/mp4">
                 </video>
+                <div style="text-align:center; margin-top:10px;">
+                    <span class="video-popup-admin-status inactive" id="videoPopupPreviewStatus">🔴 Preview</span>
+                </div>
             </div>
-
+    
             <div class="action-buttons" style="margin-top:20px;">
                 <button class="btn btn-primary" onclick="activateVideoPopup()">
                     <i class="fas fa-play"></i> Aktifkan Video Popup
@@ -3204,6 +3274,7 @@
     let selectedMessages = new Set();
     let notifiedDeposits = new Set();
     let notifiedVIP = new Set();
+    let selectedVideoPopupType = 'announcement';
     
     // Push Notification Setup
     let notificationPermissionGranted = false;
@@ -4289,6 +4360,127 @@
         }
     }
     
+    // Tambahkan fungsi selectVideoPopupType
+    function selectVideoPopupType(type, el) {
+        selectedVideoPopupType = type;
+        document.querySelectorAll('.video-popup-type-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        el.classList.add('selected');
+    }
+    
+    // Update fungsi loadVideoPopupStatus
+    function loadVideoPopupStatus() {
+        db.ref('admin_config/video_popup').on('value', (snap) => {
+            const data = snap.val();
+            if (data && data.active === true) {
+                document.getElementById('currentVideoPopupStatus').style.display = 'block';
+                const videoName = videoPopupList.find(v => v.id === data.videoId)?.name || 'Unknown';
+                const typeLabel = data.type === 'tutorial' ? '📖 Tutorial' : data.type === 'promo' ? '🎁 Promo' : '📢 Pengumuman';
+                document.getElementById('currentVideoPopupDetails').innerHTML = `
+                    <div><strong>Title:</strong> ${data.title || '-'}</div>
+                    <div><strong>Description:</strong> ${data.description || '-'}</div>
+                    <div><strong>Video:</strong> ${videoName}</div>
+                    <div><strong>Badge:</strong> ${data.badge || '-'}</div>
+                    <div><strong>Type:</strong> ${typeLabel}</div>
+                `;
+                document.getElementById('videoPopupTitle').value = data.title || '';
+                document.getElementById('videoPopupDesc').value = data.description || '';
+                document.getElementById('videoPopupBadge').value = data.badge || '📢 PENGUMUMAN';
+                document.getElementById('videoPopupSelect').value = data.videoId || 1;
+                
+                // Set type
+                const type = data.type || 'announcement';
+                document.querySelectorAll('.video-popup-type-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    if (opt.dataset.type === type) {
+                        opt.classList.add('selected');
+                    }
+                });
+                selectedVideoPopupType = type;
+                
+                // Preview video
+                const preview = document.getElementById('videoPopupAdminPreview');
+                const videoFile = videoPopupList.find(v => v.id === data.videoId)?.file || 'game1.mp4';
+                preview.src = videoFile;
+                preview.load();
+                preview.play().catch(e => console.log('Auto-play error:', e));
+                
+                const statusEl = document.getElementById('videoPopupPreviewStatus');
+                statusEl.textContent = '✅ AKTIF';
+                statusEl.className = 'video-popup-admin-status active';
+            } else {
+                document.getElementById('currentVideoPopupStatus').style.display = 'none';
+                const statusEl = document.getElementById('videoPopupPreviewStatus');
+                statusEl.textContent = '🔴 NONAKTIF';
+                statusEl.className = 'video-popup-admin-status inactive';
+            }
+        });
+    }
+    
+    // Update fungsi activateVideoPopup
+    async function activateVideoPopup() {
+        const title = document.getElementById('videoPopupTitle').value.trim();
+        const desc = document.getElementById('videoPopupDesc').value.trim();
+        const badge = document.getElementById('videoPopupBadge').value.trim();
+        const videoId = parseInt(document.getElementById('videoPopupSelect').value);
+        const type = selectedVideoPopupType || 'announcement';
+        
+        if (!title) { showToast('Masukkan judul video popup!'); return; }
+        if (!desc) { showToast('Masukkan deskripsi video popup!'); return; }
+        
+        showLoading();
+        try {
+            await db.ref('admin_config/video_popup').set({
+                active: true,
+                title: title,
+                description: desc,
+                badge: badge || '📢 PENGUMUMAN',
+                videoId: videoId,
+                type: type,
+                updatedAt: Date.now()
+            });
+            addActivityLog('Activate Video Popup', `Video popup activated: ${title} (${type})`);
+            hideLoading();
+            showToast('✅ Video popup diaktifkan!');
+            loadVideoPopupStatus();
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+    
+    // Update fungsi deactivateVideoPopup
+    async function deactivateVideoPopup() {
+        showConfirm('Nonaktifkan Video Popup', 'Yakin ingin menonaktifkan video popup?', async () => {
+            showLoading();
+            try {
+                await db.ref('admin_config/video_popup').update({ active: false });
+                addActivityLog('Deactivate Video Popup', 'Video popup deactivated');
+                hideLoading();
+                showToast('✅ Video popup dinonaktifkan!');
+                loadVideoPopupStatus();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+    
+    // Tambahkan event listener untuk preview video saat select berubah
+    document.addEventListener('DOMContentLoaded', function() {
+        const select = document.getElementById('videoPopupSelect');
+        if (select) {
+            select.addEventListener('change', function() {
+                const preview = document.getElementById('videoPopupAdminPreview');
+                const videoFile = videoPopupList.find(v => v.id === parseInt(this.value))?.file || 'game1.mp4';
+                preview.src = videoFile;
+                preview.load();
+                preview.play().catch(e => console.log('Auto-play error:', e));
+            });
+        }
+    });
+    
     // ==================== FREE UPDATE ====================
     async function loadFreeUpdateStats() { 
         const viewsSnap = await db.ref('free_updates/views').once('value'); 
@@ -4770,4 +4962,3 @@
     init();
 </script>
 </body>
-</html>
