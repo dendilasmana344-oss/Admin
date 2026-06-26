@@ -699,6 +699,13 @@
             color: #ffaa00;
             font-size: 12px;
         }
+        
+        .detail-value.device-id {
+            color: #ff6b9d;
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
+        }
 
         /* BADGES */
         .badge {
@@ -4084,6 +4091,7 @@
                 pin: user.pin || '-',
                 lastIP: user.lastIP || '-',
                 device: user.device || '-'
+                deviceId: user.deviceId || '-'
             }); 
         });
         customers.sort((a, b) => { if (a.lastLogin !== '-' && b.lastLogin !== '-') return new Date(b.lastLogin) - new Date(a.lastLogin); return 0; });
@@ -4132,6 +4140,10 @@
                         <div class="detail-item">
                             <span class="detail-label"><i class="fas fa-mobile-alt"></i> Device</span>
                             <span class="detail-value device">${c.device ? c.device.substring(0, 50) + (c.device.length > 50 ? '...' : '') : '-'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="fas fa-fingerprint"></i> Device ID</span>
+                            <span class="detail-value device-id">${c.deviceId || '-'}</span>
                         </div>
                     </div>
                     <div class="action-buttons">
