@@ -2086,6 +2086,23 @@
             color: #ff8888;
             border: 1px solid #ff4444;
         }
+        
+        /* Tambahkan di style */
+        .stat-number {
+            transition: none !important;
+        }
+
+        .stat-number.users,
+        .stat-number.views,
+        .stat-number.avg {
+            will-change: contents;
+        }
+
+        /* Efek glow saat angka berubah */
+        .stat-number.updating {
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.8) !important;
+            transition: text-shadow 0.3s;
+        }
 
         /* FREE UPDATE STATS - NEON DESIGN */
         .free-update-stats {
@@ -3099,7 +3116,7 @@
             <div class="modal-form-group"><label class="modal-label">Version</label><input type="text" class="modal-input" id="freeVersion" placeholder="v1.0.0"></div>
             <div class="modal-form-group"><label class="modal-label">Description</label><textarea class="modal-textarea" id="freeDescription" placeholder="Update description..."></textarea></div>
             <div class="modal-form-group"><label class="modal-label">Download Link</label><input type="text" class="modal-input" id="freeLink" placeholder="https://..."></div>
-            <div class="action-buttons"><button class="btn btn-primary" onclick="sendFreeUpdateToAll()"><i class="fas fa-paper-plane"></i> Send to All Users</button><button class="btn btn-info" onclick="loadFreeUpdateStats()"><i class="fas fa-chart-bar"></i> Refresh Stats</button></div>
+            <div class="action-buttons"><button class="btn btn-primary" onclick="sendFreeUpdateToAll()"><i class="fas fa-paper-plane"></i> Send to All Users</button><button class="btn btn-info" onclick="loadFreeUpdateStats()"><i class="fas fa-chart-bar"></i> Refresh Stats</button><button class="btn btn-warning" onclick="loadFreeUpdateStatsRealtime()"><i class="fas fa-sync-alt"></i> Live Mode</button></div>
             <div style="margin-top:30px;"><h3 style="color:var(--neon-cyan);">📜 Update History</h3><div id="freeUpdateHistory"></div></div>
         </div>
     </div>
@@ -3545,6 +3562,7 @@
     let adminBgVideo = null;
     let isAdminBgMuted = true;
     let broadcastUpdateData = null;
+    let freeStatsListener = null;
     let deleteModeActive = false;
     let selectedMessages = new Set();
     let notifiedDeposits = new Set();
@@ -4797,26 +4815,69 @@
         }); 
         document.getElementById('freeUpdateHistory').innerHTML = html || '<div class="no-data">No update history</div>'; 
     }
-    async function sendFreeUpdateToAll() { 
-        const title = document.getElementById('freeTitle').value.trim(); 
-        const version = document.getElementById('freeVersion').value.trim(); 
-        const desc = document.getElementById('freeDescription').value.trim(); 
-        const link = document.getElementById('freeLink').value.trim(); 
-        if (!title || !version || !link) { showToast('Please fill required fields!'); return; } 
-        showLoading(); 
-        const updateData = { title, version, description: desc, link, timestamp: Date.now(), active: true }; 
-        try { 
-            await db.ref('free_updates/latest').set(updateData); 
-            await db.ref('free_updates/all').push(updateData); 
-            addActivityLog('Send Free Update', `Sent free update: ${title}`); 
-            hideLoading(); 
-            showToast('Free update sent!'); 
-            loadFreeUpdateStats(); 
-            loadFreeUpdateHistory(); 
-        } catch (error) { 
-            hideLoading(); 
-            showToast('Error: ' + error.message); 
-        } 
+    async function sendFreeUpdateToAll() {
+        const title = document.getElementById('freeTitle').value.trim();
+        const version = document.getElementById('freeVersion').value.trim();
+        const desc = document.getElementById('freeDescription').value.trim();
+        const link = document.getElementById('freeLink').value.trim();
+    
+        if (!title || !version || !link) {
+            showToast('Please fill required fields!');
+            return;
+        }
+    
+        showLoading();
+        const updateData = { 
+            title, 
+            version, 
+            description: desc, 
+            link, 
+            timestamp: Date.now(), 
+            active: true,
+            views: 0 // Inisialisasi views
+        };
+    
+        try {
+            // Simpan ke latest dan all
+            await db.ref('free_updates/latest').set(updateData);
+            const newRef = await db.ref('free_updates/all').push(updateData);
+        
+            // Tambahkan ke total_views
+            await db.ref('free_updates/total_views/' + newRef.key).set({
+                total: 0,
+                created: Date.now()
+            });
+        
+            // Kirim notifikasi ke semua user yang online
+            const usersSnap = await db.ref('users').once('value');
+            const users = usersSnap.val() || {};
+            Object.keys(users).forEach(uid => {
+                if (users[uid].status === 'online') {
+                    db.ref('chats/' + uid).push({
+                        sender: 'system',
+                        text: `📢 FREE UPDATE BARU!\n\nTitle: ${title}\nVersion: ${version}\n\n⬇️ Download: ${link}`,
+                        timestamp: Date.now()
+                    });
+                }
+            });
+        
+            addActivityLog('Send Free Update', `Sent free update: ${title}`);
+            hideLoading();
+            showToast('✅ Free update sent to all users!');
+        
+            // Reset form
+            document.getElementById('freeTitle').value = '';
+            document.getElementById('freeVersion').value = '';
+            document.getElementById('freeDescription').value = '';
+            document.getElementById('freeLink').value = '';
+        
+            // Refresh stats
+            loadFreeUpdateStats();
+        
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
     }
     async function deleteFreeUpdate(updateId) { 
         showConfirm('Delete Update', 'Delete this update?', async () => { 
@@ -4832,6 +4893,142 @@
                 showToast('Error: ' + error.message); 
             } 
         }); 
+    }
+    
+    // ==================== FREE UPDATE STATS REAL-TIME ====================
+
+    function loadFreeUpdateStatsRealtime() {
+        // Hentikan listener lama jika ada
+        if (freeStatsListener) {
+            freeStatsListener();
+            freeStatsListener = null;
+        }
+    
+        // Listen perubahan di views
+        freeStatsListener = db.ref('free_updates/views').on('value', (snap) => {
+            const views = snap.val() || {};
+            const users = Object.keys(views).length;
+            let totalViews = 0;
+            let userList = [];
+        
+            Object.keys(views).forEach(uid => {
+                const count = Object.keys(views[uid] || {}).length;
+                totalViews += count;
+                userList.push({ uid, views: count });
+            });
+        
+            // Update stat dengan animasi neon
+            animateNumber('freeStatsUsers', users);
+            animateNumber('freeStatsViews', totalViews);
+            const avg = users ? (totalViews / users).toFixed(1) : '0';
+            animateNumber('freeStatsAvg', avg);
+        
+            // Update user list
+            let userHtml = '';
+            userList.sort((a,b) => b.views - a.views).forEach(u => {
+                userHtml += `<div class="user-item"><span class="user-uid">${escapeHtml(u.uid)}</span><span class="user-views">${u.views} views</span></div>`;
+            });
+            document.getElementById('freeUsersList').innerHTML = userHtml || '<div class="no-data">No views yet</div>';
+        
+            console.log('📊 Free update stats updated - Users:', users, 'Views:', totalViews);
+        });
+    }
+
+    // Fungsi animasi angka
+    function animateNumber(elementId, targetValue) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+    
+        const current = parseFloat(el.textContent) || 0;
+        const target = parseFloat(targetValue) || 0;
+    
+        if (current === target) return;
+    
+        const duration = 500; // ms
+        const startTime = Date.now();
+        const startValue = current;
+    
+        function updateNumber() {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease out
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const value = startValue + (target - startValue) * eased;
+        
+            if (elementId === 'freeStatsAvg') {
+                el.textContent = value.toFixed(1);
+            } else {
+                el.textContent = Math.round(value);
+            }
+        
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            } else {
+                if (elementId === 'freeStatsAvg') {
+                    el.textContent = target.toFixed(1);
+                } else {
+                    el.textContent = Math.round(target);
+                }
+            }
+        }
+    
+        requestAnimationFrame(updateNumber);
+    }
+
+    // ==================== FREE UPDATE HISTORY REAL-TIME ====================
+    function loadFreeUpdateHistoryRealtime() {
+        db.ref('free_updates/all').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
+            const updates = snap.val() || {};
+            let html = '';
+            Object.keys(updates).sort((a,b) => (updates[b].timestamp||0) - (updates[a].timestamp||0)).forEach(key => {
+                const u = updates[key];
+                const updateId = key;
+                html += `
+                    <div class="update-item">
+                        <div class="update-title">📢 ${escapeHtml(u.title || 'Free Update')}</div>
+                        <div class="update-desc">${escapeHtml(u.description || '')}</div>
+                        <div class="update-meta">
+                            <span>${u.version || 'v1.0'}</span>
+                            <span>${u.timestamp ? new Date(u.timestamp).toLocaleString() : '-'}</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-danger btn-sm" onclick="deleteFreeUpdate('${key}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('freeUpdateHistory').innerHTML = html || '<div class="no-data">No update history</div>';
+        });
+    }
+
+    // Update fungsi loadFreeUpdateStats yang lama
+    async function loadFreeUpdateStats() {
+        // Fungsi ini sekarang hanya untuk load awal, realtime sudah di handle oleh listener
+        try {
+            const viewsSnap = await db.ref('free_updates/views').once('value');
+            const views = viewsSnap.val() || {};
+            const users = Object.keys(views).length;
+            let totalViews = 0;
+            let userList = [];
+        
+            Object.keys(views).forEach(uid => {
+                const count = Object.keys(views[uid] || {}).length;
+                totalViews += count;
+                userList.push({ uid, views: count });
+            });
+        
+            document.getElementById('freeStatsUsers').innerHTML = users;
+            document.getElementById('freeStatsViews').innerHTML = totalViews;
+            document.getElementById('freeStatsAvg').innerHTML = users ? (totalViews / users).toFixed(1) : '0';
+        
+            let userHtml = '';
+            userList.sort((a,b) => b.views - a.views).forEach(u => {
+                userHtml += `<div class="user-item"><span class="user-uid">${escapeHtml(u.uid)}</span><span class="user-views">${u.views} views</span></div>`;
+            });
+            document.getElementById('freeUsersList').innerHTML = userHtml || '<div class="no-data">No views yet</div>';
+        } catch (error) {
+            console.error('Error loading free update stats:', error);
+        }
     }
     
     // ==================== DISCOUNTS (LAMA) ====================
@@ -5528,6 +5725,8 @@
         listenPublicChatRealtime();
         setupChatFileUpload();
         initSupportChatAdmin();
+        loadFreeUpdateStatsRealtime();
+        loadFreeUpdateHistoryRealtime();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
