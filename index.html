@@ -1035,6 +1035,223 @@
         .chat-selector-neon .btn {
             flex-shrink: 0;
         }
+        
+        /* ===== CHAT SUPPORT ADMIN ===== */
+        .chat-support-admin-container {
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 30px;
+            padding: 20px;
+        }
+        
+        .chat-support-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: rgba(0, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 30px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .chat-support-selector .chat-label {
+            font-family: 'Orbitron', monospace;
+            color: var(--neon-cyan);
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        .chat-support-select {
+            flex: 1;
+            min-width: 250px;
+            padding: 14px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 25px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .chat-support-select:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+        }
+        
+        .chat-support-select option {
+            background: #0a0a0a;
+            color: white;
+            padding: 10px;
+        }
+        
+        .chat-support-device-info {
+            font-size: 12px;
+            color: #ffaa00;
+            padding: 5px 15px;
+            background: rgba(255, 170, 0, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 170, 0, 0.3);
+        }
+        
+        .chat-support-messages-admin {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 300px;
+            max-height: 400px;
+        }
+        
+        .chat-support-messages-admin::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .chat-support-messages-admin::-webkit-scrollbar-track {
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .chat-support-messages-admin::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 10px;
+        }
+        
+        .chat-support-msg-admin {
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: slideInUp 0.3s;
+        }
+        
+        .chat-support-msg-admin.user {
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            align-self: flex-end;
+            color: #000;
+        }
+        
+        .chat-support-msg-admin.admin {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            align-self: flex-start;
+            color: white;
+        }
+        
+        .chat-support-msg-admin.system {
+            background: rgba(255, 170, 0, 0.2);
+            border: 1px solid #ffaa00;
+            align-self: center;
+            color: #ffaa00;
+            font-size: 12px;
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        .chat-support-msg-admin .msg-sender {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        
+        .chat-support-msg-admin .msg-time {
+            font-size: 9px;
+            opacity: 0.6;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .chat-support-input-admin {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            align-items: center;
+        }
+        
+        .chat-support-input-admin .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: #000;
+            border: 2px solid var(--neon-cyan);
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .chat-support-input-admin .chat-input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        .chat-support-input-admin .chat-send-btn {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            border: none;
+            border-radius: 50%;
+            color: #000;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        
+        .chat-support-input-admin .chat-send-btn:hover {
+            transform: scale(1.1) rotate(-5deg);
+            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.4);
+        }
+        
+        .chat-support-input-admin .chat-upload-btn {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            border: none;
+            border-radius: 50%;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+        
+        .chat-support-input-admin .chat-upload-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+        
+        .chat-support-active-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .chat-support-active-badge.online {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+        
+        .chat-support-active-badge.offline {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+            border: 1px solid #9e9e9e;
+        }
 
         /* CHAT */
         .chat-container {
@@ -2716,6 +2933,7 @@
         <div class="tab" onclick="openTab('video_popup')"><i class="fas fa-play-circle"></i> Video Popup</div>
         <div class="tab" onclick="openTab('leaderboard')"><i class="fas fa-trophy"></i> Leaderboard</div>
         <div class="tab" onclick="openTab('chat')"><i class="fas fa-comments"></i> Private Chat</div>
+        <div class="tab" onclick="openTab('support_chat')"><i class="fas fa-headset"></i> Support Chat<span class="chat-badge" id="supportChatBadge">0</span></div>
         <div class="tab" onclick="openTab('public_chat')"><i class="fas fa-globe"></i> Public Chat<span class="chat-badge" id="publicChatBadge">0</span></div>
         <div class="tab" onclick="openTab('user_files')"><i class="fas fa-images"></i> User Files</div>
         <div class="tab" onclick="openTab('logs')"><i class="fas fa-history"></i> Activity Logs</div>
@@ -3084,6 +3302,45 @@
             <div class="action-buttons"><button class="btn btn-primary" onclick="activateMaintenance()"><i class="fas fa-play"></i> Activate Maintenance</button><button class="btn btn-danger" onclick="deactivateMaintenance()"><i class="fas fa-stop"></i> Deactivate Maintenance</button></div>
         </div>
     </div>
+    
+    <!-- SUPPORT CHAT TAB -->
+    <div id="support_chat" class="tab-content">
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-headset"></i> Chat Support Management
+                <span style="font-size:12px; margin-left:auto; color:#ffaa00;">
+                    <i class="fas fa-fingerprint"></i> Berdasarkan Device ID
+                </span>
+            </div>
+        
+            <div class="chat-support-admin-container">
+                <div class="chat-support-selector">
+                    <span class="chat-label"><i class="fas fa-users"></i> Pilih User:</span>
+                    <select class="chat-support-select" id="chatSupportSelect" onchange="loadSupportChat()">
+                        <option value="">-- Pilih User --</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" onclick="loadSupportUsers()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <span class="chat-support-device-info" id="supportDeviceInfo">Device ID: -</span>
+                </div>
+            
+                <div class="chat-support-messages-admin" id="chatSupportMessagesAdmin">
+                    <div class="chat-support-msg-admin system">Pilih user di atas untuk mulai chat support.</div>
+                </div>
+            
+                <div class="chat-support-input-admin">
+                    <button class="chat-upload-btn" id="chatSupportAdminUpload" onclick="uploadSupportAdminFile()">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <input type="text" class="chat-input" id="chatSupportAdminInput" placeholder="Ketik pesan balasan..." disabled>
+                    <button class="chat-send-btn" onclick="sendSupportAdminMessage()" id="chatSupportAdminSend" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="footer"><p>&copy; 2026 VIP Files Admin Panel | Real-Time Management System | V1.0.0</p></div>
 </div>
@@ -3282,6 +3539,9 @@
     let notifiedDeposits = new Set();
     let notifiedVIP = new Set();
     let selectedVideoPopupType = 'announcement';
+    let currentSupportDeviceId = '';
+    let supportAdminListener = null;
+    let supportUsersList = {};
     
     // Push Notification Setup
     let notificationPermissionGranted = false;
@@ -4090,7 +4350,7 @@
                 lastLogin: user.lastLogin || '-', 
                 pin: user.pin || '-',
                 lastIP: user.lastIP || '-',
-                device: user.device || '-',
+                device: user.device || '-'
                 deviceId: user.deviceId || '-'
             }); 
         });
@@ -4913,6 +5173,263 @@
         } catch (error) { console.error(error); }
     }, 5 * 60 * 1000);
     
+    // ==================== CHAT SUPPORT ADMIN ====================
+
+    function loadSupportUsers() {
+        db.ref('support_chats').once('value', (snap) => {
+            const chats = snap.val() || {};
+            supportUsersList = chats;
+            const select = document.getElementById('chatSupportSelect');
+            
+            // Simpan nilai yang dipilih
+            const currentVal = select.value;
+            
+            select.innerHTML = '<option value="">-- Pilih User --</option>';
+            
+            // Urutkan berdasarkan lastTimestamp terbaru
+            const sorted = Object.keys(chats).sort((a, b) => {
+                return (chats[b].lastTimestamp || 0) - (chats[a].lastTimestamp || 0);
+            });
+            
+            let hasUnread = 0;
+            sorted.forEach(deviceId => {
+                const chat = chats[deviceId];
+                const label = `${chat.uid || 'Unknown'} (${deviceId.substring(0, 12)}...)`;
+                const option = document.createElement('option');
+                option.value = deviceId;
+                option.textContent = label;
+                option.dataset.uid = chat.uid || 'Unknown';
+                option.dataset.device = deviceId;
+                
+                // Tandai yang belum dibaca admin
+                if (chat.lastSender === 'user' && !chat.adminRead) {
+                    option.textContent = '🔴 ' + label;
+                    hasUnread++;
+                }
+                
+                select.appendChild(option);
+            });
+            
+            // Badge notifikasi
+            const badge = document.getElementById('supportChatBadge');
+            if (hasUnread > 0) {
+                badge.textContent = hasUnread > 9 ? '9+' : hasUnread;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
+            
+            // Restore value
+            if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
+                select.value = currentVal;
+                loadSupportChat();
+            }
+        });
+    }
+    
+    // Load chat support untuk user tertentu
+    function loadSupportChat() {
+        const select = document.getElementById('chatSupportSelect');
+        const deviceId = select.value;
+        const input = document.getElementById('chatSupportAdminInput');
+        const sendBtn = document.getElementById('chatSupportAdminSend');
+        const uploadBtn = document.getElementById('chatSupportAdminUpload');
+        
+        if (!deviceId) {
+            input.disabled = true;
+            sendBtn.disabled = true;
+            uploadBtn.disabled = true;
+            document.getElementById('chatSupportMessagesAdmin').innerHTML = 
+                '<div class="chat-support-msg-admin system">Pilih user di atas untuk mulai chat support.</div>';
+            document.getElementById('supportDeviceInfo').textContent = 'Device ID: -';
+            if (supportAdminListener) {
+                db.ref('support_chats/' + currentSupportDeviceId).off('value', supportAdminListener);
+                supportAdminListener = null;
+            }
+            return;
+        }
+        
+        currentSupportDeviceId = deviceId;
+        input.disabled = false;
+        sendBtn.disabled = false;
+        uploadBtn.disabled = false;
+        
+        // Update info device
+        const chatData = supportUsersList[deviceId] || {};
+        document.getElementById('supportDeviceInfo').textContent = 
+            `Device ID: ${deviceId.substring(0, 20)}... | UID: ${chatData.uid || 'Unknown'}`;
+        
+        // Tandai sudah dibaca admin
+        db.ref('support_chats/' + deviceId).update({
+            adminRead: true,
+            adminReadAt: Date.now()
+        });
+        
+        // Reset badge
+        loadSupportUsers();
+        
+        if (supportAdminListener) {
+            db.ref('support_chats/' + currentSupportDeviceId).off('value', supportAdminListener);
+            supportAdminListener = null;
+        }
+        
+        const messagesContainer = document.getElementById('chatSupportMessagesAdmin');
+        
+        supportAdminListener = db.ref('support_chats/' + deviceId + '/messages')
+            .orderByChild('timestamp')
+            .limitToLast(50)
+            .on('value', (snap) => {
+                const messages = snap.val() || {};
+                messagesContainer.innerHTML = '';
+                
+                if (Object.keys(messages).length === 0) {
+                    messagesContainer.innerHTML = 
+                        '<div class="chat-support-msg-admin system">Belum ada pesan. Mulai chat dengan user ini.</div>';
+                    return;
+                }
+                
+                const sortedKeys = Object.keys(messages).sort((a, b) => messages[a].timestamp - messages[b].timestamp);
+                
+                sortedKeys.forEach(key => {
+                    const msg = messages[key];
+                    const div = document.createElement('div');
+                    const isUser = msg.sender === 'user';
+                    div.className = `chat-support-msg-admin ${isUser ? 'user' : 'admin'}`;
+                    
+                    let content = '';
+                    if (isUser) {
+                        content = `<div class="msg-sender">👤 ${msg.uid || 'User'}</div>`;
+                    } else {
+                        content = `<div class="msg-sender">👑 Admin</div>`;
+                    }
+                    content += `<div>${escapeHtml(msg.text || '')}</div>`;
+                    
+                    if (msg.fileData && msg.fileData.url) {
+                        const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
+                        if (isImage) {
+                            content += `<div style="margin-top: 8px;">
+                                <img src="${msg.fileData.url}" style="max-width:150px; max-height:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileData.url}')">
+                                <div style="font-size:10px; color:#888;">${escapeHtml(msg.fileData.name || 'Image')}</div>
+                            </div>`;
+                        } else {
+                            content += `<div style="margin-top: 8px;">
+                                <a href="${msg.fileData.url}" target="_blank" style="color:#00ff88; text-decoration:none;">
+                                    <i class="fas fa-file"></i> ${escapeHtml(msg.fileData.name || 'File')}
+                                </a>
+                            </div>`;
+                        }
+                    }
+                    
+                    content += `<div class="msg-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`;
+                    div.innerHTML = content;
+                    messagesContainer.appendChild(div);
+                });
+                
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+    }
+    
+    // Kirim pesan admin di chat support
+    function sendSupportAdminMessage() {
+        const input = document.getElementById('chatSupportAdminInput');
+        const text = input.value.trim();
+        
+        if (!text || !currentSupportDeviceId) return;
+        
+        const msgData = {
+            uid: 'Admin',
+            deviceId: currentSupportDeviceId,
+            text: text,
+            sender: 'admin',
+            timestamp: Date.now(),
+            isSupport: true
+        };
+        
+        db.ref('support_chats/' + currentSupportDeviceId + '/messages').push(msgData);
+        db.ref('support_chats/' + currentSupportDeviceId).update({
+            lastMessage: text,
+            lastSender: 'admin',
+            lastTimestamp: Date.now(),
+            adminRead: true
+        });
+        
+        input.value = '';
+    }
+    
+    // Upload file di chat support admin
+    function uploadSupportAdminFile() {
+        if (!currentSupportDeviceId) {
+            showToast('Pilih user terlebih dahulu!');
+            return;
+        }
+        
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            showLoading();
+            try {
+                const fileUrl = await uploadToImgbb(file);
+                const fileSize = formatFileSize(file.size);
+                
+                const msgData = {
+                    uid: 'Admin',
+                    deviceId: currentSupportDeviceId,
+                    text: `📎 Mengirim file: ${file.name}`,
+                    sender: 'admin',
+                    timestamp: Date.now(),
+                    isSupport: true,
+                    fileData: {
+                        name: file.name,
+                        url: fileUrl,
+                        size: file.size,
+                        sizeFormatted: fileSize,
+                        type: file.type,
+                        timestamp: Date.now()
+                    }
+                };
+                
+                await db.ref('support_chats/' + currentSupportDeviceId + '/messages').push(msgData);
+                await db.ref('support_chats/' + currentSupportDeviceId).update({
+                    lastMessage: `📎 ${file.name}`,
+                    lastSender: 'admin',
+                    lastTimestamp: Date.now(),
+                    adminRead: true
+                });
+                
+                hideLoading();
+                showToast('File terkirim!');
+            } catch (error) {
+                hideLoading();
+                showToast('Gagal upload: ' + error.message);
+            }
+        };
+        input.click();
+    }
+    
+    // Enter key untuk send
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('chatSupportAdminInput');
+        if (input) {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendSupportAdminMessage();
+                }
+            });
+        }
+    });
+    
+    // Inisialisasi support chat admin
+    function initSupportChatAdmin() {
+        loadSupportUsers();
+        // Refresh setiap 30 detik
+        setInterval(loadSupportUsers, 30000);
+        console.log('💬 Support Chat Admin initialized');
+    }
+    
     // ==================== USER FILES ====================
     function loadUserFiles() { window.allFiles = []; db.ref('chats').once('value', snap => { const chats = snap.val() || {}; Object.keys(chats).forEach(uid => { Object.keys(chats[uid]).forEach(msgId => { const msg = chats[uid][msgId]; if (msg.fileUrl) window.allFiles.push({ id: msgId, uid, name: msg.fileName || 'file', url: msg.fileUrl, type: msg.fileType || 'unknown', timestamp: msg.timestamp || Date.now() }); }); }); window.allFiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); displayUserFiles(); }); }
     function displayUserFiles() { let filtered = window.allFiles || []; if (currentFileFilter !== 'all') { if (currentFileFilter === 'image') filtered = filtered.filter(f => f.type && f.type.startsWith('image/')); else filtered = filtered.filter(f => !f.type || !f.type.startsWith('image/')); } const search = document.getElementById('fileSearch')?.value.toLowerCase() || ''; if (search) filtered = filtered.filter(f => f.uid.toLowerCase().includes(search) || f.name.toLowerCase().includes(search)); let html = ''; filtered.slice(0, 100).forEach(f => { const isImage = f.type && f.type.startsWith('image/'); html += `<div class="gallery-item"><div class="gallery-preview">${isImage ? `<img src="${f.url}" onclick="window.open('${f.url}')">` : `<i class="fas fa-file" style="font-size:50px; color:#ffaa00;"></i>`}</div><div class="gallery-info"><div class="gallery-uid" onclick="copyUID('${f.uid}')">${f.uid}</div><div class="gallery-filename">${f.name.substring(0, 30)}</div></div><div class="gallery-actions"><button class="gallery-btn view" onclick="window.open('${f.url}')">View</button><button class="gallery-btn delete" onclick="deleteUserFile('${f.uid}', '${f.id}')">Delete</button></div></div>`; }); document.getElementById('fileGallery').innerHTML = html || '<div class="no-data">No files found</div>'; }
@@ -4959,6 +5476,7 @@
         loadVideoPopupStatus();
         listenPublicChatRealtime();
         setupChatFileUpload();
+        initSupportChatAdmin();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
