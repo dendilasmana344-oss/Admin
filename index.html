@@ -1252,6 +1252,17 @@
             color: #9e9e9e;
             border: 1px solid #9e9e9e;
         }
+        
+        /* Tambahkan di style */
+        .chat-support-messages-admin {
+            transition: none !important;
+            animation: none !important;
+        }
+
+        .chat-support-msg-admin {
+            animation: none !important;
+            transition: none !important;
+        }
 
         /* CHAT */
         .chat-container {
@@ -5175,22 +5186,28 @@
     
     // ==================== CHAT SUPPORT ADMIN ====================
 
+    let supportUsersLoading = false;
+
     function loadSupportUsers() {
+        // Cegah loading ganda
+        if (supportUsersLoading) return;
+        supportUsersLoading = true;
+    
         db.ref('support_chats').once('value', (snap) => {
             const chats = snap.val() || {};
             supportUsersList = chats;
             const select = document.getElementById('chatSupportSelect');
-            
+        
             // Simpan nilai yang dipilih
             const currentVal = select.value;
-            
+        
             select.innerHTML = '<option value="">-- Pilih User --</option>';
-            
+        
             // Urutkan berdasarkan lastTimestamp terbaru
             const sorted = Object.keys(chats).sort((a, b) => {
                 return (chats[b].lastTimestamp || 0) - (chats[a].lastTimestamp || 0);
             });
-            
+        
             let hasUnread = 0;
             sorted.forEach(deviceId => {
                 const chat = chats[deviceId];
@@ -5200,16 +5217,16 @@
                 option.textContent = label;
                 option.dataset.uid = chat.uid || 'Unknown';
                 option.dataset.device = deviceId;
-                
+            
                 // Tandai yang belum dibaca admin
                 if (chat.lastSender === 'user' && !chat.adminRead) {
                     option.textContent = '🔴 ' + label;
                     hasUnread++;
                 }
-                
+            
                 select.appendChild(option);
             });
-            
+        
             // Badge notifikasi
             const badge = document.getElementById('supportChatBadge');
             if (hasUnread > 0) {
@@ -5218,23 +5235,32 @@
             } else {
                 badge.classList.remove('show');
             }
-            
+        
             // Restore value
             if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
                 select.value = currentVal;
-                loadSupportChat();
+                // Jangan panggil loadSupportChat() di sini untuk menghindari loop
             }
+        
+            supportUsersLoading = false;
+        }).catch(() => {
+            supportUsersLoading = false;
         });
     }
     
     // Load chat support untuk user tertentu
+    let supportChatLoading = false;
+
     function loadSupportChat() {
+        // Cegah loading ganda
+        if (supportChatLoading) return;
+    
         const select = document.getElementById('chatSupportSelect');
         const deviceId = select.value;
         const input = document.getElementById('chatSupportAdminInput');
         const sendBtn = document.getElementById('chatSupportAdminSend');
         const uploadBtn = document.getElementById('chatSupportAdminUpload');
-        
+    
         if (!deviceId) {
             input.disabled = true;
             sendBtn.disabled = true;
@@ -5248,54 +5274,66 @@
             }
             return;
         }
-        
+    
+        supportChatLoading = true;
         currentSupportDeviceId = deviceId;
         input.disabled = false;
         sendBtn.disabled = false;
         uploadBtn.disabled = false;
-        
+    
         // Update info device
         const chatData = supportUsersList[deviceId] || {};
         document.getElementById('supportDeviceInfo').textContent = 
             `Device ID: ${deviceId.substring(0, 20)}... | UID: ${chatData.uid || 'Unknown'}`;
-        
+    
         // Tandai sudah dibaca admin
         db.ref('support_chats/' + deviceId).update({
             adminRead: true,
             adminReadAt: Date.now()
         });
-        
-        // Reset badge
-        loadSupportUsers();
-        
+    
+        // Update badge tanpa reload semua
+        const badge = document.getElementById('supportChatBadge');
+        if (badge) {
+            // Kurangi badge atau update
+            const currentBadge = parseInt(badge.textContent) || 0;
+            if (currentBadge > 0) {
+                badge.textContent = currentBadge > 1 ? currentBadge - 1 : '';
+                if (badge.textContent === '' || badge.textContent === '0') {
+                    badge.classList.remove('show');
+                }
+            }
+        }
+    
         if (supportAdminListener) {
             db.ref('support_chats/' + currentSupportDeviceId).off('value', supportAdminListener);
             supportAdminListener = null;
         }
-        
+    
         const messagesContainer = document.getElementById('chatSupportMessagesAdmin');
-        
+    
         supportAdminListener = db.ref('support_chats/' + deviceId + '/messages')
             .orderByChild('timestamp')
             .limitToLast(50)
             .on('value', (snap) => {
                 const messages = snap.val() || {};
                 messagesContainer.innerHTML = '';
-                
+            
                 if (Object.keys(messages).length === 0) {
                     messagesContainer.innerHTML = 
                         '<div class="chat-support-msg-admin system">Belum ada pesan. Mulai chat dengan user ini.</div>';
+                    supportChatLoading = false;
                     return;
                 }
-                
+            
                 const sortedKeys = Object.keys(messages).sort((a, b) => messages[a].timestamp - messages[b].timestamp);
-                
+            
                 sortedKeys.forEach(key => {
                     const msg = messages[key];
                     const div = document.createElement('div');
                     const isUser = msg.sender === 'user';
                     div.className = `chat-support-msg-admin ${isUser ? 'user' : 'admin'}`;
-                    
+                
                     let content = '';
                     if (isUser) {
                         content = `<div class="msg-sender">👤 ${msg.uid || 'User'}</div>`;
@@ -5303,7 +5341,7 @@
                         content = `<div class="msg-sender">👑 Admin</div>`;
                     }
                     content += `<div>${escapeHtml(msg.text || '')}</div>`;
-                    
+                
                     if (msg.fileData && msg.fileData.url) {
                         const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
                         if (isImage) {
@@ -5319,13 +5357,14 @@
                             </div>`;
                         }
                     }
-                    
+                
                     content += `<div class="msg-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`;
                     div.innerHTML = content;
                     messagesContainer.appendChild(div);
                 });
-                
+            
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                supportChatLoading = false;
             });
     }
     
@@ -5422,11 +5461,22 @@
         }
     });
     
-    // Inisialisasi support chat admin
     function initSupportChatAdmin() {
+        // Load sekali, tanpa interval
         loadSupportUsers();
-        // Refresh setiap 30 detik
-        setInterval(loadSupportUsers, 200000);
+    
+        // Tambahkan event untuk refresh manual saat tab dibuka
+        const tab = document.querySelector('.tab[onclick*="support_chat"]');
+        if (tab) {
+            // Hanya refresh saat tab diklik
+            const originalClick = tab.onclick;
+            tab.onclick = function(e) {
+                if (originalClick) originalClick.call(this, e);
+                // Load ulang user list saat tab dibuka
+                setTimeout(loadSupportUsers, 500);
+            };
+        }
+    
         console.log('💬 Support Chat Admin initialized');
     }
     
@@ -5465,6 +5515,7 @@
         else if (tabId === 'user_files') loadUserFiles(); 
         else if (tabId === 'logs') loadActivityLogs(); 
         else if (tabId === 'maintenance') loadMaintenanceStatus(); 
+        else if (tabId === 'support_chat') { loadVideoPopupStatus(); setTimeout(loadSupportUsers, 300); }
     }
     
     function init() { 
