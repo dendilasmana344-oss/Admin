@@ -1883,6 +1883,183 @@
             background: #444;
             transform: scale(1.05);
         }
+        
+        /* ============================================================
+           NEON DROPDOWN SELECT - UNTUK PRIVATE CHAT & SUPPORT CHAT
+           ============================================================ */
+        
+        /* ----- WRAPPER SELECT ----- */
+        .chat-selector-neon,
+        .chat-support-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: rgba(0, 255, 255, 0.05);
+            padding: 15px 20px;
+            border-radius: 30px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            align-items: center;
+            flex-wrap: wrap;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .chat-selector-neon:hover,
+        .chat-support-selector:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+        }
+        
+        .chat-selector-neon .chat-label,
+        .chat-support-selector .chat-label {
+            font-family: 'Orbitron', monospace;
+            color: var(--neon-cyan);
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            white-space: nowrap;
+        }
+        
+        .chat-selector-neon .chat-label i,
+        .chat-support-selector .chat-label i {
+            margin-right: 8px;
+        }
+        
+        /* ----- SELECT STYLE ----- */
+        .chat-select-neon,
+        .chat-support-select {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px 20px;
+            padding-right: 45px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 25px;
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .chat-select-neon:hover,
+        .chat-support-select:hover {
+            border-color: #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .chat-select-neon:focus,
+        .chat-support-select:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.1);
+            transform: translateY(-3px);
+        }
+        
+        .chat-select-neon option,
+        .chat-support-select option {
+            background: #0a0a0a;
+            color: #ccc;
+            padding: 12px 18px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.08);
+            transition: all 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .chat-select-neon option:checked,
+        .chat-support-select option:checked {
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff) !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+        
+        .chat-select-neon option:hover,
+        .chat-support-select option:hover {
+            background: rgba(0, 255, 255, 0.2) !important;
+            color: var(--neon-cyan) !important;
+        }
+        
+        /* ----- CUSTOM ARROW ICON ----- */
+        .chat-selector-neon .select-arrow,
+        .chat-support-selector .select-arrow {
+            position: absolute;
+            right: 35px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--neon-cyan);
+            font-size: 18px;
+            pointer-events: none;
+            z-index: 2;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .chat-selector-neon:hover .select-arrow,
+        .chat-support-selector:hover .select-arrow {
+            transform: translateY(-50%) rotate(180deg);
+            color: #00ffff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+        
+        /* ----- CUSTOM SCROLLBAR ----- */
+        .chat-select-neon::-webkit-scrollbar,
+        .chat-support-select::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-select-neon::-webkit-scrollbar-track,
+        .chat-support-select::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+        }
+        
+        .chat-select-neon::-webkit-scrollbar-thumb,
+        .chat-support-select::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .chat-select-neon::-webkit-scrollbar-thumb:hover,
+        .chat-support-select::-webkit-scrollbar-thumb:hover {
+            background: #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* ----- RESPONSIVE ----- */
+        @media (max-width: 768px) {
+            .chat-selector-neon,
+            .chat-support-selector {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 15px;
+            }
+            
+            .chat-select-neon,
+            .chat-support-select {
+                min-width: unset;
+                width: 100%;
+            }
+            
+            .chat-selector-neon .chat-label,
+            .chat-support-selector .chat-label {
+                text-align: center;
+            }
+            
+            .chat-selector-neon .select-arrow,
+            .chat-support-selector .select-arrow {
+                right: 25px;
+            }
+        }
 
         /* MODAL STYLES - NEON DESIGN */
         .modal-overlay {
@@ -3484,11 +3661,10 @@
         <div class="chat-container">
             <div class="chat-selector-neon">
                 <span class="chat-label"><i class="fas fa-user"></i> Pilih Customer:</span>
-                <div class="neon-select-wrapper">
-                    <select class="chat-select-neon" id="chatUserSelect" onchange="loadUserChat()">
-                        <option value="">-- Pilih Customer --</option>
-                    </select>
-                </div>
+                <select class="chat-select-neon" id="chatUserSelect" onchange="loadUserChat()">
+                    <option value="">-- Pilih Customer --</option>
+                </select>
+                <span class="select-arrow"><i class="fas fa-chevron-down"></i></span>
                 <button class="btn btn-primary btn-sm" onclick="loadChatUsers()">
                     <i class="fas fa-sync-alt"></i>
                 </button>
@@ -3569,7 +3745,7 @@
     <div id="support_chat" class="tab-content">
         <div class="card">
             <div class="card-title">
-                <i class="fas fa-headset"></i> Chat Support Management
+                    <i class="fas fa-headset"></i> Chat Support Management
                 <span style="font-size:12px; margin-left:auto; color:#ffaa00;">
                     <i class="fas fa-fingerprint"></i> Berdasarkan Device ID
                 </span>
@@ -3578,11 +3754,10 @@
             <div class="chat-support-admin-container">
                 <div class="chat-support-selector">
                     <span class="chat-label"><i class="fas fa-users"></i> Pilih User:</span>
-                    <div class="neon-select-wrapper">
-                        <select class="chat-support-select" id="chatSupportSelect" onchange="loadSupportChat()">
-                            <option value="">-- Pilih User --</option>
-                        </select>
-                    </div>
+                    <select class="chat-support-select" id="chatSupportSelect" onchange="loadSupportChat()">
+                        <option value="">-- Pilih User --</option>
+                    </select>
+                    <span class="select-arrow"><i class="fas fa-chevron-down"></i></span>
                     <button class="btn btn-primary btn-sm" onclick="loadSupportUsers()">
                         <i class="fas fa-sync-alt"></i>
                     </button>
