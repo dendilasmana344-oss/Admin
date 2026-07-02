@@ -1263,6 +1263,200 @@
             animation: none !important;
             transition: none !important;
         }
+        
+        /* ============================================================
+           NOTIFICATION TOAST - ADMIN
+           ============================================================ */
+        
+        .notification-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            width: 100%;
+            pointer-events: none;
+        }
+        
+        .notification-toast {
+            background: linear-gradient(145deg, #0a0a0a, #1a0a0a);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 20px;
+            padding: 16px 20px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+            animation: notifSlideIn 0.5s ease forwards;
+            pointer-events: auto;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        .notification-toast::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+        
+        .notification-toast.info::before {
+            background: var(--neon-cyan);
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+        
+        .notification-toast.success::before {
+            background: #00ff88;
+            box-shadow: 0 0 20px #00ff88;
+        }
+        
+        .notification-toast.warning::before {
+            background: #ffaa00;
+            box-shadow: 0 0 20px #ffaa00;
+        }
+        
+        .notification-toast.error::before {
+            background: #ff4444;
+            box-shadow: 0 0 20px #ff4444;
+        }
+        
+        .notification-toast.hide {
+            animation: notifSlideOut 0.4s ease forwards;
+        }
+        
+        @keyframes notifSlideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes notifSlideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+        
+        .notification-toast .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .notification-toast .notif-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .notification-toast .notif-title .badge-count {
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 11px;
+            animation: pulse 1s infinite;
+        }
+        
+        .notification-toast .notif-close {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 5px;
+            transition: all 0.3s;
+        }
+        
+        .notification-toast .notif-close:hover {
+            color: #ff4444;
+            transform: rotate(90deg);
+        }
+        
+        .notification-toast .notif-body {
+            font-size: 13px;
+            color: #ccc;
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+        
+        .notification-toast .notif-body .highlight {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+        
+        .notification-toast .notif-time {
+            font-size: 10px;
+            color: #666;
+            margin-top: 6px;
+            text-align: right;
+        }
+        
+        /* ===== CHAT BADGE NOTIFICATION ===== */
+        .chat-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            display: none;
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+        }
+        
+        .chat-badge.show {
+            display: flex;
+        }
+        
+        /* ===== UNREAD MESSAGE INDICATOR ===== */
+        .unread-indicator {
+            display: inline-block;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+            margin-left: 8px;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.3);
+        }
+        
+        /* ===== RESPONSIVE NOTIFICATION ===== */
+        @media (max-width: 500px) {
+            .notification-container {
+                top: 70px;
+                right: 10px;
+                max-width: calc(100vw - 20px);
+            }
+            .notification-toast {
+                padding: 12px 15px;
+            }
+        }
 
         /* CHAT */
         .chat-container {
@@ -3309,6 +3503,9 @@
 <body>
 
 <div class="neon-bg"></div>
+
+<!-- NOTIFICATION CONTAINER - Letakkan setelah <div class="neon-bg"></div> -->
+<div class="notification-container" id="notificationContainer"></div>
 
 <!-- VIDEO BACKGROUND ADMIN -->
 <div class="admin-video-bg" id="adminVideoBg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden;">
@@ -5387,6 +5584,363 @@
     
         requestAnimationFrame(updateNumber);
     }
+    
+    // ============================================================
+    // NOTIFICATION SYSTEM - ADMIN
+    // ============================================================
+    
+    let adminNotificationPermission = false;
+    
+    // Request permission notifikasi
+    async function requestAdminNotificationPermission() {
+        if ('Notification' in window) {
+            const permission = await Notification.requestPermission();
+            adminNotificationPermission = permission === 'granted';
+            if (adminNotificationPermission && 'serviceWorker' in navigator) {
+                try {
+                    await navigator.serviceWorker.register('/sw.js');
+                    console.log('✅ Admin notification permission granted');
+                } catch(err) { console.log('Service Worker error:', err); }
+            }
+        }
+    }
+    
+    // Tampilkan notifikasi admin
+    function showAdminNotificationToast(title, message, type = 'info', duration = 5000) {
+        const container = document.getElementById('notificationContainer');
+        if (!container) return;
+        
+        // Hapus notifikasi lama jika lebih dari 3
+        const existing = container.querySelectorAll('.notification-toast');
+        if (existing.length >= 3) {
+            existing[0].classList.add('hide');
+            setTimeout(() => existing[0].remove(), 400);
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = `notification-toast ${type}`;
+        const icons = {
+            info: 'fa-info-circle',
+            success: 'fa-check-circle',
+            warning: 'fa-exclamation-triangle',
+            error: 'fa-times-circle'
+        };
+        
+        toast.innerHTML = `
+            <div class="notif-header">
+                <div class="notif-title">
+                    <i class="fas ${icons[type] || icons.info}"></i>
+                    ${title}
+                    <span class="badge-count">NEW</span>
+                </div>
+                <button class="notif-close" onclick="this.closest('.notification-toast').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="notif-body">${message}</div>
+            <div class="notif-time">${new Date().toLocaleTimeString()}</div>
+        `;
+        
+        container.appendChild(toast);
+        
+        // Auto hide
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 400);
+            }
+        }, duration);
+        
+        // Play sound
+        playAdminNotificationSound();
+    }
+    
+    function playAdminNotificationSound() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 880;
+            gainNode.gain.value = 0.15;
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        } catch(e) {}
+    }
+    
+    // ===== PRIVATE CHAT NOTIFICATION =====
+    let privateChatUnread = {};
+    let privateChatListener = null;
+    
+    function setupPrivateChatNotification() {
+        // Listen semua chat dari user
+        db.ref('chats').on('child_added', (snap) => {
+            const uid = snap.key;
+            const messages = snap.val() || {};
+            
+            // Cek pesan terakhir
+            const keys = Object.keys(messages).sort((a, b) => messages[b].timestamp - messages[a].timestamp);
+            if (keys.length > 0) {
+                const lastMsg = messages[keys[0]];
+                
+                // Jika pesan dari customer dan belum dibaca admin
+                if (lastMsg && lastMsg.sender === 'customer') {
+                    // Cek apakah chat ini sedang aktif di tab
+                    const isActive = document.getElementById('chat')?.classList.contains('active');
+                    const selectedUser = document.getElementById('chatUserSelect')?.value;
+                    const isSelected = selectedUser === uid;
+                    
+                    // Jika tidak aktif atau tidak sedang melihat chat ini
+                    if (!isActive || !isSelected) {
+                        // Update unread count
+                        if (!privateChatUnread[uid]) privateChatUnread[uid] = 0;
+                        privateChatUnread[uid]++;
+                        
+                        // Update badge di tab
+                        updatePrivateChatBadge();
+                        
+                        // Tampilkan notifikasi toast
+                        const msgText = lastMsg.text ? lastMsg.text.substring(0, 80) + (lastMsg.text.length > 80 ? '...' : '') : 'Mengirim pesan';
+                        showAdminNotificationToast(
+                            '💬 Pesan dari Customer',
+                            `<span class="highlight">${uid}</span>: ${msgText}`,
+                            'info'
+                        );
+                        
+                        // Browser notification
+                        if (adminNotificationPermission) {
+                            new Notification('💬 Pesan dari Customer', {
+                                body: `${uid}: ${msgText}`,
+                                icon: adminIcon,
+                                vibrate: [200, 100, 200]
+                            });
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function updatePrivateChatBadge() {
+        const totalUnread = Object.values(privateChatUnread).reduce((a, b) => a + b, 0);
+        const badge = document.querySelector('.tab[onclick*="chat"] .chat-badge');
+        if (badge) {
+            if (totalUnread > 0) {
+                badge.textContent = totalUnread > 9 ? '9+' : totalUnread;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
+        }
+    }
+    
+    // Reset unread saat chat dibuka
+    function resetPrivateChatUnread(uid) {
+        if (uid && privateChatUnread[uid]) {
+            delete privateChatUnread[uid];
+            updatePrivateChatBadge();
+        }
+    }
+    
+    // ===== PUBLIC CHAT NOTIFICATION =====
+    let publicChatUnread = 0;
+    let publicChatListener = null;
+    
+    function setupPublicChatNotificationAdmin() {
+        if (publicChatListener) {
+            db.ref('all_comments').off('value', publicChatListener);
+            publicChatListener = null;
+        }
+        
+        publicChatListener = db.ref('all_comments')
+            .orderByChild('timestamp')
+            .limitToLast(1)
+            .on('child_added', (snap) => {
+                const msg = snap.val();
+                if (!msg) return;
+                
+                // Hanya notifikasi jika bukan dari admin
+                if (msg.uid !== 'ADMIN') {
+                    const isActive = document.getElementById('public_chat')?.classList.contains('active');
+                    
+                    if (!isActive) {
+                        publicChatUnread++;
+                        updatePublicChatBadgeAdmin();
+                        
+                        showAdminNotificationToast(
+                            '💬 Public Chat',
+                            `<span class="highlight">${msg.uid}</span>: ${msg.text ? msg.text.substring(0, 80) + (msg.text.length > 80 ? '...' : '') : 'Mengirim pesan'}`,
+                            'info'
+                        );
+                    }
+                }
+            });
+    }
+    
+    function updatePublicChatBadgeAdmin() {
+        const badge = document.getElementById('publicChatBadge');
+        if (badge) {
+            if (publicChatUnread > 0) {
+                badge.textContent = publicChatUnread > 9 ? '9+' : publicChatUnread;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
+        }
+    }
+    
+    function resetPublicChatUnreadAdmin() {
+        publicChatUnread = 0;
+        updatePublicChatBadgeAdmin();
+    }
+    
+    // ===== SUPPORT CHAT NOTIFICATION =====
+    let supportChatUnread = 0;
+    let supportChatListenerAdmin = null;
+    
+    function setupSupportChatNotificationAdmin() {
+        if (supportChatListenerAdmin) {
+            db.ref('support_chats').off('value', supportChatListenerAdmin);
+            supportChatListenerAdmin = null;
+        }
+        
+        supportChatListenerAdmin = db.ref('support_chats')
+            .on('child_added', (snap) => {
+                const deviceId = snap.key;
+                const chat = snap.val() || {};
+                
+                // Jika ada pesan baru dari user
+                if (chat.lastSender === 'user' && !chat.adminRead) {
+                    const isActive = document.getElementById('support_chat')?.classList.contains('active');
+                    const selectedDevice = document.getElementById('chatSupportSelect')?.value;
+                    const isSelected = selectedDevice === deviceId;
+                    
+                    if (!isActive || !isSelected) {
+                        supportChatUnread++;
+                        updateSupportChatBadgeAdmin();
+                        
+                        const uid = chat.uid || 'Guest';
+                        showAdminNotificationToast(
+                            '💬 Support Chat',
+                            `<span class="highlight">${uid}</span> (${deviceId.substring(0, 8)}...): ${chat.lastMessage ? chat.lastMessage.substring(0, 80) + (chat.lastMessage.length > 80 ? '...' : '') : 'Ada pesan baru'}`,
+                            'warning'
+                        );
+                        
+                        if (adminNotificationPermission) {
+                            new Notification('💬 Support Chat', {
+                                body: `${uid}: ${chat.lastMessage ? chat.lastMessage.substring(0, 80) : 'Ada pesan baru'}`,
+                                icon: adminIcon,
+                                vibrate: [200, 100, 200]
+                            });
+                        }
+                    }
+                }
+            });
+    }
+    
+    function updateSupportChatBadgeAdmin() {
+        const badge = document.getElementById('supportChatBadge');
+        if (badge) {
+            if (supportChatUnread > 0) {
+                badge.textContent = supportChatUnread > 9 ? '9+' : supportChatUnread;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
+        }
+    }
+    
+    function resetSupportChatUnreadAdmin() {
+        supportChatUnread = 0;
+        updateSupportChatBadgeAdmin();
+    }
+    
+    // ===== ADMIN STATUS =====
+    let adminLastActivity = Date.now();
+    
+    function updateAdminStatus() {
+        // Update status online
+        db.ref('admin_status').set({
+            status: 'online',
+            last_seen: Date.now(),
+            name: 'Admin',
+            lastActivity: adminLastActivity
+        });
+        
+        // Set offline jika tidak ada aktivitas selama 2 menit
+        setInterval(() => {
+            const now = Date.now();
+            if (now - adminLastActivity > 120000) {
+                db.ref('admin_status').update({
+                    status: 'offline',
+                    last_seen: now
+                });
+            } else {
+                db.ref('admin_status').update({
+                    status: 'online',
+                    last_seen: now
+                });
+            }
+        }, 30000);
+    }
+    
+    // Track aktivitas admin
+    document.addEventListener('click', () => {
+        adminLastActivity = Date.now();
+        db.ref('admin_status').update({
+            status: 'online',
+            last_seen: adminLastActivity,
+            lastActivity: adminLastActivity
+        });
+    });
+    
+    document.addEventListener('keydown', () => {
+        adminLastActivity = Date.now();
+        db.ref('admin_status').update({
+            status: 'online',
+            last_seen: adminLastActivity
+        });
+    });
+    
+    // ===== INIT ADMIN NOTIFICATIONS =====
+    function initAdminNotifications() {
+        requestAdminNotificationPermission();
+        setupPrivateChatNotification();
+        setupPublicChatNotificationAdmin();
+        setupSupportChatNotificationAdmin();
+        updateAdminStatus();
+        
+        // Reset unread saat tab dibuka
+        const chatTab = document.querySelector('.tab[onclick*="chat"]');
+        if (chatTab) {
+            chatTab.addEventListener('click', () => {
+                setTimeout(() => {
+                    const select = document.getElementById('chatUserSelect');
+                    if (select && select.value) {
+                        resetPrivateChatUnread(select.value);
+                    }
+                }, 500);
+            });
+        }
+        
+        const publicTab = document.querySelector('.tab[onclick*="public_chat"]');
+        if (publicTab) {
+            publicTab.addEventListener('click', () => {
+                setTimeout(resetPublicChatUnreadAdmin, 500);
+            });
+        }
+        
+        const supportTab = document.querySelector('.tab[onclick*="support_chat"]');
+        if (supportTab) {
+            supportTab.addEventListener('click', () => {
+                setTimeout(resetSupportChatUnreadAdmin, 500);
+            });
+        }
+        
+        console.log('🔔 Admin notification system initialized');
+    }
 
     // ==================== FREE UPDATE HISTORY REAL-TIME ====================
     function loadFreeUpdateHistoryRealtime() {
@@ -5530,6 +6084,8 @@
             return; 
         } 
     
+        resetPrivateChatUnread(currentChatUser);
+        
         input.disabled = false; 
         sendBtn.disabled = false; 
     
@@ -6200,6 +6756,7 @@
         listenPublicChatRealtime();
         setupChatFileUpload();
         initSupportChatAdmin();
+        initAdminNotifications();
         loadFreeUpdateStatsRealtime();
         loadFreeUpdateHistoryRealtime();
         setInterval(updateAdminStatus, 30000); 
