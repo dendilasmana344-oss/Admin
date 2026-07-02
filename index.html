@@ -4824,165 +4824,6 @@
         } catch (error) { hideLoading(); showToast('Error saving: ' + error.message); }
     }
 
-    // ==================== VIDEO POPUP - ADMIN ====================
-    function loadVideoPopupStatus() {
-        db.ref('admin_config/video_popup').on('value', (snap) => {
-            const data = snap.val();
-            if (data && data.active === true) {
-                document.getElementById('currentVideoPopupStatus').style.display = 'block';
-                const videoName = videoPopupList.find(v => v.id === data.videoId)?.name || 'Unknown';
-                document.getElementById('currentVideoPopupDetails').innerHTML = `
-                    <div><strong>Title:</strong> ${data.title || '-'}</div>
-                    <div><strong>Description:</strong> ${data.description || '-'}</div>
-                    <div><strong>Video:</strong> ${videoName}</div>
-                    <div><strong>Badge:</strong> ${data.badge || '-'}</div>
-                `;
-                document.getElementById('videoPopupTitle').value = data.title || '';
-                document.getElementById('videoPopupDesc').value = data.description || '';
-                document.getElementById('videoPopupBadge').value = data.badge || '📢 PENGUMUMAN';
-                document.getElementById('videoPopupSelect').value = data.videoId || 1;
-                
-                // Preview video
-                const preview = document.getElementById('videoPopupAdminPreview');
-                const videoFile = videoPopupList.find(v => v.id === data.videoId)?.file || 'game1.mp4';
-                preview.src = videoFile;
-                preview.load();
-                preview.play().catch(e => console.log('Auto-play error:', e));
-            } else {
-                document.getElementById('currentVideoPopupStatus').style.display = 'none';
-            }
-        });
-    }
-
-    async function activateVideoPopup() {
-        const title = document.getElementById('videoPopupTitle').value.trim();
-        const desc = document.getElementById('videoPopupDesc').value.trim();
-        const badge = document.getElementById('videoPopupBadge').value.trim();
-        const videoId = parseInt(document.getElementById('videoPopupSelect').value);
-        
-        if (!title) { showToast('Masukkan judul video popup!'); return; }
-        if (!desc) { showToast('Masukkan deskripsi video popup!'); return; }
-        
-        showLoading();
-        try {
-            await db.ref('admin_config/video_popup').set({
-                active: true,
-                title: title,
-                description: desc,
-                badge: badge || '📢 PENGUMUMAN',
-                videoId: videoId,
-                updatedAt: Date.now()
-            });
-            addActivityLog('Activate Video Popup', `Video popup activated: ${title}`);
-            hideLoading();
-            showToast('✅ Video popup diaktifkan!');
-            loadVideoPopupStatus();
-        } catch (error) {
-            hideLoading();
-            showToast('Error: ' + error.message);
-        }
-    }
-
-    async function deactivateVideoPopup() {
-        showConfirm('Nonaktifkan Video Popup', 'Yakin ingin menonaktifkan video popup?', async () => {
-            showLoading();
-            try {
-                await db.ref('admin_config/video_popup').update({ active: false });
-                addActivityLog('Deactivate Video Popup', 'Video popup deactivated');
-                hideLoading();
-                showToast('✅ Video popup dinonaktifkan!');
-                loadVideoPopupStatus();
-            } catch (error) {
-                hideLoading();
-                showToast('Error: ' + error.message);
-            }
-        });
-    }
-
-    // ==================== GLOBAL DISCOUNT FUNCTIONS ====================
-    async function loadGlobalDiscountStatus() {
-        try {
-            const snap = await db.ref('global_discount').once('value');
-            const discount = snap.val();
-            const statusDiv = document.getElementById('currentDiscountStatus');
-        
-            if (discount && discount.active === true) {
-                const expiryDate = new Date(discount.expiryDate);
-                if (expiryDate > new Date()) {
-                    statusDiv.style.display = 'block';
-                    const statusBadge = statusDiv.querySelector('.discount-status-badge');
-                    if (statusBadge) {
-                        statusBadge.textContent = '✅ AKTIF';
-                        statusBadge.className = 'discount-status-badge active';
-                    }
-                    document.getElementById('currentDiscountDetails').innerHTML = `
-                        <div><strong>Diskon:</strong> <span style="color:#00ff88; font-size:24px;">${discount.percentage}%</span></div>
-                        <div><strong>Berlaku hingga:</strong> ${expiryDate.toLocaleDateString('id-ID')} ${expiryDate.toLocaleTimeString('id-ID')}</div>
-                        ${discount.minPurchase > 0 ? `<div><strong>Minimal pembelian:</strong> Rp ${formatRupiah(discount.minPurchase)}</div>` : '<div><strong>Minimal pembelian:</strong> Tidak ada</div>'}
-                        <div><strong>Diaktifkan:</strong> ${discount.startedAt ? new Date(discount.startedAt).toLocaleString() : '-'}</div>
-                        <div style="margin-top: 10px; color: #ffaa00; font-size: 12px;">
-                            <i class="fas fa-info-circle"></i> Diskon ini akan berlaku untuk semua pembelian package
-                        </div>
-                    `;
-                    document.getElementById('discountPercentage').value = discount.percentage;
-                    document.getElementById('discountMinPurchase').value = discount.minPurchase || 0;
-                } else {
-                    await db.ref('global_discount').update({ active: false });
-                    statusDiv.style.display = 'none';
-                }
-            } else {
-                statusDiv.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error loading discount status:', error);
-        }
-    }
-
-    async function activateGlobalDiscount() {
-        const percentage = parseInt(document.getElementById('discountPercentage').value);
-        const duration = parseInt(document.getElementById('discountDuration').value);
-        const minPurchase = parseInt(document.getElementById('discountMinPurchase').value) || 0;
-        if (isNaN(percentage) || percentage < 0 || percentage > 100) { showToast('Persentase diskon harus antara 0-100!'); return; }
-        if (isNaN(duration) || duration < 1) { showToast('Durasi minimal 1 hari!'); return; }
-        const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + duration);
-        showLoading();
-        try {
-            await db.ref('global_discount').set({ active: true, percentage, minPurchase, expiryDate: expiryDate.toISOString(), startedAt: new Date().toISOString() });
-            await db.ref('discount_history').push({ percentage, minPurchase, expiryDate, activatedAt: new Date().toISOString() });
-            addActivityLog('Activate Global Discount', `${percentage}% discount activated`);
-            hideLoading();
-            showToast(`✅ Diskon ${percentage}% berhasil diaktifkan!`);
-            loadGlobalDiscountStatus();
-            loadDiscountHistory();
-        } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
-    }
-
-    async function deactivateGlobalDiscount() {
-        showConfirm('Nonaktifkan Diskon', 'Yakin ingin menonaktifkan diskon global?', async () => {
-            showLoading();
-            try {
-                await db.ref('global_discount').update({ active: false });
-                addActivityLog('Deactivate Global Discount', 'Global discount deactivated');
-                hideLoading();
-                showToast('✅ Diskon global dinonaktifkan!');
-                loadGlobalDiscountStatus();
-            } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
-        });
-    }
-
-    async function loadDiscountHistory() {
-        try {
-            const snap = await db.ref('discount_history').once('value');
-            const history = snap.val() || {};
-            let html = '';
-            Object.keys(history).sort((a,b) => new Date(history[b].activatedAt) - new Date(history[a].activatedAt)).forEach(key => {
-                const item = history[key];
-                html += `<div class="discount-card"><div class="discount-header"><span class="discount-code" style="color:#00ff88;">${item.percentage}% DISKON</span><span class="discount-percent" style="background:#00ff88;">GLOBAL</span></div><div class="discount-details"><div><span class="detail-label">Berlaku hingga:</span> ${new Date(item.expiryDate).toLocaleDateString()}</div><div><span class="detail-label">Minimal belanja:</span> ${item.minPurchase > 0 ? 'Rp ' + formatRupiah(item.minPurchase) : 'Tidak ada'}</div><div><span class="detail-label">Diaktifkan:</span> ${new Date(item.activatedAt).toLocaleString()}</div></div></div>`;
-            });
-            document.getElementById('discountHistoryList').innerHTML = html || '<div class="no-data">Belum ada riwayat diskon</div>';
-        } catch (error) { console.error(error); }
-    }
-    
     // ==================== MAINTENANCE FUNCTIONS ====================
     async function loadMaintenanceStatus() {
         try {
@@ -5900,18 +5741,18 @@
         playAdminNotificationSound();
     }
     
-    function playAdminNotificationSound() {
+    function playAdminNotifSound() {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.frequency.value = 880;
-            gainNode.gain.value = 0.15;
-            oscillator.start();
-            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
-            oscillator.stop(audioCtx.currentTime + 0.3);
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 880;
+            gain.gain.value = 0.15;
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            osc.stop(audioCtx.currentTime + 0.3);
         } catch(e) {}
     }
     
@@ -6955,22 +6796,30 @@
     }
         
     // ============================================================
-    // NOTIFICATION SYSTEM - ADMIN
+    // NOTIFICATION SYSTEM - ADMIN (UNIFIED)
     // ============================================================
-    
+
     let adminNotifPermission = false;
+    let adminUnreadCount = {};
+    let publicUnreadAdmin = 0;
+    let supportUnreadAdmin = 0;
     
-    // Request permission
-    function requestAdminNotifPermission() {
+    // Request permission notifikasi
+    async function requestAdminNotifPermission() {
         if ('Notification' in window) {
-            Notification.requestPermission().then(permission => {
-                adminNotifPermission = permission === 'granted';
-                console.log('📢 Admin notification permission:', permission);
-            });
+            const permission = await Notification.requestPermission();
+            adminNotifPermission = permission === 'granted';
+            if (adminNotifPermission && 'serviceWorker' in navigator) {
+                try {
+                    await navigator.serviceWorker.register('/sw.js');
+                    console.log('✅ Admin notification permission granted');
+                } catch(err) { console.log('Service Worker error:', err); }
+            }
         }
+        return adminNotifPermission;
     }
     
-    // Tampilkan toast notifikasi admin
+    // Tampilkan notifikasi toast admin
     function showAdminNotifToast(title, message, type = 'info', duration = 5000) {
         const container = document.getElementById('notificationContainer');
         if (!container) return;
@@ -7016,31 +6865,17 @@
         if (adminNotifPermission) {
             try {
                 new Notification(title, {
-                    body: message,
+                    body: message.replace(/<[^>]*>/g, ''),
                     icon: 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg',
                     vibrate: [200, 100, 200]
                 });
             } catch(e) {}
         }
         
-        // Play sound
-        try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.frequency.value = 880;
-            gain.gain.value = 0.15;
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
-            osc.stop(audioCtx.currentTime + 0.3);
-        } catch(e) {}
+        playAdminNotifSound();
     }
     
     // ===== PRIVATE CHAT NOTIFICATION =====
-    let adminUnreadCount = {};
-    
     function setupPrivateChatNotifAdmin() {
         db.ref('chats').on('child_added', (snap) => {
             const uid = snap.key;
@@ -7123,8 +6958,6 @@
     }
     
     // ===== SUPPORT CHAT NOTIFICATION =====
-    let supportUnreadAdmin = 0;
-    
     function setupSupportChatNotifAdmin() {
         db.ref('support_chats').on('child_added', (snap) => {
             const deviceId = snap.key;
@@ -7138,41 +6971,32 @@
                     supportUnreadAdmin++;
                     updateSupportBadgeAdmin();
                     
-                        const uid = chat.uid || 'Guest';
-                        const msg = chat.lastMessage || 'Ada pesan baru';
-                        showAdminNotifToast('💬 Support Chat', `<span class="highlight">${uid}</span>: ${msg.substring(0, 80)}`, 'warning');
-                    }
-                }
-            });
-        }
-        
-        function updateSupportBadgeAdmin() {
-            const badge = document.getElementById('supportChatBadge');
-            if (badge) {
-                if (supportUnreadAdmin > 0) {
-                    badge.textContent = supportUnreadAdmin > 9 ? '9+' : supportUnreadAdmin;
-                    badge.classList.add('show');
-                } else {
-                    badge.classList.remove('show');
+                    const uid = chat.uid || 'Guest';
+                    const msg = chat.lastMessage || 'Ada pesan baru';
+                    showAdminNotifToast('💬 Support Chat', `<span class="highlight">${uid}</span>: ${msg.substring(0, 80)}`, 'warning');
                 }
             }
+        });
+    }
+    
+    function updateSupportBadgeAdmin() {
+        const badge = document.getElementById('supportChatBadge');
+        if (badge) {
+            if (supportUnreadAdmin > 0) {
+                badge.textContent = supportUnreadAdmin > 9 ? '9+' : supportUnreadAdmin;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
         }
+    }
+    
+    function resetSupportBadgeAdmin() {
+        supportUnreadAdmin = 0;
+        updateSupportBadgeAdmin();
+    }
         
-        function resetSupportBadgeAdmin() {
-            supportUnreadAdmin = 0;
-            updateSupportBadgeAdmin();
-        }
-        
-        // ===== INIT NOTIFICATIONS ADMIN =====
-        function initNotifAdmin() {
-            requestAdminNotifPermission();
-            setupPrivateChatNotifAdmin();
-            setupPublicChatNotifAdmin();
-            setupSupportChatNotifAdmin();
-            console.log('🔔 Admin notifications initialized');
-        }
-        
-        // ============================================================
+    // ============================================================
     // EDIT SALDO - ADMIN
     // ============================================================
     
@@ -7394,6 +7218,7 @@
         else if (tabId === 'support_chat') { loadVideoPopupStatus(); setTimeout(loadSupportUsers, 300); }
     }
     
+    // ==================== INIT ====================
     function init() { 
         updateAdminStatus(); 
         loadAllData(); 
@@ -7405,7 +7230,6 @@
         setupChatFileUpload();
         initSupportChatAdmin();
         initAdminNotifications();
-        initNotifAdmin();
         loadFreeUpdateStatsRealtime();
         loadFreeUpdateHistoryRealtime();
         setInterval(updateAdminStatus, 30000); 
@@ -7420,6 +7244,8 @@
         if (Notification.permission === 'default') Notification.requestPermission();
         console.log('🚀 Admin panel initialized - V1.0.0');
     }
-    init();
+    // Jalankan init saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', init);
+    
 </script>
 </body>
