@@ -4824,6 +4824,81 @@
         } catch (error) { hideLoading(); showToast('Error saving: ' + error.message); }
     }
 
+    // ==================== VIDEO POPUP - ADMIN ====================
+    function loadVideoPopupStatus() {
+        db.ref('admin_config/video_popup').on('value', (snap) => {
+            const data = snap.val();
+            if (data && data.active === true) {
+                document.getElementById('currentVideoPopupStatus').style.display = 'block';
+                const videoName = videoPopupList.find(v => v.id === data.videoId)?.name || 'Unknown';
+                document.getElementById('currentVideoPopupDetails').innerHTML = `
+                    <div><strong>Title:</strong> ${data.title || '-'}</div>
+                    <div><strong>Description:</strong> ${data.description || '-'}</div>
+                    <div><strong>Video:</strong> ${videoName}</div>
+                    <div><strong>Badge:</strong> ${data.badge || '-'}</div>
+                `;
+                document.getElementById('videoPopupTitle').value = data.title || '';
+                document.getElementById('videoPopupDesc').value = data.description || '';
+                document.getElementById('videoPopupBadge').value = data.badge || '📢 PENGUMUMAN';
+                document.getElementById('videoPopupSelect').value = data.videoId || 1;
+                
+                // Preview video
+                const preview = document.getElementById('videoPopupAdminPreview');
+                const videoFile = videoPopupList.find(v => v.id === data.videoId)?.file || 'game1.mp4';
+                preview.src = videoFile;
+                preview.load();
+                preview.play().catch(e => console.log('Auto-play error:', e));
+            } else {
+                document.getElementById('currentVideoPopupStatus').style.display = 'none';
+            }
+        });
+    }
+
+    async function activateVideoPopup() {
+        const title = document.getElementById('videoPopupTitle').value.trim();
+        const desc = document.getElementById('videoPopupDesc').value.trim();
+        const badge = document.getElementById('videoPopupBadge').value.trim();
+        const videoId = parseInt(document.getElementById('videoPopupSelect').value);
+        
+        if (!title) { showToast('Masukkan judul video popup!'); return; }
+        if (!desc) { showToast('Masukkan deskripsi video popup!'); return; }
+        
+        showLoading();
+        try {
+            await db.ref('admin_config/video_popup').set({
+                active: true,
+                title: title,
+                description: desc,
+                badge: badge || '📢 PENGUMUMAN',
+                videoId: videoId,
+                updatedAt: Date.now()
+            });
+            addActivityLog('Activate Video Popup', `Video popup activated: ${title}`);
+            hideLoading();
+            showToast('✅ Video popup diaktifkan!');
+            loadVideoPopupStatus();
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+
+    async function deactivateVideoPopup() {
+        showConfirm('Nonaktifkan Video Popup', 'Yakin ingin menonaktifkan video popup?', async () => {
+            showLoading();
+            try {
+                await db.ref('admin_config/video_popup').update({ active: false });
+                addActivityLog('Deactivate Video Popup', 'Video popup deactivated');
+                hideLoading();
+                showToast('✅ Video popup dinonaktifkan!');
+                loadVideoPopupStatus();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+
     // ==================== MAINTENANCE FUNCTIONS ====================
     async function loadMaintenanceStatus() {
         try {
