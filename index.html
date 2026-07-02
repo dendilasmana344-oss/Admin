@@ -6922,7 +6922,6 @@
     }
     
     // ===== PUBLIC CHAT NOTIFICATION =====
-    let publicUnreadAdmin = 0;
     
     function setupPublicChatNotifAdmin() {
         db.ref('all_comments').orderByChild('timestamp').limitToLast(1).on('child_added', (snap) => {
