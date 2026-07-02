@@ -3192,6 +3192,102 @@
             background: linear-gradient(135deg, #ff4444, #cc0000);
             color: white;
         }
+        
+        /* ===== EDIT SALDO MODAL ===== */
+        .saldo-edit-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .saldo-edit-input {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 15px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .saldo-edit-input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .saldo-edit-input::placeholder {
+            color: #666;
+        }
+
+        .saldo-edit-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .saldo-edit-buttons .btn {
+            padding: 10px 18px;
+            font-size: 12px;
+        }
+
+        /* Diskon status badge */
+        .discount-status-badge {
+            display: inline-block;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .discount-status-badge.active {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .discount-status-badge.inactive {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+            border: 1px solid #9e9e9e;
+        }
+
+        /* Tombol nonaktifkan diskon */
+        .btn-disable-discount {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-disable-discount:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 68, 68, 0.4);
+        }
+
+        .btn-enable-discount {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-enable-discount:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.4);
+        }
 
         /* PUBLIC CHAT STYLE */
         #public_chat .chat-container {
@@ -3736,19 +3832,27 @@
         <div class="card">
             <div class="card-title"><i class="fas fa-tags"></i> Global Discount Settings</div>
         
+            <!-- Status Diskon Saat Ini -->
             <div id="currentDiscountStatus" style="margin-bottom: 20px; display: none;">
                 <div style="background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,255,136,0.05)); border: 2px solid #00ff88; border-radius: 20px; padding: 20px;">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
                         <i class="fas fa-percent" style="font-size: 28px; color: #00ff88;"></i>
                         <span style="font-weight: bold; color: #00ff88; font-size: 18px;">DISKON AKTIF</span>
+                        <span class="discount-status-badge active" style="margin-left: auto;">✅ AKTIF</span>
                     </div>
                     <div id="currentDiscountDetails"></div>
-                    <button class="btn btn-danger btn-sm" onclick="deactivateGlobalDiscount()" style="margin-top: 15px;">
-                        <i class="fas fa-stop"></i> Nonaktifkan Diskon
-                    </button>
+                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn-disable-discount" onclick="deactivateGlobalDiscount()">
+                            <i class="fas fa-stop"></i> Nonaktifkan Diskon Sekarang
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deactivateGlobalDiscount()">
+                            <i class="fas fa-times"></i> Nonaktifkan
+                        </button>
+                    </div>
                 </div>
             </div>
         
+            <!-- Form Aktifkan Diskon -->
             <div class="modal-form-group">
                 <label class="modal-label"><i class="fas fa-percent"></i> Persentase Diskon (%)</label>
                 <input type="number" class="modal-input" id="discountPercentage" placeholder="0" min="0" max="100" value="0">
@@ -3771,7 +3875,7 @@
                 <button class="btn btn-primary" onclick="activateGlobalDiscount()">
                     <i class="fas fa-play"></i> Aktifkan Diskon Global
                 </button>
-                <button class="btn btn-danger" onclick="deactivateGlobalDiscount()">
+                <button class="btn-disable-discount" onclick="deactivateGlobalDiscount()">
                     <i class="fas fa-stop"></i> Nonaktifkan Diskon
                 </button>
             </div>
@@ -4800,25 +4904,38 @@
         try {
             const snap = await db.ref('global_discount').once('value');
             const discount = snap.val();
+            const statusDiv = document.getElementById('currentDiscountStatus');
+        
             if (discount && discount.active === true) {
                 const expiryDate = new Date(discount.expiryDate);
                 if (expiryDate > new Date()) {
-                    document.getElementById('currentDiscountStatus').style.display = 'block';
+                    statusDiv.style.display = 'block';
+                    const statusBadge = statusDiv.querySelector('.discount-status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = '✅ AKTIF';
+                        statusBadge.className = 'discount-status-badge active';
+                    }
                     document.getElementById('currentDiscountDetails').innerHTML = `
-                        <div><strong>Diskon:</strong> <span style="color:#00ff88; font-size:20px;">${discount.percentage}%</span></div>
-                        <div><strong>Berlaku hingga:</strong> ${expiryDate.toLocaleDateString('id-ID')}</div>
-                        ${discount.minPurchase > 0 ? `<div><strong>Minimal pembelian:</strong> Rp ${formatRupiah(discount.minPurchase)}</div>` : ''}
+                        <div><strong>Diskon:</strong> <span style="color:#00ff88; font-size:24px;">${discount.percentage}%</span></div>
+                        <div><strong>Berlaku hingga:</strong> ${expiryDate.toLocaleDateString('id-ID')} ${expiryDate.toLocaleTimeString('id-ID')}</div>
+                        ${discount.minPurchase > 0 ? `<div><strong>Minimal pembelian:</strong> Rp ${formatRupiah(discount.minPurchase)}</div>` : '<div><strong>Minimal pembelian:</strong> Tidak ada</div>'}
+                        <div><strong>Diaktifkan:</strong> ${discount.startedAt ? new Date(discount.startedAt).toLocaleString() : '-'}</div>
+                        <div style="margin-top: 10px; color: #ffaa00; font-size: 12px;">
+                            <i class="fas fa-info-circle"></i> Diskon ini akan berlaku untuk semua pembelian package
+                        </div>
                     `;
                     document.getElementById('discountPercentage').value = discount.percentage;
                     document.getElementById('discountMinPurchase').value = discount.minPurchase || 0;
                 } else {
                     await db.ref('global_discount').update({ active: false });
-                    document.getElementById('currentDiscountStatus').style.display = 'none';
+                    statusDiv.style.display = 'none';
                 }
             } else {
-                document.getElementById('currentDiscountStatus').style.display = 'none';
+                statusDiv.style.display = 'none';
             }
-        } catch (error) { console.error(error); }
+        } catch (error) {
+            console.error('Error loading discount status:', error);
+        }
     }
 
     async function activateGlobalDiscount() {
@@ -5112,6 +5229,8 @@
             const statusClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline'); 
             const statusText = c.banned ? 'BANNED' : (c.status === 'online' ? 'Online' : 'Offline');
             const customerClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline');
+            const saldoId = 'saldoEdit_' + c.uid;
+            
             html += `
                 <div class="customer-item ${customerClass}">
                     <div class="customer-header">
@@ -5151,6 +5270,26 @@
                             <span class="detail-value device-id">${c.deviceId || '-'}</span>
                         </div>
                     </div>
+                    
+                    <!-- TAMBAHKAN INI - Edit Saldo -->
+                    <div class="saldo-edit-row" style="margin-top: 10px; padding: 12px 15px; background: rgba(0,0,0,0.3); border-radius: 15px; border: 1px solid rgba(0,255,255,0.1);">
+                        <span style="color: #aaa; font-size: 12px; min-width: 80px;">
+                            <i class="fas fa-wallet"></i> Edit Saldo:
+                        </span>
+                        <input type="number" class="saldo-edit-input" id="${saldoId}" placeholder="Jumlah" min="0" style="flex: 0 1 150px;">
+                        <div class="saldo-edit-buttons">
+                            <button class="btn btn-success btn-sm" onclick="editSaldo('${c.uid}', 'add')">
+                                <i class="fas fa-plus"></i> Tambah
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="editSaldo('${c.uid}', 'reduce')">
+                                <i class="fas fa-minus"></i> Kurangi
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="editSaldo('${c.uid}', 'set')">
+                                <i class="fas fa-edit"></i> Set
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="action-buttons">
                         <button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')">Reset PIN</button>
                         ${c.banned ? `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')">Unban</button>` : `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')">Ban</button>`}
@@ -6999,39 +7138,223 @@
                     supportUnreadAdmin++;
                     updateSupportBadgeAdmin();
                     
-                    const uid = chat.uid || 'Guest';
-                    const msg = chat.lastMessage || 'Ada pesan baru';
-                    showAdminNotifToast('💬 Support Chat', `<span class="highlight">${uid}</span>: ${msg.substring(0, 80)}`, 'warning');
+                        const uid = chat.uid || 'Guest';
+                        const msg = chat.lastMessage || 'Ada pesan baru';
+                        showAdminNotifToast('💬 Support Chat', `<span class="highlight">${uid}</span>: ${msg.substring(0, 80)}`, 'warning');
+                    }
                 }
+            });
+        }
+        
+        function updateSupportBadgeAdmin() {
+            const badge = document.getElementById('supportChatBadge');
+            if (badge) {
+                if (supportUnreadAdmin > 0) {
+                    badge.textContent = supportUnreadAdmin > 9 ? '9+' : supportUnreadAdmin;
+                    badge.classList.add('show');
+                } else {
+                    badge.classList.remove('show');
+                }
+            }
+        }
+        
+        function resetSupportBadgeAdmin() {
+            supportUnreadAdmin = 0;
+            updateSupportBadgeAdmin();
+        }
+        
+        // ===== INIT NOTIFICATIONS ADMIN =====
+        function initNotifAdmin() {
+            requestAdminNotifPermission();
+            setupPrivateChatNotifAdmin();
+            setupPublicChatNotifAdmin();
+            setupSupportChatNotifAdmin();
+            console.log('🔔 Admin notifications initialized');
+        }
+        
+        // ============================================================
+    // EDIT SALDO - ADMIN
+    // ============================================================
+    
+    async function editSaldo(uid, action) {
+        const input = document.getElementById('saldoEdit_' + uid);
+        if (!input) return;
+        
+        const amount = parseInt(input.value);
+        if (!amount || amount <= 0) {
+            showToast('Masukkan jumlah yang valid!');
+            return;
+        }
+        
+        showLoading();
+        try {
+            // Ambil saldo saat ini
+            const snap = await db.ref('saldo/' + uid).once('value');
+            const currentSaldo = snap.val()?.amount || 0;
+            let newSaldo = currentSaldo;
+            let actionText = '';
+            
+            if (action === 'add') {
+                newSaldo = currentSaldo + amount;
+                actionText = `Menambahkan Rp ${formatRupiah(amount)}`;
+            } else if (action === 'reduce') {
+                if (currentSaldo < amount) {
+                    hideLoading();
+                    showToast('Saldo tidak mencukupi!');
+                    return;
+                }
+                newSaldo = currentSaldo - amount;
+                actionText = `Mengurangi Rp ${formatRupiah(amount)}`;
+            } else if (action === 'set') {
+                newSaldo = amount;
+                actionText = `Mengatur saldo menjadi Rp ${formatRupiah(amount)}`;
+            }
+            
+            // Update saldo
+            await db.ref('saldo/' + uid).set({
+                amount: newSaldo,
+                last_updated: Date.now(),
+                last_action: action,
+                last_amount: amount,
+                previous_saldo: currentSaldo
+            });
+            
+            // Kirim notifikasi ke user
+            await db.ref('chats/' + uid).push({
+                sender: 'system',
+                text: `💰 SALDO DIUPDATE OLEH ADMIN\n\n${actionText}\nSaldo sebelumnya: Rp ${formatRupiah(currentSaldo)}\nSaldo sekarang: Rp ${formatRupiah(newSaldo)}`,
+                timestamp: Date.now()
+            });
+            
+            // Log aktivitas
+            addActivityLog('Edit Saldo', `${actionText} untuk ${uid} (${currentSaldo} → ${newSaldo})`);
+            
+            hideLoading();
+            showToast(`✅ Saldo ${uid} berhasil diupdate!`);
+            
+            // Refresh data
+            input.value = '';
+            loadCustomers();
+            loadAllData();
+            
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+    
+    // ============================================================
+    // NONAKTIFKAN DISKON - ADMIN
+    // ============================================================
+    
+    // Fungsi deactivateGlobalDiscount sudah ada, tapi kita perkuat
+    async function deactivateGlobalDiscount() {
+        showConfirm('Nonaktifkan Diskon', 'Yakin ingin menonaktifkan diskon global?', async () => {
+            showLoading();
+            try {
+                await db.ref('global_discount').update({ 
+                    active: false,
+                    deactivatedAt: Date.now(),
+                    deactivatedBy: 'Admin'
+                });
+                
+                // Catat di history
+                await db.ref('discount_history').push({
+                    action: 'deactivated',
+                    percentage: 0,
+                    timestamp: Date.now(),
+                    note: 'Diskon dinonaktifkan oleh admin'
+                });
+                
+                addActivityLog('Deactivate Global Discount', 'Global discount deactivated by admin');
+                hideLoading();
+                showToast('✅ Diskon global dinonaktifkan!');
+                
+                // Refresh status
+                loadGlobalDiscountStatus();
+                loadDiscountHistory();
+                
+                // Kirim notifikasi ke user bahwa diskon telah dinonaktifkan
+                const usersSnap = await db.ref('users').once('value');
+                const users = usersSnap.val() || {};
+                Object.keys(users).forEach(uid => {
+                    if (users[uid].status === 'online') {
+                        db.ref('chats/' + uid).push({
+                            sender: 'system',
+                            text: `📢 DISKON GLOBAL TELAH DINONAKTIFKAN\n\nDiskon global telah dinonaktifkan oleh admin. Harga akan kembali normal.`,
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+                
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
             }
         });
     }
     
-    function updateSupportBadgeAdmin() {
-        const badge = document.getElementById('supportChatBadge');
-        if (badge) {
-            if (supportUnreadAdmin > 0) {
-                badge.textContent = supportUnreadAdmin > 9 ? '9+' : supportUnreadAdmin;
-                badge.classList.add('show');
-            } else {
-                badge.classList.remove('show');
-            }
+    // Fungsi untuk mengaktifkan diskon (update)
+    async function activateGlobalDiscount() {
+        const percentage = parseInt(document.getElementById('discountPercentage').value);
+        const duration = parseInt(document.getElementById('discountDuration').value);
+        const minPurchase = parseInt(document.getElementById('discountMinPurchase').value) || 0;
+        
+        if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+            showToast('Persentase diskon harus antara 0-100!');
+            return;
         }
+        if (isNaN(duration) || duration < 1) {
+            showToast('Durasi minimal 1 hari!');
+            return;
+        }
+        
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + duration);
+        
+        showLoading();
+        try {
+            await db.ref('global_discount').set({
+                active: true,
+                percentage: percentage,
+                minPurchase: minPurchase,
+                expiryDate: expiryDate.toISOString(),
+                startedAt: new Date().toISOString(),
+            activatedBy: 'Admin'
+        });
+        
+        await db.ref('discount_history').push({
+            action: 'activated',
+            percentage: percentage,
+            minPurchase: minPurchase,
+            expiryDate: expiryDate.toISOString(),
+            timestamp: Date.now()
+        });
+        
+        addActivityLog('Activate Global Discount', `${percentage}% discount activated`);
+        hideLoading();
+        showToast(`✅ Diskon ${percentage}% berhasil diaktifkan!`);
+        loadGlobalDiscountStatus();
+        loadDiscountHistory();
+        
+        // Kirim notifikasi ke user
+        const usersSnap = await db.ref('users').once('value');
+        const users = usersSnap.val() || {};
+        Object.keys(users).forEach(uid => {
+            if (users[uid].status === 'online') {
+                db.ref('chats/' + uid).push({
+                    sender: 'system',
+                    text: `🎉 DISKON GLOBAL ${percentage}%\n\nDiskon ${percentage}% telah diaktifkan!\n💰 Minimal pembelian: ${minPurchase > 0 ? 'Rp ' + formatRupiah(minPurchase) : 'Tidak ada'}\n⏰ Berlaku hingga: ${expiryDate.toLocaleDateString('id-ID')}`,
+                    timestamp: Date.now()
+                });
+            }
+        });
+        
+    } catch (error) {
+        hideLoading();
+        showToast('Error: ' + error.message);
     }
-    
-    function resetSupportBadgeAdmin() {
-        supportUnreadAdmin = 0;
-        updateSupportBadgeAdmin();
-    }
-    
-    // ===== INIT NOTIFICATIONS ADMIN =====
-    function initNotifAdmin() {
-        requestAdminNotifPermission();
-        setupPrivateChatNotifAdmin();
-        setupPublicChatNotifAdmin();
-        setupSupportChatNotifAdmin();
-        console.log('🔔 Admin notifications initialized');
-    }
+}
     
     // ==================== USER FILES ====================
     function loadUserFiles() { window.allFiles = []; db.ref('chats').once('value', snap => { const chats = snap.val() || {}; Object.keys(chats).forEach(uid => { Object.keys(chats[uid]).forEach(msgId => { const msg = chats[uid][msgId]; if (msg.fileUrl) window.allFiles.push({ id: msgId, uid, name: msg.fileName || 'file', url: msg.fileUrl, type: msg.fileType || 'unknown', timestamp: msg.timestamp || Date.now() }); }); }); window.allFiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); displayUserFiles(); }); }
