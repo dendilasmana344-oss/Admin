@@ -5907,12 +5907,15 @@
     
     // ===== INIT ADMIN NOTIFICATIONS =====
     function initAdminNotifications() {
-        requestAdminNotificationPermission();
-        setupPrivateChatNotification();
-        setupPublicChatNotificationAdmin();
-        setupSupportChatNotificationAdmin();
+        // Request permission
+        requestAdminNotifPermission();
+    
+        // Setup semua notifikasi
+        setupPrivateChatNotifAdmin();
+        setupPublicChatNotifAdmin();
+        setupSupportChatNotifAdmin();
         updateAdminStatus();
-        
+    
         // Reset unread saat tab dibuka
         const chatTab = document.querySelector('.tab[onclick*="chat"]');
         if (chatTab) {
@@ -5920,26 +5923,26 @@
                 setTimeout(() => {
                     const select = document.getElementById('chatUserSelect');
                     if (select && select.value) {
-                        resetPrivateChatUnread(select.value);
+                        resetAdminChatBadge(select.value);
                     }
                 }, 500);
             });
         }
-        
+    
         const publicTab = document.querySelector('.tab[onclick*="public_chat"]');
         if (publicTab) {
             publicTab.addEventListener('click', () => {
-                setTimeout(resetPublicChatUnreadAdmin, 500);
+                setTimeout(resetPublicBadgeAdmin, 500);
             });
         }
-        
+    
         const supportTab = document.querySelector('.tab[onclick*="support_chat"]');
         if (supportTab) {
             supportTab.addEventListener('click', () => {
-                setTimeout(resetSupportChatUnreadAdmin, 500);
+                setTimeout(resetSupportBadgeAdmin, 500);
             });
         }
-        
+    
         console.log('🔔 Admin notification system initialized');
     }
 
@@ -6796,20 +6799,30 @@
             const uid = snap.key;
             const messages = snap.val() || {};
             const keys = Object.keys(messages).sort((a, b) => messages[b].timestamp - messages[a].timestamp);
-            
+        
             if (keys.length > 0) {
                 const lastMsg = messages[keys[0]];
                 if (lastMsg && lastMsg.sender === 'customer') {
                     const isActive = document.getElementById('chat')?.classList.contains('active');
                     const selected = document.getElementById('chatUserSelect')?.value;
-                    
+                
                     if (!isActive || selected !== uid) {
                         if (!adminUnreadCount[uid]) adminUnreadCount[uid] = 0;
                         adminUnreadCount[uid]++;
                         updateAdminChatBadge();
-                        
-                        const text = lastMsg.text ? lastMsg.text.substring(0, 80) : 'Mengirim pesan';
-                        showAdminNotifToast('💬 Pesan dari Customer', `<span class="highlight">${uid}</span>: ${text}`, 'info');
+                    
+                        const msgText = lastMsg.text ? lastMsg.text.substring(0, 80) + (lastMsg.text.length > 80 ? '...' : '') : 'Mengirim pesan';
+                        showAdminNotifToast('💬 Pesan dari Customer', `<span class="highlight">${uid}</span>: ${msgText}`, 'info');
+                    
+                        if (adminNotifPermission) {
+                            try {
+                                new Notification('💬 Pesan dari Customer', {
+                                    body: `${uid}: ${msgText}`,
+                                    icon: adminIcon,
+                                    vibrate: [200, 100, 200]
+                                });
+                            } catch(e) {}
+                        }
                     }
                 }
             }
@@ -6837,19 +6850,28 @@
     }
     
     // ===== PUBLIC CHAT NOTIFICATION =====
-    
     function setupPublicChatNotifAdmin() {
         db.ref('all_comments').orderByChild('timestamp').limitToLast(1).on('child_added', (snap) => {
             const msg = snap.val();
             if (!msg || msg.uid === 'ADMIN') return;
-            
+        
             const isActive = document.getElementById('public_chat')?.classList.contains('active');
             if (!isActive) {
                 publicUnreadAdmin++;
                 updatePublicBadgeAdmin();
-                
+            
                 const text = msg.text ? msg.text.substring(0, 80) : 'Mengirim pesan';
                 showAdminNotifToast('💬 Public Chat', `<span class="highlight">${msg.uid}</span>: ${text}`, 'info');
+            
+                if (adminNotifPermission) {
+                    try {
+                        new Notification('💬 Public Chat', {
+                            body: `${msg.uid}: ${text}`,
+                            icon: adminIcon,
+                            vibrate: [200, 100, 200]
+                        });
+                    } catch(e) {}
+                }
             }
         });
     }
@@ -6876,18 +6898,28 @@
         db.ref('support_chats').on('child_added', (snap) => {
             const deviceId = snap.key;
             const chat = snap.val() || {};
-            
+        
             if (chat.lastSender === 'user' && !chat.adminRead) {
                 const isActive = document.getElementById('support_chat')?.classList.contains('active');
                 const selected = document.getElementById('chatSupportSelect')?.value;
-                
+            
                 if (!isActive || selected !== deviceId) {
                     supportUnreadAdmin++;
                     updateSupportBadgeAdmin();
-                    
+                
                     const uid = chat.uid || 'Guest';
                     const msg = chat.lastMessage || 'Ada pesan baru';
                     showAdminNotifToast('💬 Support Chat', `<span class="highlight">${uid}</span>: ${msg.substring(0, 80)}`, 'warning');
+                
+                    if (adminNotifPermission) {
+                        try {
+                            new Notification('💬 Support Chat', {
+                                body: `${uid}: ${msg.substring(0, 80)}`,
+                                icon: adminIcon,
+                                vibrate: [200, 100, 200]
+                            });
+                        } catch(e) {}
+                    }
                 }
             }
         });
