@@ -5791,6 +5791,7 @@
             if (selectedUid && select.querySelector(`option[value="${selectedUid}"]`)) {
                 select.value = selectedUid;
                 loadUserChat();
+                resetAdminChatBadge(currentChatUser);
             }
         
             console.log('👥 Chat users loaded:', sortedUids.length);
@@ -6574,10 +6575,11 @@
         });
     }
     
+    // ===== ADMIN CHAT BADGE =====
     function updateAdminChatBadge() {
         const total = Object.values(adminUnreadCount).reduce((a, b) => a + b, 0);
         const badge = document.querySelector('.tab[onclick*="chat"] .chat-badge');
-        if (badge) {
+            if (badge) {
             if (total > 0) {
                 badge.textContent = total > 9 ? '9+' : total;
                 badge.classList.add('show');
@@ -6586,12 +6588,48 @@
             }
         }
     }
-    
+
     function resetAdminChatBadge(uid) {
         if (uid && adminUnreadCount[uid]) {
             delete adminUnreadCount[uid];
             updateAdminChatBadge();
         }
+    }
+
+    // ===== PUBLIC BADGE =====
+    function updatePublicBadgeAdmin() {
+        const badge = document.getElementById('publicChatBadge');
+        if (badge) {
+            if (publicUnreadAdmin > 0) {
+                badge.textContent = publicUnreadAdmin > 9 ? '9+' : publicUnreadAdmin;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
+        }
+    }
+
+    function resetPublicBadgeAdmin() {
+        publicUnreadAdmin = 0;
+        updatePublicBadgeAdmin();
+    }
+
+    // ===== SUPPORT BADGE =====
+    function updateSupportBadgeAdmin() {
+        const badge = document.getElementById('supportChatBadge');
+        if (badge) {
+            if (supportUnreadAdmin > 0) {
+                badge.textContent = supportUnreadAdmin > 9 ? '9+' : supportUnreadAdmin;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
+        }
+    }
+
+    function resetSupportBadgeAdmin() {
+        supportUnreadAdmin = 0;
+        updateSupportBadgeAdmin();
     }
     
     // ===== PUBLIC CHAT NOTIFICATION =====
@@ -6921,6 +6959,8 @@
         setupChatFileUpload();
         initSupportChatAdmin();
         initAdminNotifications();
+        resetSupportBadgeAdmin();
+        resetPublicBadgeAdmin();
         loadFreeUpdateStatsRealtime();
         loadFreeUpdateHistoryRealtime();
         setInterval(updateAdminStatus, 30000); 
