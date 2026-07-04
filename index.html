@@ -958,6 +958,12 @@
             border-radius: 20px;
             padding: 20px;
             margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .discount-card:hover {
+            transform: translateX(5px);
+            border-color: #ffaa00;
         }
 
         .discount-header {
@@ -965,6 +971,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .discount-code {
@@ -3766,6 +3774,7 @@
         <div class="tab" onclick="openTab('background')"><i class="fas fa-video"></i> Background Video</div>
         <div class="tab" onclick="openTab('video_popup')"><i class="fas fa-play-circle"></i> Video Popup</div>
         <div class="tab" onclick="openTab('leaderboard')"><i class="fas fa-trophy"></i> Leaderboard</div>
+        <div class="tab" onclick="openTab('announcements')"><i class="fas fa-bullhorn"></i> Pengumuman</div>
         <div class="tab" onclick="openTab('chat')"><i class="fas fa-comments"></i> Private Chat</div>
         <div class="tab" onclick="openTab('support_chat')"><i class="fas fa-headset"></i> Support Chat<span class="chat-badge" id="supportChatBadge">0</span></div>
         <div class="tab" onclick="openTab('public_chat')"><i class="fas fa-globe"></i> Public Chat<span class="chat-badge" id="publicChatBadge">0</span></div>
@@ -4060,6 +4069,64 @@
             <div class="card-title"><i class="fas fa-trophy"></i> Top Depositors <button class="btn btn-primary btn-sm" onclick="loadLeaderboard()" style="margin-left:auto;"><i class="fas fa-sync-alt"></i> Refresh</button></div>
             <div id="leaderboardList"></div>
             <div class="card" style="margin-top:20px;"><div style="display:flex; justify-content:space-between;"><span style="color:#ffaa00;">💰 Total All Deposits:</span><span style="color:#ffaa00; font-size:20px; font-weight:bold;" id="leaderboardTotal">Rp 0</span></div></div>
+        </div>
+    </div>
+    
+    <!-- ANNOUNCEMENTS TAB -->
+    <div id="announcements" class="tab-content">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-bullhorn"></i> Kirim Pengumuman ke User</div>
+        
+            <!-- Form Kirim Pengumuman -->
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-heading"></i> Judul Pengumuman</label>
+                <input type="text" class="modal-input" id="announcementTitle" placeholder="e.g., 📢 INFO PENTING!">
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-align-left"></i> Isi Pengumuman</label>
+                <textarea class="modal-textarea" id="announcementMessage" placeholder="Tulis pesan pengumuman di sini..." style="min-height:120px;"></textarea>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-tag"></i> Tipe Notifikasi</label>
+                <select class="modal-select" id="announcementType">
+                    <option value="info">ℹ️ Info (Biru)</option>
+                    <option value="success">✅ Success (Hijau)</option>
+                    <option value="warning">⚠️ Warning (Kuning)</option>
+                    <option value="error">❌ Error (Merah)</option>
+                </select>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-users"></i> Target User</label>
+                <select class="modal-select" id="announcementTarget">
+                    <option value="all">📢 Semua User</option>
+                    <option value="online">🟢 User Online</option>
+                    <option value="vip">👑 User VIP</option>
+                    <option value="free">🔓 User Free</option>
+                </select>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-clock"></i> Durasi Tampil (detik)</label>
+                <input type="number" class="modal-input" id="announcementDuration" value="5" min="1" max="30">
+                <small style="color:#888;">Berapa lama notifikasi akan muncul di layar user</small>
+            </div>
+        
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="sendAnnouncement()">
+                    <i class="fas fa-paper-plane"></i> Kirim Pengumuman
+                </button>
+                <button class="btn btn-info" onclick="loadAnnouncementHistory()">
+                    <i class="fas fa-sync-alt"></i> Refresh Riwayat
+                </button>
+            </div>
+        
+            <div style="margin-top:30px;">
+                <h3 style="color:var(--neon-cyan);"><i class="fas fa-history"></i> Riwayat Pengumuman</h3>
+                <div id="announcementHistoryList"></div>
+            </div>
         </div>
     </div>
 
@@ -4390,6 +4457,9 @@
     let selectedVideoPopupType = 'announcement';
     let currentSupportDeviceId = '';
     let supportAdminListener = null;
+    let editingVIPUpdateId = null;
+    let editingFreeUpdateId = null;
+    let editingPackageIdx = null;
     let supportUsersList = {};
     
     // Push Notification Setup
@@ -5162,11 +5232,178 @@
     async function removeVIP(uid) { showConfirm('Remove VIP', `Remove VIP from ${uid}?`, async () => { showLoading(); try { await db.ref(`vip_members/${uid}`).remove(); addActivityLog('Remove VIP', `Removed VIP status from ${uid}`); hideLoading(); showToast(`VIP removed from ${uid}`); loadVIPMembers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     
     // ==================== FILE UPDATES ====================
-    function loadFileUpdates() { db.ref('global_updates').orderByChild('created_at').once('value', snap => { const updates = snap.val() || {}; let html = ''; Object.keys(updates).sort((a,b) => (updates[b].created_at||0) - (updates[a].created_at||0)).forEach(key => { const u = updates[key]; html += `<div class="update-item"><div class="update-title">👑 ${u.title || 'VIP Update'}</div><div class="update-desc">${u.description || ''}</div><div class="update-meta"><span>${u.version || 'v2.0'}</span><span>${u.created_at ? new Date(u.created_at).toLocaleString() : '-'}</span><span>Expiry: ${u.expiry_days || 7} hari</span></div><div class="action-buttons"><button class="btn btn-danger btn-sm" onclick="deleteFileUpdate('${key}')">Delete</button></div></div>`; }); document.getElementById('fileUpdatesList').innerHTML = html || '<div class="no-data">No file updates</div>'; }); }
+    function loadFileUpdates() { 
+        db.ref('global_updates').orderByChild('created_at').once('value', snap => { 
+            const updates = snap.val() || {}; 
+            let html = ''; 
+            Object.keys(updates).sort((a,b) => (updates[b].created_at||0) - (updates[a].created_at||0)).forEach(key => { 
+                const u = updates[key]; 
+                html += `<div class="update-item">
+                    <div class="update-title">👑 ${u.title || 'VIP Update'}</div>
+                    <div class="update-desc">${u.description || ''}</div>
+                    <div class="update-meta">
+                        <span>${u.version || 'v2.0'}</span>
+                        <span>${u.created_at ? new Date(u.created_at).toLocaleString() : '-'}</span>
+                        <span>Expiry: ${u.expiry_days || 7} hari</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-warning btn-sm" onclick="openEditVIPUpdate('${key}')"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteFileUpdate('${key}')">Delete</button>
+                    </div>
+                </div>`; 
+            }); 
+            document.getElementById('fileUpdatesList').innerHTML = html || '<div class="no-data">No file updates</div>'; 
+        }); 
+    }
+    
     function openUpdateModal() { document.getElementById('updateModal').classList.add('active'); }
     function closeUpdateModal() { document.getElementById('updateModal').classList.remove('active'); }
     async function createFileUpdate() { const title = document.getElementById('updateTitle').value.trim(); const desc = document.getElementById('updateDescription').value.trim(); const link = document.getElementById('updateLink').value.trim(); const version = document.getElementById('updateVersion').value.trim(); const expiry = parseInt(document.getElementById('updateExpiry').value) || 7; if (!title || !desc || !link) { showToast('Please fill all fields!'); return; } showLoading(); try { await db.ref('global_updates').push({ title, description: desc, link, version, expiry_days: expiry, created_at: new Date().toISOString(), status: 'active' }); addActivityLog('Create VIP Update', `Created update: ${title}`); hideLoading(); showToast('Update created!'); closeUpdateModal(); loadFileUpdates(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
     async function deleteFileUpdate(updateId) { showConfirm('Delete Update', 'Delete this update?', async () => { showLoading(); try { await db.ref(`global_updates/${updateId}`).remove(); addActivityLog('Delete VIP Update', `Deleted update ${updateId}`); hideLoading(); showToast('Update deleted!'); loadFileUpdates(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+    
+    // ==================== EDIT FILE UPDATE ====================
+    let editingUpdateId = null;
+    function openEditUpdateModal(updateId) {
+        editingUpdateId = updateId;
+        db.ref('global_updates/' + updateId).once('value', snap => {
+            const data = snap.val();
+            if (!data) { showToast('Update not found!'); return; }
+            document.getElementById('updateTitle').value = data.title || '';
+            document.getElementById('updateDescription').value = data.description || '';
+            document.getElementById('updateLink').value = data.link || '';
+            document.getElementById('updateVersion').value = data.version || '';
+            document.getElementById('updateExpiry').value = data.expiry_days || 7;
+            document.getElementById('updateModal').classList.add('active');
+            document.querySelector('#updateModal .btn-primary').onclick = async function() {
+                const title = document.getElementById('updateTitle').value.trim();
+                const desc = document.getElementById('updateDescription').value.trim();
+                const link = document.getElementById('updateLink').value.trim();
+                const version = document.getElementById('updateVersion').value.trim();
+                const expiry = parseInt(document.getElementById('updateExpiry').value) || 7;
+                if (!title || !desc || !link) { showToast('Please fill all fields!'); return; }
+                showLoading();
+                try {
+                    await db.ref('global_updates/' + editingUpdateId).update({
+                        title, description: desc, link, version, expiry_days: expiry
+                    });
+                    addActivityLog('Edit VIP Update', `Updated update: ${title}`);
+                    hideLoading();
+                    showToast('Update updated!');
+                    closeUpdateModal();
+                    loadFileUpdates();
+                } catch (error) {
+                    hideLoading();
+                    showToast('Error: ' + error.message);
+                }
+            };
+        });
+    }
+    
+    // ==================== EDIT FREE UPDATE ====================
+
+    function openEditFreeUpdate(updateId) {
+        editingFreeUpdateId = updateId;
+        db.ref('free_updates/all/' + updateId).once('value', snap => {
+            const data = snap.val();
+            if (!data) { showToast('Update not found!'); return; }
+        
+            document.getElementById('freeTitle').value = data.title || '';
+            document.getElementById('freeVersion').value = data.version || '';
+            document.getElementById('freeDescription').value = data.description || '';
+            document.getElementById('freeLink').value = data.link || '';
+        
+            // Scroll ke form
+            document.getElementById('free_update').scrollIntoView({ behavior: 'smooth' });
+        
+            // Ubah tombol submit menjadi Update
+            const submitBtn = document.querySelector('#free_update .btn-primary');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Free Update';
+            submitBtn.onclick = async function() {
+                const title = document.getElementById('freeTitle').value.trim();
+                const version = document.getElementById('freeVersion').value.trim();
+                const desc = document.getElementById('freeDescription').value.trim();
+                const link = document.getElementById('freeLink').value.trim();
+            
+                if (!title || !version || !link) { showToast('Please fill required fields!'); return; }
+            
+                showLoading();
+                try {
+                    await db.ref('free_updates/all/' + editingFreeUpdateId).update({
+                        title, version, description: desc, link, updated_at: Date.now()
+                    });
+                    await db.ref('free_updates/latest').update({
+                        title, version, description: desc, link, updated_at: Date.now()
+                    });
+                    addActivityLog('Edit Free Update', `Updated free update: ${title}`);
+                    hideLoading();
+                    showToast('✅ Free Update updated!');
+                    loadFreeUpdateHistory();
+                    loadFreeUpdateStats();
+                    editingFreeUpdateId = null;
+                    // Reset form dan tombol
+                    document.getElementById('freeTitle').value = '';
+                    document.getElementById('freeVersion').value = '';
+                    document.getElementById('freeDescription').value = '';
+                    document.getElementById('freeLink').value = '';
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send to All Users';
+                    submitBtn.onclick = sendFreeUpdateToAll;
+                } catch (error) {
+                    hideLoading();
+                    showToast('Error: ' + error.message);
+                }
+            };
+        });
+    }
+    
+    // ==================== EDIT VIP UPDATE ====================
+    
+    function openEditVIPUpdate(updateId) {
+        editingVIPUpdateId = updateId;
+        db.ref('global_updates/' + updateId).once('value', snap => {
+            const data = snap.val();
+            if (!data) { showToast('Update not found!'); return; }
+        
+            document.getElementById('updateTitle').value = data.title || '';
+            document.getElementById('updateDescription').value = data.description || '';
+            document.getElementById('updateLink').value = data.link || '';
+            document.getElementById('updateVersion').value = data.version || '';
+            document.getElementById('updateExpiry').value = data.expiry_days || 7;
+            document.getElementById('updateModal').classList.add('active');
+        
+            // Ubah tombol submit menjadi Update
+            const submitBtn = document.querySelector('#updateModal .btn-primary');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Update VIP Update';
+            submitBtn.onclick = async function() {
+                const title = document.getElementById('updateTitle').value.trim();
+                const desc = document.getElementById('updateDescription').value.trim();
+                const link = document.getElementById('updateLink').value.trim();
+                const version = document.getElementById('updateVersion').value.trim();
+                const expiry = parseInt(document.getElementById('updateExpiry').value) || 7;
+            
+                if (!title || !desc || !link) { showToast('Please fill all fields!'); return; }
+            
+                showLoading();
+                try {
+                    await db.ref('global_updates/' + editingVIPUpdateId).update({
+                        title, description: desc, link, version, expiry_days: expiry,
+                        updated_at: Date.now()
+                    });
+                    addActivityLog('Edit VIP Update', `Updated update: ${title}`);
+                    hideLoading();
+                    showToast('✅ VIP Update updated!');
+                    closeUpdateModal();
+                    loadFileUpdates();
+                    editingVIPUpdateId = null;
+                    // Reset tombol
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Create';
+                    submitBtn.onclick = createFileUpdate;
+                } catch (error) {
+                    hideLoading();
+                    showToast('Error: ' + error.message);
+                }
+            };
+        });
+    }
     
     // ==================== BROADCAST VIP UPDATE ====================
     function openBroadcastVIPModal() {
@@ -5422,12 +5659,13 @@
         const badge = document.getElementById('videoPopupBadge').value.trim();
         const videoId = parseInt(document.getElementById('videoPopupSelect').value);
         const type = selectedVideoPopupType || 'announcement';
-        
+    
         if (!title) { showToast('Masukkan judul video popup!'); return; }
         if (!desc) { showToast('Masukkan deskripsi video popup!'); return; }
-        
+    
         showLoading();
         try {
+            // PASTIKAN data video tersimpan dengan benar
             await db.ref('admin_config/video_popup').set({
                 active: true,
                 title: title,
@@ -5437,6 +5675,15 @@
                 type: type,
                 updatedAt: Date.now()
             });
+        
+            // HAPUS CACHE user agar video muncul lagi
+            const usersSnap = await db.ref('users').once('value');
+            const users = usersSnap.val() || {};
+            Object.keys(users).forEach(uid => {
+                // Hapus seen key untuk user
+                db.ref('user_config/' + uid + '/video_popup_seen').remove();
+            });
+        
             addActivityLog('Activate Video Popup', `Video popup activated: ${title} (${type})`);
             hideLoading();
             showToast('✅ Video popup diaktifkan!');
@@ -5478,6 +5725,70 @@
         }
     });
     
+    // ==================== EDIT PACKAGES ====================
+
+    function openEditPackage(idx) {
+        editingPackageIdx = idx;
+        db.ref('admin_config/premium_packages').once('value', snap => {
+            const packages = snap.val() || [];
+            const pkg = packages[idx];
+            if (!pkg) { showToast('Package not found!'); return; }
+        
+            document.getElementById('packageLabel').value = pkg.label || '';
+            document.getElementById('packagePrice').value = pkg.price || '';
+            document.getElementById('packageType').value = pkg.type || 'quota';
+            document.getElementById('packageDesc').value = pkg.description || '';
+            document.getElementById('packageQuota').value = pkg.quota || 5;
+            document.getElementById('packageDuration').value = pkg.durationMonths || 2;
+            togglePackageFields();
+            document.getElementById('packageModal').classList.add('active');
+        
+            // Ubah tombol submit menjadi Update
+            const submitBtn = document.querySelector('#packageModal .btn-primary');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Package';
+            submitBtn.onclick = async function() {
+                const label = document.getElementById('packageLabel').value.trim();
+                const price = parseInt(document.getElementById('packagePrice').value);
+                const type = document.getElementById('packageType').value;
+                const description = document.getElementById('packageDesc').value.trim();
+                let quota = 0, durationMonths = 0;
+            
+                if (type === 'quota') { 
+                    quota = parseInt(document.getElementById('packageQuota').value) || 0; 
+                    if (quota <= 0) { showToast('Jumlah update harus lebih dari 0!'); return; } 
+                } else if (type === 'unlimited') { 
+                    durationMonths = parseInt(document.getElementById('packageDuration').value) || 0; 
+                    if (durationMonths <= 0) { showToast('Durasi harus lebih dari 0 bulan!'); return; } 
+                }
+            
+                if (!label || !price) { showToast('Please fill required fields!'); return; }
+            
+                showLoading();
+                try {
+                    const snap = await db.ref('admin_config/premium_packages').once('value');
+                    let packages = snap.val() || [];
+                    packages[editingPackageIdx] = { 
+                        label, price, type, description, quota, durationMonths, 
+                        updatedAt: new Date().toISOString() 
+                    };
+                    await db.ref('admin_config/premium_packages').set(packages);
+                    addActivityLog('Edit Package', `Updated premium package: ${label} - Rp ${formatRupiah(price)}`);
+                    hideLoading();
+                    showToast('✅ Package updated!');
+                    closePackageModal();
+                    loadPackages();
+                    editingPackageIdx = null;
+                    // Reset tombol
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Add';
+                    submitBtn.onclick = addPackage;
+                } catch (error) {
+                    hideLoading();
+                    showToast('Error: ' + error.message);
+                }
+            };
+        });
+    }
+    
     // ==================== FREE UPDATE ====================
     async function loadFreeUpdateStats() { 
         const viewsSnap = await db.ref('free_updates/views').once('value'); 
@@ -5507,10 +5818,22 @@
         let html = ''; 
         Object.keys(updates).sort((a,b) => (updates[b].timestamp||0) - (updates[a].timestamp||0)).forEach(key => { 
             const u = updates[key]; 
-            html += `<div class="update-item"><div class="update-title">📢 ${u.title || 'Free Update'}</div><div class="update-desc">${u.description || ''}</div><div class="update-meta"><span>${u.version || 'v1.0'}</span><span>${u.timestamp ? new Date(u.timestamp).toLocaleString() : '-'}</span></div><div class="action-buttons"><button class="btn btn-danger btn-sm" onclick="deleteFreeUpdate('${key}')">Delete</button></div></div>`; 
+            html += `<div class="update-item">
+                <div class="update-title">📢 ${u.title || 'Free Update'}</div>
+                <div class="update-desc">${u.description || ''}</div>
+                <div class="update-meta">
+                    <span>${u.version || 'v1.0'}</span>
+                    <span>${u.timestamp ? new Date(u.timestamp).toLocaleString() : '-'}</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-warning btn-sm" onclick="openEditFreeUpdate('${key}')"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteFreeUpdate('${key}')">Delete</button>
+                </div>
+            </div>`; 
         }); 
         document.getElementById('freeUpdateHistory').innerHTML = html || '<div class="no-data">No update history</div>'; 
     }
+    
     async function sendFreeUpdateToAll() {
         const title = document.getElementById('freeTitle').value.trim();
         const version = document.getElementById('freeVersion').value.trim();
@@ -5670,6 +5993,166 @@
     
         requestAnimationFrame(updateNumber);
     }
+    
+    // ==================== ANNOUNCEMENT / PENGUMUMAN ====================
+
+    async function sendAnnouncement() {
+        const title = document.getElementById('announcementTitle').value.trim();
+        const message = document.getElementById('announcementMessage').value.trim();
+        const type = document.getElementById('announcementType').value;
+        const target = document.getElementById('announcementTarget').value;
+        const duration = parseInt(document.getElementById('announcementDuration').value) || 5;
+    
+        if (!title || !message) {
+            showToast('Judul dan Isi pengumuman harus diisi!');
+            return;
+        }
+    
+        showLoading();
+    
+        try {
+            // Simpan ke database sebagai pengumuman
+            const announcementRef = await db.ref('announcements').push({
+                title: title,
+                message: message,
+                type: type,
+                target: target,
+                duration: duration,
+                sentAt: Date.now(),
+                sentBy: 'Admin'
+            });
+        
+            const announcementId = announcementRef.key;
+        
+            // Dapatkan daftar user berdasarkan target
+            const usersSnap = await db.ref('users').once('value');
+            const users = usersSnap.val() || {};
+            let targetUsers = [];
+        
+            switch(target) {
+                case 'all':
+                    targetUsers = Object.keys(users);
+                    break;
+                case 'online':
+                    targetUsers = Object.keys(users).filter(uid => users[uid].status === 'online');
+                    break;
+                case 'vip':
+                    const vipSnap = await db.ref('vip_members').once('value');
+                    const vipData = vipSnap.val() || {};
+                    targetUsers = Object.keys(vipData).filter(uid => vipData[uid].status === 'active');
+                    break;
+                case 'free':
+                    const vipSnap2 = await db.ref('vip_members').once('value');
+                    const vipData2 = vipSnap2.val() || {};
+                    const vipUsers = new Set(Object.keys(vipData2).filter(uid => vipData2[uid].status === 'active'));
+                    targetUsers = Object.keys(users).filter(uid => !vipUsers.has(uid));
+                    break;
+            }
+        
+            // Kirim notifikasi ke setiap user target
+            let sentCount = 0;
+            for (const uid of targetUsers) {
+                try {
+                    // Simpan di chat user (system message)
+                    await db.ref('chats/' + uid).push({
+                        sender: 'system',
+                        text: `📢 *${title}*\n\n${message}`,
+                        timestamp: Date.now(),
+                        isAnnouncement: true,
+                        announcementId: announcementId
+                    });
+                
+                    // Simpan di notifikasi user
+                    await db.ref('user_notifications/' + uid + '/' + announcementId).set({
+                        title: title,
+                        message: message,
+                        type: type,
+                        duration: duration,
+                        sentAt: Date.now(),
+                        read: false
+                    });
+                
+                    sentCount++;
+                } catch(e) {
+                    console.error('Gagal kirim ke', uid, e);
+                }
+            }
+        
+            addActivityLog('Kirim Pengumuman', `"${title}" ke ${sentCount} user (Target: ${target})`);
+            hideLoading();
+            showToast(`✅ Pengumuman terkirim ke ${sentCount} user!`);
+        
+            // Reset form
+            document.getElementById('announcementTitle').value = '';
+            document.getElementById('announcementMessage').value = '';
+        
+            // Refresh riwayat
+            loadAnnouncementHistory();
+        
+        } catch(error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+
+    function loadAnnouncementHistory() {
+        db.ref('announcements').orderByChild('sentAt').limitToLast(50).once('value', (snap) => {
+            const announcements = snap.val() || {};
+            let html = '';
+        
+            Object.keys(announcements).sort((a,b) => (announcements[b].sentAt||0) - (announcements[a].sentAt||0)).forEach(key => {
+                const a = announcements[key];
+                const typeMap = {
+                    info: 'ℹ️ Info',
+                    success: '✅ Success',
+                    warning: '⚠️ Warning',
+                    error: '❌ Error'
+                };
+                const targetMap = {
+                    all: '📢 Semua User',
+                    online: '🟢 User Online',
+                    vip: '👑 User VIP',
+                    free: '🔓 User Free'
+                };
+            
+                html += `
+                    <div class="update-item" style="border-left: 5px solid ${a.type === 'error' ? '#ff4444' : a.type === 'warning' ? '#ffaa00' : a.type === 'success' ? '#00ff88' : '#00ffff'};">
+                        <div class="update-title">${escapeHtml(a.title)}</div>
+                        <div class="update-desc">${escapeHtml(a.message)}</div>
+                        <div class="update-meta">
+                            <span>${typeMap[a.type] || 'Info'}</span>
+                            <span>${targetMap[a.target] || 'Semua'}</span>
+                            <span>${a.sentAt ? new Date(a.sentAt).toLocaleString() : '-'}</span>
+                            <span>Durasi: ${a.duration || 5}s</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement('${key}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        
+            document.getElementById('announcementHistoryList').innerHTML = html || '<div class="no-data">Belum ada pengumuman</div>';
+        });
+    }
+
+    async function deleteAnnouncement(announcementId) {
+        showConfirm('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', async () => {
+            showLoading();
+            try {
+                await db.ref('announcements/' + announcementId).remove();
+                addActivityLog('Hapus Pengumuman', `Menghapus pengumuman ${announcementId}`);
+                hideLoading();
+                showToast('Pengumuman dihapus!');
+                loadAnnouncementHistory();
+            } catch(error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
 
     // ==================== FREE UPDATE HISTORY REAL-TIME ====================
     function loadFreeUpdateHistoryRealtime() {
@@ -5688,6 +6171,7 @@
                             <span>${u.timestamp ? new Date(u.timestamp).toLocaleString() : '-'}</span>
                         </div>
                         <div class="action-buttons">
+                            <button class="btn btn-warning btn-sm" onclick="openEditFreeUpdate('${key}')"><i class="fas fa-edit"></i> Edit</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteFreeUpdate('${key}')">Delete</button>
                         </div>
                     </div>
@@ -5728,7 +6212,16 @@
     }
     
     // ==================== DISCOUNTS (LAMA) ====================
-    function loadDiscounts() { let html = ''; Object.keys(allDiscounts).forEach(code => { const d = allDiscounts[code]; const expiry = new Date(d.expiryDate); const isExpired = expiry < new Date(); html += `<div class="discount-card"><div class="discount-header"><span class="discount-code">${code}</span><span class="discount-percent">${d.percentage}%</span></div><div class="discount-details"><div><span class="detail-label">Min:</span> Rp ${formatRupiah(d.minPurchase || 0)}</div><div><span class="detail-label">Expiry:</span> ${expiry.toLocaleDateString()}</div><div><span class="detail-label">Status:</span> <span style="color:${isExpired ? '#f44336' : d.active ? '#00ff88' : '#ffaa00'}">${isExpired ? 'Expired' : d.active ? 'Active' : 'Inactive'}</span></div></div><div class="action-buttons"><button class="btn btn-warning btn-sm" onclick="toggleDiscount('${code}', ${!d.active})">${d.active ? 'Deactivate' : 'Activate'}</button><button class="btn btn-danger btn-sm" onclick="deleteDiscount('${code}')">Delete</button></div></div>`; }); document.getElementById('discountsList').innerHTML = html || '<div class="no-data">No discounts</div>'; }
+    function loadDiscounts() { 
+        let html = ''; 
+        Object.keys(allDiscounts).forEach(code => { 
+            const d = allDiscounts[code]; 
+            const expiry = new Date(d.expiryDate); 
+            const isExpired = expiry < new Date(); 
+            html += `<div class="discount-card"><div class="discount-header"><span class="discount-code">${code}</span><span class="discount-percent">${d.percentage}%</span></div><div class="discount-details"><div><span class="detail-label">Min:</span> Rp ${formatRupiah(d.minPurchase || 0)}</div><div><span class="detail-label">Expiry:</span> ${expiry.toLocaleDateString()}</div><div><span class="detail-label">Status:</span> <span style="color:${isExpired ? '#f44336' : d.active ? '#00ff88' : '#ffaa00'}">${isExpired ? 'Expired' : d.active ? 'Active' : 'Inactive'}</span></div></div><div class="action-buttons"><button class="btn btn-warning btn-sm" onclick="toggleDiscount('${code}', ${!d.active})">${d.active ? 'Deactivate' : 'Activate'}</button><button class="btn btn-danger btn-sm" onclick="deleteDiscount('${code}')">Delete</button></div></div>`; 
+        }); 
+        document.getElementById('discountsList').innerHTML = html || '<div class="no-data">No discounts</div>'; 
+    }
     function openDiscountModal() { document.getElementById('discountModal').classList.add('active'); }
     function closeDiscountModal() { document.getElementById('discountModal').classList.remove('active'); }
     async function addDiscount() { const code = document.getElementById('discountCode').value.trim().toUpperCase(); const percent = parseInt(document.getElementById('discountPercent').value); const min = parseInt(document.getElementById('discountMin').value) || 0; const expiryDays = parseInt(document.getElementById('discountExpiry').value) || 7; if (!code || !percent || percent < 1 || percent > 100) { showToast('Invalid input!'); return; } const expiry = new Date(); expiry.setDate(expiry.getDate() + expiryDays); showLoading(); try { await db.ref(`discounts/${code}`).set({ code, percentage: percent, minPurchase: min, expiryDate: expiry.toISOString(), active: true, createdAt: new Date().toISOString() }); addActivityLog('Add Discount', `Added discount: ${code} (${percent}%)`); hideLoading(); showToast('Discount added!'); closeDiscountModal(); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
@@ -5736,15 +6229,72 @@
     async function deleteDiscount(code) { showConfirm('Delete Discount', `Delete discount ${code}?`, async () => { showLoading(); try { await db.ref(`discounts/${code}`).remove(); addActivityLog('Delete Discount', `Deleted discount: ${code}`); hideLoading(); showToast('Discount deleted!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     
     // ==================== PACKAGES ====================
-    function loadPackages() { db.ref('admin_config/premium_packages').once('value', snap => { const packages = snap.val() || []; let html = ''; packages.forEach((pkg, idx) => { html += `<div class="discount-card"><div class="discount-header"><span class="discount-code" style="color:var(--neon-cyan);">${pkg.label}</span><span class="discount-percent" style="background:var(--neon-cyan);">Rp ${formatRupiah(pkg.price)}</span></div><div class="discount-details"><div><span class="detail-label">Type:</span> ${pkg.type}</div><div><span class="detail-label">Description:</span> ${pkg.description || '-'}</div></div><div class="action-buttons"><button class="btn btn-danger btn-sm" onclick="deletePackage(${idx})">Delete</button></div></div>`; }); document.getElementById('packagesList').innerHTML = html || '<div class="no-data">No packages</div>'; }); }
-    function openPackageModal() { document.getElementById('packageModal').classList.add('active'); }
+    function loadPackages() { 
+        db.ref('admin_config/premium_packages').once('value', snap => { 
+            const packages = snap.val() || []; 
+            let html = ''; 
+            packages.forEach((pkg, idx) => { 
+                html += `<div class="discount-card">
+                    <div class="discount-header">
+                        <span class="discount-code" style="color:var(--neon-cyan);">${pkg.label}</span>
+                        <span class="discount-percent" style="background:var(--neon-cyan);">Rp ${formatRupiah(pkg.price)}</span>
+                    </div>
+                    <div class="discount-details">
+                        <div><span class="detail-label">Type:</span> ${pkg.type}</div>
+                        <div><span class="detail-label">Description:</span> ${pkg.description || '-'}</div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-warning btn-sm" onclick="openEditPackage(${idx})"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deletePackage(${idx})">Delete</button>
+                    </div>
+                </div>`; 
+            }); 
+            document.getElementById('packagesList').innerHTML = html || '<div class="no-data">No packages</div>'; 
+        }); 
+    }
+    // ==================== EDIT PACKAGE ====================
+
+    function openPackageModal() { 
+        document.getElementById('packageLabel').value = '';
+        document.getElementById('packagePrice').value = '';
+        document.getElementById('packageType').value = 'quota';
+        document.getElementById('packageDesc').value = '';
+        document.getElementById('packageQuota').value = 5;
+        document.getElementById('packageDuration').value = 2;
+        togglePackageFields();
+        document.getElementById('packageModal').classList.add('active'); 
+        document.querySelector('#packageModal .btn-primary').onclick = async function() {
+            const label = document.getElementById('packageLabel').value.trim();
+            const price = parseInt(document.getElementById('packagePrice').value);
+            const type = document.getElementById('packageType').value;
+            const description = document.getElementById('packageDesc').value.trim();
+            let quota = 0, durationMonths = 0;
+            if (type === 'quota') { quota = parseInt(document.getElementById('packageQuota').value) || 0; if (quota <= 0) { showToast('Jumlah update harus lebih dari 0!'); return; } }
+            else if (type === 'unlimited') { durationMonths = parseInt(document.getElementById('packageDuration').value) || 0; if (durationMonths <= 0) { showToast('Durasi harus lebih dari 0 bulan!'); return; } }
+            if (!label || !price) { showToast('Please fill required fields!'); return; }
+            showLoading();
+            try {
+                const snap = await db.ref('admin_config/premium_packages').once('value');
+                let packages = snap.val() || [];
+                packages.push({ label, price, type, description, quota, durationMonths, createdAt: new Date().toISOString() });
+                await db.ref('admin_config/premium_packages').set(packages);
+                addActivityLog('Add Package', `Added premium package: ${label} - Rp ${formatRupiah(price)}`);
+                hideLoading();
+                showToast('Package added!');
+                closePackageModal();
+                loadPackages();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        };
+    }
     function closePackageModal() { document.getElementById('packageModal').classList.remove('active'); }
     function togglePackageFields() {
         const type = document.getElementById('packageType').value;
         document.getElementById('quotaField').style.display = type === 'quota' ? 'block' : 'none';
         document.getElementById('durationField').style.display = type === 'unlimited' ? 'block' : 'none';
     }
-    async function addPackage() { const label = document.getElementById('packageLabel').value.trim(); const price = parseInt(document.getElementById('packagePrice').value); const type = document.getElementById('packageType').value; const description = document.getElementById('packageDesc').value.trim(); let quota = 0, durationMonths = 0; if (type === 'quota') { quota = parseInt(document.getElementById('packageQuota').value) || 0; if (quota <= 0) { showToast('Jumlah update harus lebih dari 0!'); return; } } else if (type === 'unlimited') { durationMonths = parseInt(document.getElementById('packageDuration').value) || 0; if (durationMonths <= 0) { showToast('Durasi harus lebih dari 0 bulan!'); return; } } if (!label || !price) { showToast('Please fill required fields!'); return; } showLoading(); try { const snap = await db.ref('admin_config/premium_packages').once('value'); const packages = snap.val() || []; packages.push({ label, price, type, description, quota, durationMonths, createdAt: new Date().toISOString() }); await db.ref('admin_config/premium_packages').set(packages); addActivityLog('Add Package', `Added premium package: ${label} - Rp ${formatRupiah(price)}`); hideLoading(); showToast('Package added!'); closePackageModal(); loadPackages(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
     async function deletePackage(idx) { showConfirm('Delete Package', 'Delete this package?', async () => { showLoading(); try { const snap = await db.ref('admin_config/premium_packages').once('value'); let packages = snap.val() || []; packages.splice(idx, 1); await db.ref('admin_config/premium_packages').set(packages); addActivityLog('Delete Package', `Deleted package`); hideLoading(); showToast('Package deleted!'); loadPackages(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     
     // ==================== LEADERBOARD ====================
@@ -6589,7 +7139,7 @@
         }
     }
 
-    function resetAdminChatBadge(uid) {
+    function resetPrivateChatUnread(uid) {
         if (uid && adminUnreadCount[uid]) {
             delete adminUnreadCount[uid];
             updateAdminChatBadge();
@@ -6724,7 +7274,28 @@
         supportUnreadAdmin = 0;
         updateSupportBadgeAdmin();
     }
+    
+    // ==================== INIT NOTIFICATIONS ====================
+    function initAdminNotifications() {
+        requestAdminNotifPermission();
+        setupPrivateChatNotifAdmin();
+        setupPublicChatNotifAdmin();
+        setupSupportChatNotifAdmin();
         
+        // Reset saat tab dibuka
+        document.querySelector('.tab[onclick*="chat"]').addEventListener('click', () => {
+            resetPrivateChatUnread(currentChatUser);
+        });
+        
+        document.querySelector('.tab[onclick*="public_chat"]').addEventListener('click', () => {
+            resetPublicBadgeAdmin();
+        });
+        
+        document.querySelector('.tab[onclick*="support_chat"]').addEventListener('click', () => {
+            resetSupportBadgeAdmin();
+        });
+    }
+    
     // ============================================================
     // EDIT SALDO - ADMIN
     // ============================================================
@@ -6873,41 +7444,90 @@
                 minPurchase: minPurchase,
                 expiryDate: expiryDate.toISOString(),
                 startedAt: new Date().toISOString(),
-            activatedBy: 'Admin'
-        });
-        
-        await db.ref('discount_history').push({
-            action: 'activated',
-            percentage: percentage,
-            minPurchase: minPurchase,
-            expiryDate: expiryDate.toISOString(),
-            timestamp: Date.now()
-        });
-        
-        addActivityLog('Activate Global Discount', `${percentage}% discount activated`);
-        hideLoading();
-        showToast(`✅ Diskon ${percentage}% berhasil diaktifkan!`);
-        loadGlobalDiscountStatus();
-        loadDiscountHistory();
-        
-        // Kirim notifikasi ke user
-        const usersSnap = await db.ref('users').once('value');
-        const users = usersSnap.val() || {};
-        Object.keys(users).forEach(uid => {
-            if (users[uid].status === 'online') {
-                db.ref('chats/' + uid).push({
-                    sender: 'system',
-                    text: `🎉 DISKON GLOBAL ${percentage}%\n\nDiskon ${percentage}% telah diaktifkan!\n💰 Minimal pembelian: ${minPurchase > 0 ? 'Rp ' + formatRupiah(minPurchase) : 'Tidak ada'}\n⏰ Berlaku hingga: ${expiryDate.toLocaleDateString('id-ID')}`,
-                    timestamp: Date.now()
-                });
+                activatedBy: 'Admin'
+            });
+            
+            await db.ref('discount_history').push({
+                action: 'activated',
+                percentage: percentage,
+                minPurchase: minPurchase,
+                expiryDate: expiryDate.toISOString(),
+                timestamp: Date.now()
+            });
+            
+            addActivityLog('Activate Global Discount', `${percentage}% discount activated`);
+            hideLoading();
+            showToast(`✅ Diskon ${percentage}% berhasil diaktifkan!`);
+            loadGlobalDiscountStatus();
+            loadDiscountHistory();
+            
+            // Kirim notifikasi ke user
+            const usersSnap = await db.ref('users').once('value');
+            const users = usersSnap.val() || {};
+            Object.keys(users).forEach(uid => {
+                if (users[uid].status === 'online') {
+                    db.ref('chats/' + uid).push({
+                        sender: 'system',
+                        text: `🎉 DISKON GLOBAL ${percentage}%\n\nDiskon ${percentage}% telah diaktifkan!\n💰 Minimal pembelian: ${minPurchase > 0 ? 'Rp ' + formatRupiah(minPurchase) : 'Tidak ada'}\n⏰ Berlaku hingga: ${expiryDate.toLocaleDateString('id-ID')}`,
+                        timestamp: Date.now()
+                    });
+                }
+            });
+            
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+    
+    // ==================== LOAD GLOBAL DISCOUNT STATUS ====================
+    function loadGlobalDiscountStatus() {
+        db.ref('global_discount').on('value', (snap) => {
+            const data = snap.val();
+            const statusDiv = document.getElementById('currentDiscountStatus');
+            
+            if (data && data.active === true) {
+                statusDiv.style.display = 'block';
+                const expiry = new Date(data.expiryDate);
+                const isExpired = expiry < new Date();
+                
+                document.getElementById('currentDiscountDetails').innerHTML = `
+                    <div><strong>Persentase:</strong> <span style="color:#ffaa00;">${data.percentage}%</span></div>
+                    <div><strong>Minimal Pembelian:</strong> ${data.minPurchase > 0 ? 'Rp ' + formatRupiah(data.minPurchase) : 'Tidak ada'}</div>
+                    <div><strong>Berlaku hingga:</strong> ${expiry.toLocaleDateString('id-ID')} ${isExpired ? '⚠️ (Kadaluarsa)' : ''}</div>
+                    <div><strong>Dibuat:</strong> ${data.startedAt ? new Date(data.startedAt).toLocaleString() : '-'}</div>
+                `;
+            } else {
+                statusDiv.style.display = 'none';
             }
         });
-        
-    } catch (error) {
-        hideLoading();
-        showToast('Error: ' + error.message);
     }
-}
+    
+    // ==================== LOAD DISCOUNT HISTORY ====================
+    function loadDiscountHistory() {
+        db.ref('discount_history').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
+            const history = snap.val() || {};
+            let html = '';
+            Object.keys(history).sort((a,b) => (history[b].timestamp||0) - (history[a].timestamp||0)).forEach(key => {
+                const h = history[key];
+                const action = h.action === 'activated' ? '✅ Diaktifkan' : '⛔ Dinonaktifkan';
+                const time = h.timestamp ? new Date(h.timestamp).toLocaleString() : '-';
+                html += `
+                    <div class="discount-card" style="border-color: ${h.action === 'activated' ? '#00ff88' : '#ff4444'};">
+                        <div class="discount-header">
+                            <span style="font-size:14px;">${action}</span>
+                            <span style="font-size:13px; color:#aaa;">${time}</span>
+                        </div>
+                        ${h.percentage > 0 ? `<div><strong>Diskon:</strong> ${h.percentage}%</div>` : ''}
+                        ${h.minPurchase > 0 ? `<div><strong>Min Pembelian:</strong> Rp ${formatRupiah(h.minPurchase)}</div>` : ''}
+                        ${h.expiryDate ? `<div><strong>Berlaku hingga:</strong> ${new Date(h.expiryDate).toLocaleDateString()}</div>` : ''}
+                        ${h.note ? `<div style="color:#ffaa00;">${h.note}</div>` : ''}
+                    </div>
+                `;
+            });
+            document.getElementById('discountHistoryList').innerHTML = html || '<div class="no-data">Belum ada riwayat diskon</div>';
+        });
+    }
     
     // ==================== USER FILES ====================
     function loadUserFiles() { window.allFiles = []; db.ref('chats').once('value', snap => { const chats = snap.val() || {}; Object.keys(chats).forEach(uid => { Object.keys(chats[uid]).forEach(msgId => { const msg = chats[uid][msgId]; if (msg.fileUrl) window.allFiles.push({ id: msgId, uid, name: msg.fileName || 'file', url: msg.fileUrl, type: msg.fileType || 'unknown', timestamp: msg.timestamp || Date.now() }); }); }); window.allFiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); displayUserFiles(); }); }
@@ -6934,7 +7554,7 @@
         else if (tabId === 'vip_list') loadVIPMembers(); 
         else if (tabId === 'updates') loadFileUpdates(); 
         else if (tabId === 'free_update') { loadFreeUpdateStats(); loadFreeUpdateHistory(); } 
-        else if (tabId === 'discounts') loadDiscounts(); 
+        else if (tabId === 'discounts') { loadDiscounts(); loadGlobalDiscountStatus(); loadDiscountHistory(); } 
         else if (tabId === 'packages') loadPackages(); 
         else if (tabId === 'background') { renderVideoSelection(); loadActiveVideo(); } 
         else if (tabId === 'video_popup') loadVideoPopupStatus(); 
@@ -6943,6 +7563,7 @@
         else if (tabId === 'public_chat') loadPublicChat(); 
         else if (tabId === 'user_files') loadUserFiles(); 
         else if (tabId === 'logs') loadActivityLogs(); 
+        else if (tabId === 'announcements') { loadAnnouncementHistory(); } 
         else if (tabId === 'maintenance') loadMaintenanceStatus(); 
         else if (tabId === 'support_chat') { loadVideoPopupStatus(); setTimeout(loadSupportUsers, 300); }
     }
@@ -6978,3 +7599,4 @@
     init();
 </script>
 </body>
+</html>
