@@ -5791,6 +5791,7 @@
             if (selectedUid && select.querySelector(`option[value="${selectedUid}"]`)) {
                 select.value = selectedUid;
                 loadUserChat();
+                resetAdminChatBadge(currentChatUser);
             }
         
             console.log('👥 Chat users loaded:', sortedUids.length);
@@ -5814,7 +5815,6 @@
         } 
     
         resetPrivateChatUnread(currentChatUser);
-        resetAdminChatBadge(currentChatUser);
         
         input.disabled = false; 
         sendBtn.disabled = false; 
