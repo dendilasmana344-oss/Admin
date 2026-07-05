@@ -4214,6 +4214,17 @@
             <div class="action-buttons"><button class="btn btn-primary" onclick="activateMaintenance()"><i class="fas fa-play"></i> Activate Maintenance</button><button class="btn btn-danger" onclick="deactivateMaintenance()"><i class="fas fa-stop"></i> Deactivate Maintenance</button></div>
         </div>
     </div>
+    <!-- Di bagian Maintenance Tab -->
+    <div class="modal-form-group">
+        <label class="modal-label"><i class="fas fa-key"></i> Kunci Akses Maintenance</label>
+        <input type="text" class="modal-input" id="maintenanceKeyInput" placeholder="Set kunci akses..." maxlength="20">
+        <small style="color:#888;">User yang memasukkan kunci ini bisa mengakses sistem meskipun maintenance aktif</small>
+    </div>
+    <div class="action-buttons">
+        <button class="btn btn-primary" onclick="setMaintenanceKey()">
+            <i class="fas fa-save"></i> Simpan Kunci
+        </button>
+    </div>
     
     <!-- SUPPORT CHAT TAB -->
     <div id="support_chat" class="tab-content">
@@ -4460,6 +4471,8 @@
     let editingVIPUpdateId = null;
     let editingFreeUpdateId = null;
     let editingPackageIdx = null;
+    let notificationAudio = null;
+    let adminNotificationAudio = null;
     let supportUsersList = {};
     
     // Push Notification Setup
@@ -4590,7 +4603,7 @@
         let newVIP = 0;
         let newMessages = 0;
         let newNotifications = [];
-        
+    
         Object.keys(allDeposits).forEach(uid => {
             Object.keys(allDeposits[uid]).forEach(id => {
                 if (allDeposits[uid][id].status === 'pending' && (!localStorage.getItem(`deposit_notified_${id}`))) {
@@ -4605,7 +4618,7 @@
                 }
             });
         });
-        
+    
         Object.keys(allPurchases).forEach(uid => {
             Object.keys(allPurchases[uid]).forEach(id => {
                 if (allPurchases[uid][id].status === 'pending' && (!localStorage.getItem(`vip_notified_${id}`))) {
@@ -4620,7 +4633,7 @@
                 }
             });
         });
-        
+    
         // Cek pesan chat baru dalam 30 detik terakhir
         const thirtySecAgo = Date.now() - 30000;
         Object.keys(allUsers).forEach(uid => {
@@ -4637,7 +4650,7 @@
                 }
             });
         });
-        
+    
         const totalNotif = newDeposits + newVIP;
         const badge = document.getElementById('adminNotifBadge');
         if (totalNotif > 0) {
@@ -4645,8 +4658,8 @@
             badge.classList.add('show');
             if (newNotifications.length > 0) {
                 newNotifications.forEach(notif => {
-                    showNotificationToast(notif.title, notif.message);
-                    playNotificationSound();
+                    showNotificationToast(notif.title, notif.message, 'warning', 8000);
+                    // ✅ SUARA SUDAH ADA DI DALAM showNotificationToast
                 });
             }
         } else {
@@ -4654,40 +4667,108 @@
         }
     }
     
-    function showNotificationToast(title, message) {
+    function showNotificationToast(title, message, type = 'info', duration = 5000) {
         const container = document.getElementById('notificationToastContainer');
-        if (!container) return;
-        
+        if (!container) {
+            console.log('❌ Container notifikasi tidak ditemukan!');
+            return;
+        }
+    
+        // Hapus notifikasi lama jika lebih dari 3
+        const existing = container.querySelectorAll('.notification-toast');
+        if (existing.length >= 3) {
+            existing[0].classList.add('hide');
+            setTimeout(() => existing[0].remove(), 400);
+        }
+    
         const toast = document.createElement('div');
-        toast.className = 'notification-toast';
+        toast.className = `notification-toast ${type}`;
+    
+        const icons = {
+            info: 'fa-info-circle',
+            success: 'fa-check-circle',
+            warning: 'fa-exclamation-triangle',
+            error: 'fa-times-circle'
+        };
+    
         toast.innerHTML = `
-            <div class="notification-toast-title">${title}</div>
-            <div class="notification-toast-message">${message}</div>
-            <div class="notification-toast-time">${new Date().toLocaleTimeString()}</div>
-            <button class="notification-toast-close" onclick="this.parentElement.remove()">✕</button>
+            <div class="notif-header">
+                <div class="notif-title">
+                    <i class="fas ${icons[type] || icons.info}"></i>
+                    ${title}
+                </div>
+                <button class="notif-close" onclick="this.closest('.notification-toast').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="notif-body">${message}</div>
+            <div class="notif-time">${new Date().toLocaleTimeString()}</div>
         `;
+    
         container.appendChild(toast);
+    
+        // Auto hide
         setTimeout(() => {
             if (toast.parentElement) {
                 toast.classList.add('hide');
                 setTimeout(() => toast.remove(), 400);
             }
-        }, 8000);
+        }, duration);
+    
+        // ✅ PLAY SUARA NOTIFIKASI
+        playAdminNotificationSound();
+    
+        console.log('📢 Notifikasi Admin:', title, message);
     }
     
+    // ============================================================
+    // NOTIFIKASI SUARA DENGAN FILE MP3
+    // ============================================================
+
     function playNotificationSound() {
+        try {
+            // Coba gunakan file MP3
+            if (!notificationAudio) {
+                notificationAudio = new Audio('nada.mp3');
+                notificationAudio.preload = 'auto';
+            }
+        
+            // Reset audio ke awal
+            notificationAudio.currentTime = 0;
+        
+            // Play
+            const playPromise = notificationAudio.play();
+        
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // Jika file MP3 gagal, gunakan fallback (Web Audio)
+                    playFallbackSound();
+                });
+            }
+        } catch(e) {
+            // Fallback jika MP3 tidak bisa dimuat
+            playFallbackSound();
+        }
+    }
+
+    function playFallbackSound() {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
+        
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
+        
             oscillator.frequency.value = 880;
-            gainNode.gain.value = 0.2;
+            gainNode.gain.value = 0.15;
+        
             oscillator.start();
-            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
-            oscillator.stop(audioCtx.currentTime + 0.5);
-        } catch(e) { console.log('Sound error:', e); }
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        } catch(e) {
+            console.log('Sound error:', e);
+        }
     }
     
     // Upload progress functions
@@ -4944,6 +5025,33 @@
                 showToast('✅ Maintenance deactivated!');
                 loadMaintenanceStatus();
             } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
+        });
+    }
+    
+    async function setMaintenanceKey() {
+        const key = document.getElementById('maintenanceKeyInput').value.trim();
+        if (!key) { showToast('Masukkan kunci terlebih dahulu!'); return; }
+        if (key.length < 4) { showToast('Kunci minimal 4 karakter!'); return; }
+    
+        showLoading();
+        try {
+            await db.ref('admin_config/maintenance_key').set(key);
+            addActivityLog('Set Maintenance Key', 'Kunci akses maintenance diubah');
+            hideLoading();
+            showToast('✅ Kunci maintenance berhasil disimpan!');
+            document.getElementById('maintenanceKeyInput').value = '';
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+
+    // Load kunci saat tab maintenance dibuka
+    function loadMaintenanceKey() {
+        db.ref('admin_config/maintenance_key').once('value', (snap) => {
+            if (snap.exists()) {
+                document.getElementById('maintenanceKeyInput').placeholder = 'Kunci saat ini: ' + snap.val();
+            }
         });
     }
     
@@ -7085,8 +7193,58 @@
     }
 
     // Wrapper untuk play sound
+    // ============================================================
+    // NOTIFIKASI SUARA DENGAN FILE MP3 - ADMIN
+    // ============================================================
+
     function playAdminNotificationSound() {
-        playAdminNotifSound();
+        try {
+            // Coba gunakan file MP3
+            if (!adminNotificationAudio) {
+                adminNotificationAudio = new Audio('nada.mp3');
+                adminNotificationAudio.preload = 'auto';
+            }
+        
+            // Reset audio ke awal
+            adminNotificationAudio.currentTime = 0;
+        
+            // Play
+            const playPromise = adminNotificationAudio.play();
+        
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // Jika file MP3 gagal, gunakan fallback (Web Audio)
+                    playAdminFallbackSound();
+                });
+            }
+        } catch(e) {
+            // Fallback jika MP3 tidak bisa dimuat
+            playAdminFallbackSound();
+        }
+    }
+
+    function playAdminFallbackSound() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+        
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+        
+            oscillator.frequency.value = 880;
+            gainNode.gain.value = 0.15;
+        
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        } catch(e) {
+            console.log('Sound error:', e);
+        }
+    }
+    
+    function playNotificationSound() {
+        playAdminNotificationSound();
     }
     
     // ===== PRIVATE CHAT NOTIFICATION =====
