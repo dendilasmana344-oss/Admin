@@ -5032,7 +5032,7 @@
         const key = document.getElementById('maintenanceKeyInput').value.trim();
         if (!key) { showToast('Masukkan kunci terlebih dahulu!'); return; }
         if (key.length < 4) { showToast('Kunci minimal 4 karakter!'); return; }
-    
+
         showLoading();
         try {
             await db.ref('admin_config/maintenance_key').set(key);
@@ -5040,6 +5040,8 @@
             hideLoading();
             showToast('✅ Kunci maintenance berhasil disimpan!');
             document.getElementById('maintenanceKeyInput').value = '';
+            // Refresh placeholder
+            loadMaintenanceKey();
         } catch (error) {
             hideLoading();
             showToast('Error: ' + error.message);
@@ -5051,6 +5053,8 @@
         db.ref('admin_config/maintenance_key').once('value', (snap) => {
             if (snap.exists()) {
                 document.getElementById('maintenanceKeyInput').placeholder = 'Kunci saat ini: ' + snap.val();
+            } else {
+                document.getElementById('maintenanceKeyInput').placeholder = 'Belum ada kunci yang diset';
             }
         });
     }
