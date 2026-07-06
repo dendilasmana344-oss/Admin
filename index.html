@@ -5035,12 +5035,13 @@
 
         showLoading();
         try {
+            // Simpan ke admin_config
             await db.ref('admin_config/maintenance_key').set(key);
+        
             addActivityLog('Set Maintenance Key', 'Kunci akses maintenance diubah');
             hideLoading();
             showToast('✅ Kunci maintenance berhasil disimpan!');
             document.getElementById('maintenanceKeyInput').value = '';
-            // Refresh placeholder
             loadMaintenanceKey();
         } catch (error) {
             hideLoading();
@@ -5048,7 +5049,6 @@
         }
     }
 
-    // Load kunci saat tab maintenance dibuka
     function loadMaintenanceKey() {
         db.ref('admin_config/maintenance_key').once('value', (snap) => {
             if (snap.exists()) {
@@ -6106,48 +6106,33 @@
         requestAnimationFrame(updateNumber);
     }
     
-    // ==================== ANNOUNCEMENT / PENGUMUMAN ====================
-
+    // ==================== ANNOUNCEMENTS ====================
     async function sendAnnouncement() {
         const title = document.getElementById('announcementTitle').value.trim();
         const message = document.getElementById('announcementMessage').value.trim();
         const type = document.getElementById('announcementType').value;
         const target = document.getElementById('announcementTarget').value;
         const duration = parseInt(document.getElementById('announcementDuration').value) || 5;
-    
-        if (!title || !message) {
-            showToast('Judul dan Isi pengumuman harus diisi!');
-            return;
-        }
-    
+
+        if (!title || !message) { showToast('Judul dan Isi pengumuman harus diisi!'); return; }
+
         showLoading();
-    
         try {
-            // Simpan ke database sebagai pengumuman
+            // Simpan ke announcements (untuk riwayat admin)
             const announcementRef = await db.ref('announcements').push({
-                title: title,
-                message: message,
-                type: type,
-                target: target,
-                duration: duration,
-                sentAt: Date.now(),
-                sentBy: 'Admin'
+                title, message, type, target, duration,
+                sentAt: Date.now(), sentBy: 'Admin'
             });
-        
             const announcementId = announcementRef.key;
-        
+
             // Dapatkan daftar user berdasarkan target
             const usersSnap = await db.ref('users').once('value');
             const users = usersSnap.val() || {};
             let targetUsers = [];
-        
+
             switch(target) {
-                case 'all':
-                    targetUsers = Object.keys(users);
-                    break;
-                case 'online':
-                    targetUsers = Object.keys(users).filter(uid => users[uid].status === 'online');
-                    break;
+                case 'all': targetUsers = Object.keys(users); break;
+                case 'online': targetUsers = Object.keys(users).filter(uid => users[uid].status === 'online'); break;
                 case 'vip':
                     const vipSnap = await db.ref('vip_members').once('value');
                     const vipData = vipSnap.val() || {};
@@ -6160,12 +6145,11 @@
                     targetUsers = Object.keys(users).filter(uid => !vipUsers.has(uid));
                     break;
             }
-        
-            // Kirim notifikasi ke setiap user target
+
             let sentCount = 0;
             for (const uid of targetUsers) {
                 try {
-                    // Simpan di chat user (system message)
+                    // Kirim ke chat user (system message)
                     await db.ref('chats/' + uid).push({
                         sender: 'system',
                         text: `📢 *${title}*\n\n${message}`,
@@ -6174,7 +6158,7 @@
                         announcementId: announcementId
                     });
                 
-                    // Simpan di notifikasi user
+                    // Kirim ke user_notifications (untuk popup)
                     await db.ref('user_notifications/' + uid + '/' + announcementId).set({
                         title: title,
                         message: message,
@@ -6185,11 +6169,9 @@
                     });
                 
                     sentCount++;
-                } catch(e) {
-                    console.error('Gagal kirim ke', uid, e);
-                }
+                } catch(e) { console.error('Gagal kirim ke', uid, e); }
             }
-        
+
             addActivityLog('Kirim Pengumuman', `"${title}" ke ${sentCount} user (Target: ${target})`);
             hideLoading();
             showToast(`✅ Pengumuman terkirim ke ${sentCount} user!`);
@@ -6197,13 +6179,11 @@
             // Reset form
             document.getElementById('announcementTitle').value = '';
             document.getElementById('announcementMessage').value = '';
-        
-            // Refresh riwayat
             loadAnnouncementHistory();
-        
-        } catch(error) {
-            hideLoading();
-            showToast('Error: ' + error.message);
+
+        } catch(error) { 
+            hideLoading(); 
+            showToast('Error: ' + error.message); 
         }
     }
 
@@ -7692,10 +7672,124 @@
     }
     
     // ==================== USER FILES ====================
-    function loadUserFiles() { window.allFiles = []; db.ref('chats').once('value', snap => { const chats = snap.val() || {}; Object.keys(chats).forEach(uid => { Object.keys(chats[uid]).forEach(msgId => { const msg = chats[uid][msgId]; if (msg.fileUrl) window.allFiles.push({ id: msgId, uid, name: msg.fileName || 'file', url: msg.fileUrl, type: msg.fileType || 'unknown', timestamp: msg.timestamp || Date.now() }); }); }); window.allFiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); displayUserFiles(); }); }
-    function displayUserFiles() { let filtered = window.allFiles || []; if (currentFileFilter !== 'all') { if (currentFileFilter === 'image') filtered = filtered.filter(f => f.type && f.type.startsWith('image/')); else filtered = filtered.filter(f => !f.type || !f.type.startsWith('image/')); } const search = document.getElementById('fileSearch')?.value.toLowerCase() || ''; if (search) filtered = filtered.filter(f => f.uid.toLowerCase().includes(search) || f.name.toLowerCase().includes(search)); let html = ''; filtered.slice(0, 100).forEach(f => { const isImage = f.type && f.type.startsWith('image/'); html += `<div class="gallery-item"><div class="gallery-preview">${isImage ? `<img src="${f.url}" onclick="window.open('${f.url}')">` : `<i class="fas fa-file" style="font-size:50px; color:#ffaa00;"></i>`}</div><div class="gallery-info"><div class="gallery-uid" onclick="copyUID('${f.uid}')">${f.uid}</div><div class="gallery-filename">${f.name.substring(0, 30)}</div></div><div class="gallery-actions"><button class="gallery-btn view" onclick="window.open('${f.url}')">View</button><button class="gallery-btn delete" onclick="deleteUserFile('${f.uid}', '${f.id}')">Delete</button></div></div>`; }); document.getElementById('fileGallery').innerHTML = html || '<div class="no-data">No files found</div>'; }
+    function loadUserFiles() { 
+        window.allFiles = []; 
+    
+        // 1. Ambil dari private chat
+        db.ref('chats').once('value', snap => { 
+            const chats = snap.val() || {}; 
+            Object.keys(chats).forEach(uid => { 
+                Object.keys(chats[uid]).forEach(msgId => { 
+                    const msg = chats[uid][msgId]; 
+                    if (msg.fileData && msg.fileData.url) {
+                        window.allFiles.push({ 
+                            id: msgId, 
+                            uid: uid, 
+                            name: msg.fileData.name || 'file', 
+                            url: msg.fileData.url, 
+                            type: msg.fileData.type || 'unknown', 
+                            timestamp: msg.timestamp || Date.now(),
+                            source: 'private_chat'
+                        }); 
+                    }
+                }); 
+            }); 
+        
+            // 2. Ambil dari public chat
+            db.ref('all_comments').once('value', snap2 => {
+                const comments = snap2.val() || {};
+                Object.keys(comments).forEach(key => {
+                    const msg = comments[key];
+                    if (msg.fileUrl) {
+                        window.allFiles.push({
+                            id: key,
+                            uid: msg.uid || 'public',
+                            name: msg.fileName || 'file',
+                            url: msg.fileUrl,
+                            type: msg.fileType || 'unknown',
+                            timestamp: msg.timestamp || Date.now(),
+                            source: 'public_chat'
+                        });
+                    }
+                });
+            
+                // 3. Ambil dari support chat
+                db.ref('support_chats').once('value', snap3 => {
+                    const supportChats = snap3.val() || {};
+                    Object.keys(supportChats).forEach(deviceId => {
+                        const chat = supportChats[deviceId];
+                        if (chat.messages) {
+                            Object.keys(chat.messages).forEach(msgId => {
+                                const msg = chat.messages[msgId];
+                                if (msg.fileData && msg.fileData.url) {
+                                    window.allFiles.push({
+                                        id: msgId,
+                                        uid: chat.uid || deviceId.substring(0, 8),
+                                        name: msg.fileData.name || 'file',
+                                        url: msg.fileData.url,
+                                        type: msg.fileData.type || 'unknown',
+                                        timestamp: msg.timestamp || Date.now(),
+                                        source: 'support_chat'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    window.allFiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    displayUserFiles();
+                });
+            });
+        }); 
+    }
+
+    function displayUserFiles() { 
+        let filtered = window.allFiles || []; 
+        if (currentFileFilter !== 'all') { 
+            if (currentFileFilter === 'image') filtered = filtered.filter(f => f.type && f.type.startsWith('image/')); 
+            else filtered = filtered.filter(f => !f.type || !f.type.startsWith('image/')); 
+        } 
+        const search = document.getElementById('fileSearch')?.value.toLowerCase() || ''; 
+        if (search) filtered = filtered.filter(f => f.uid.toLowerCase().includes(search) || f.name.toLowerCase().includes(search)); 
+        let html = ''; 
+        filtered.slice(0, 100).forEach(f => { 
+            const isImage = f.type && f.type.startsWith('image/'); 
+            const sourceLabel = f.source === 'private_chat' ? '💬 Private' : f.source === 'public_chat' ? '🌐 Public' : '🆘 Support';
+            html += `<div class="gallery-item"><div class="gallery-preview">${isImage ? `<img src="${f.url}" onclick="window.open('${f.url}')">` : `<i class="fas fa-file" style="font-size:50px; color:#ffaa00;"></i>`}</div><div class="gallery-info"><div class="gallery-uid" onclick="copyUID('${f.uid}')">${f.uid}</div><div class="gallery-filename">${f.name.substring(0, 30)}</div><div style="font-size:10px; color:#888;">${sourceLabel}</div></div><div class="gallery-actions"><button class="gallery-btn view" onclick="window.open('${f.url}')">View</button><button class="gallery-btn delete" onclick="deleteUserFile('${f.uid}', '${f.id}', '${f.source}')">Delete</button></div></div>`; 
+        }); 
+        document.getElementById('fileGallery').innerHTML = html || '<div class="no-data">No files found</div>'; 
+    }
+
     function filterFiles(filter) { if (filter) { currentFileFilter = filter; document.querySelectorAll('#user_files .filter-tab').forEach(t => t.classList.remove('active')); if (event?.currentTarget) event.currentTarget.classList.add('active'); } displayUserFiles(); }
-    async function deleteUserFile(uid, fileId) { showConfirm('Delete File', 'Delete this file?', async () => { showLoading(); try { await db.ref(`chats/${uid}/${fileId}`).remove(); addActivityLog('Delete File', `Deleted file from ${uid}`); hideLoading(); showToast('File deleted!'); loadUserFiles(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+
+    async function deleteUserFile(uid, fileId, source) {
+        showConfirm('Delete File', 'Delete this file?', async () => {
+            showLoading();
+            try {
+                if (source === 'private_chat') {
+                    await db.ref(`chats/${uid}/${fileId}`).remove();
+                } else if (source === 'public_chat') {
+                    await db.ref(`all_comments/${fileId}`).remove();
+                } else if (source === 'support_chat') {
+                    const snap = await db.ref('support_chats').once('value');
+                    const chats = snap.val() || {};
+                    for (const deviceId of Object.keys(chats)) {
+                        const chat = chats[deviceId];
+                        if (chat.messages) {
+                            for (const msgId of Object.keys(chat.messages)) {
+                                if (msgId === fileId && chat.messages[msgId].fileData) {
+                                    await db.ref(`support_chats/${deviceId}/messages/${msgId}`).remove();
+                                }
+                            }
+                        }
+                    }
+                }
+                addActivityLog('Delete File', `Deleted file from ${uid} (${source})`);
+                hideLoading();
+                showToast('File deleted!');
+                loadUserFiles();
+            } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
+        });
+    }
     
     // ==================== ACTIVITY LOGS ====================
     function loadActivityLogs() { const saved = localStorage.getItem('admin_activity_logs'); if (saved) { try { adminLogs = JSON.parse(saved); } catch(e) { adminLogs = []; } } displayActivityLogs(); }
