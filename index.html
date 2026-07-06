@@ -4225,6 +4225,13 @@
             <i class="fas fa-save"></i> Simpan Kunci
         </button>
     </div>
+    <!-- Di dalam tab Maintenance, setelah action-buttons -->
+    <div style="margin-top: 30px;">
+        <h3 style="color: var(--neon-orange); margin-bottom: 15px;">
+            <i class="fas fa-history"></i> Riwayat Maintenance
+        </h3>
+        <div id="maintenanceHistoryList"></div>
+    </div>
     
     <!-- SUPPORT CHAT TAB -->
     <div id="support_chat" class="tab-content">
@@ -4989,42 +4996,96 @@
                 document.getElementById('maintenanceHours').value = m.hours || 2;
                 document.getElementById('maintenanceMinutes').value = m.minutes || 0;
             } else {
-                document.getElementById('currentMaintenanceStatus').style.display = 'none';
-                document.getElementById('maintenanceStatus').value = 'inactive';
-            }
-        } catch (error) { console.error(error); }
-    }
-    
-    async function activateMaintenance() {
-        const title = document.getElementById('maintenanceTitle').value.trim();
-        const message = document.getElementById('maintenanceMessage').value.trim();
-        const hours = parseInt(document.getElementById('maintenanceHours').value) || 0;
-        const minutes = parseInt(document.getElementById('maintenanceMinutes').value) || 0;
-        const totalMinutes = (hours * 60) + minutes;
-        if (!title || !message) { showToast('Fill title and message!'); return; }
-        if (totalMinutes <= 0) { showToast('Duration must be > 0!'); return; }
-        const startTime = new Date().toISOString();
-        const endTime = new Date(Date.now() + totalMinutes * 60000).toISOString();
-        showLoading();
-        try {
-            await db.ref('maintenance').set({ status: 'active', title, message, hours, minutes, totalMinutes, startTime, endTime, updatedAt: Date.now() });
-            addActivityLog('Activate Maintenance', `Maintenance activated: ${title}`);
-            hideLoading();
-            showToast('✅ Maintenance activated!');
-            loadMaintenanceStatus();
-        } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
-    }
-    
-    async function deactivateMaintenance() {
-        showConfirm('Deactivate Maintenance', 'Turn off maintenance mode?', async () => {
+                    document.getElementById('currentMaintenanceStatus').style.display = 'none';
+                    document.getElementById('maintenanceStatus').value = 'inactive';
+                }
+            } catch (error) { console.error(error); }
+        }
+        
+        async function activateMaintenance() {
+            const title = document.getElementById('maintenanceTitle').value.trim();
+            const message = document.getElementById('maintenanceMessage').value.trim();
+            const hours = parseInt(document.getElementById('maintenanceHours').value) || 0;
+            const minutes = parseInt(document.getElementById('maintenanceMinutes').value) || 0;
+            const totalMinutes = (hours * 60) + minutes;
+            if (!title || !message) { showToast('Fill title and message!'); return; }
+            if (totalMinutes <= 0) { showToast('Duration must be > 0!'); return; }
+            const startTime = new Date().toISOString();
+            const endTime = new Date(Date.now() + totalMinutes * 60000).toISOString();
             showLoading();
             try {
-                await db.ref('maintenance').set({ status: 'inactive', updatedAt: Date.now() });
-                addActivityLog('Deactivate Maintenance', 'Maintenance deactivated');
+                await db.ref('maintenance').set({ status: 'active', title, message, hours, minutes, totalMinutes, startTime, endTime, updatedAt: Date.now() });
+                
+                // SIMPAN KE HISTORY MAINTENANCE
+                await db.ref('maintenance_history').push({
+                    action: 'activated',
+                    title: title,
+                    message: message,
+                    hours: hours,
+                    minutes: minutes,
+                    totalMinutes: totalMinutes,
+                    startTime: startTime,
+                    endTime: endTime,
+                    timestamp: Date.now(),
+                    activatedBy: 'Admin'
+                });
+                
+                addActivityLog('Activate Maintenance', `Maintenance activated: ${title}`);
                 hideLoading();
-                showToast('✅ Maintenance deactivated!');
+                showToast('✅ Maintenance activated!');
                 loadMaintenanceStatus();
+                loadMaintenanceHistory();
             } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
+        }
+        
+        async function deactivateMaintenance() {
+            showConfirm('Deactivate Maintenance', 'Turn off maintenance mode?', async () => {
+                showLoading();
+                try {
+                    await db.ref('maintenance').set({ status: 'inactive', updatedAt: Date.now() });
+                    
+                    // SIMPAN KE HISTORY MAINTENANCE
+                    await db.ref('maintenance_history').push({
+                        action: 'deactivated',
+                        timestamp: Date.now(),
+                        deactivatedBy: 'Admin'
+                    });
+                    
+                    addActivityLog('Deactivate Maintenance', 'Maintenance deactivated');
+                    hideLoading();
+                    showToast('✅ Maintenance deactivated!');
+                    loadMaintenanceStatus();
+                    loadMaintenanceHistory();
+                } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
+            });
+        }
+        
+        function loadMaintenanceHistory() {
+            db.ref('maintenance_history').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
+                const history = snap.val() || {};
+                let html = '';
+                Object.keys(history).sort((a,b) => (history[b].timestamp||0) - (history[a].timestamp||0)).forEach(key => {
+                    const h = history[key];
+                    const action = h.action === 'activated' ? '🟢 Diaktifkan' : '🔴 Dinonaktifkan';
+                    const time = h.timestamp ? new Date(h.timestamp).toLocaleString('id-ID') : '-';
+                    html += `
+                        <div class="discount-card" style="border-color: ${h.action === 'activated' ? '#00ff88' : '#ff4444'};">
+                            <div class="discount-header">
+                                <span style="font-size:14px;">${action}</span>
+                                <span style="font-size:13px; color:#aaa;">${time}</span>
+                            </div>
+                            ${h.title ? `<div><strong>Title:</strong> ${h.title}</div>` : ''}
+                            ${h.message ? `<div><strong>Message:</strong> ${h.message}</div>` : ''}
+                            ${h.totalMinutes ? `<div><strong>Durasi:</strong> ${h.hours}h ${h.minutes}m (${h.totalMinutes} menit)</div>` : ''}
+                            ${h.startTime ? `<div><strong>Mulai:</strong> ${new Date(h.startTime).toLocaleString('id-ID')}</div>` : ''}
+                            ${h.endTime ? `<div><strong>Selesai:</strong> ${new Date(h.endTime).toLocaleString('id-ID')}</div>` : ''}
+                        </div>
+                    `;
+            });
+            const container = document.getElementById('maintenanceHistoryList');
+            if (container) {
+                container.innerHTML = html || '<div class="no-data">Belum ada riwayat maintenance</div>';
+            }
         });
     }
     
@@ -7183,26 +7244,16 @@
 
     function playAdminNotificationSound() {
         try {
-            // Coba gunakan file MP3
             if (!adminNotificationAudio) {
                 adminNotificationAudio = new Audio('nada.mp3');
                 adminNotificationAudio.preload = 'auto';
             }
-        
-            // Reset audio ke awal
             adminNotificationAudio.currentTime = 0;
-        
-            // Play
             const playPromise = adminNotificationAudio.play();
-        
             if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                    // Jika file MP3 gagal, gunakan fallback (Web Audio)
-                    playAdminFallbackSound();
-                });
+                playPromise.catch(() => playAdminFallbackSound());
             }
         } catch(e) {
-            // Fallback jika MP3 tidak bisa dimuat
             playAdminFallbackSound();
         }
     }
@@ -7855,4 +7906,3 @@
     init();
 </script>
 </body>
-</html>
