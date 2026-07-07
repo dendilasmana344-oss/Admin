@@ -1273,6 +1273,228 @@
         }
         
         /* ============================================================
+           POPUP PENGUMUMAN - ADMIN (NON-BLOCKING)
+           ============================================================ */
+        
+        .popup-container {
+            background: rgba(255, 0, 0, 0.08);
+            border: 2px dashed #ff4444;
+            border-radius: 20px;
+            padding: 20px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .popup-container .empty-state {
+            color: #ff4444;
+            font-size: 13px;
+            opacity: 0.6;
+            text-align: center;
+        }
+        
+        .popup-container .empty-state i {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        /* NOTIFICATION POPUP */
+        .notification-popup {
+            width: 100%;
+            border-radius: 20px;
+            padding: 18px 22px;
+            animation: slideDown 0.5s ease forwards;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .notification-popup.hide {
+            animation: slideUp 0.4s ease forwards;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(255, 68, 68, 0.6); }
+        }
+        
+        .notification-popup.type-info {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 136, 255, 0.15));
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        .notification-popup.type-success {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 102, 0.15));
+            border: 2px solid #00ff88;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        .notification-popup.type-warning {
+            background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(255, 136, 0, 0.15));
+            border: 2px solid #ffaa00;
+            box-shadow: 0 0 30px rgba(255, 170, 0, 0.3);
+        }
+        
+        .notification-popup.type-error {
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.25), rgba(204, 0, 0, 0.2));
+            border: 2px solid #ff4444;
+            box-shadow: 0 0 40px rgba(255, 68, 68, 0.4);
+            animation: glowPulse 1.5s infinite;
+        }
+        
+        .notification-popup .notif-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .notification-popup .notif-icon {
+            font-size: 28px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .type-info .notif-icon { background: rgba(0, 255, 255, 0.2); color: var(--neon-cyan); }
+        .type-success .notif-icon { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .type-warning .notif-icon { background: rgba(255, 170, 0, 0.2); color: #ffaa00; }
+        .type-error .notif-icon { background: rgba(255, 68, 68, 0.25); color: #ff4444; animation: glowPulse 1s infinite; }
+        
+        .notification-popup .notif-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            flex: 1;
+        }
+        
+        .type-info .notif-title { color: var(--neon-cyan); }
+        .type-success .notif-title { color: #00ff88; }
+        .type-warning .notif-title { color: #ffaa00; }
+        .type-error .notif-title { color: #ff4444; }
+        
+        .notification-popup .notif-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .type-info .notif-badge { background: rgba(0, 255, 255, 0.2); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); }
+        .type-success .notif-badge { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; }
+        .type-warning .notif-badge { background: rgba(255, 170, 0, 0.2); color: #ffaa00; border: 1px solid #ffaa00; }
+        .type-error .notif-badge { background: rgba(255, 68, 68, 0.25); color: #ff4444; border: 1px solid #ff4444; animation: glowPulse 1s infinite; }
+        
+        .notification-popup .notif-message {
+            color: #ddd;
+            font-size: 13px;
+            line-height: 1.7;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            margin: 8px 0 12px 0;
+            white-space: pre-line;
+        }
+        
+        .notification-popup .notif-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .notification-popup .notif-time {
+            font-size: 10px;
+            color: #888;
+        }
+        
+        .notification-popup .notif-countdown {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            min-width: 35px;
+            text-align: center;
+        }
+        
+        .type-info .notif-countdown { color: var(--neon-cyan); }
+        .type-success .notif-countdown { color: #00ff88; }
+        .type-warning .notif-countdown { color: #ffaa00; }
+        .type-error .notif-countdown { color: #ff4444; }
+        
+        .notification-popup .notif-progress {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .notification-popup .notif-progress-fill {
+            height: 100%;
+            width: 100%;
+            border-radius: 2px;
+            transition: width 0.1s linear;
+}
+
+.type-info .notif-progress-fill { background: linear-gradient(90deg, var(--neon-cyan), #0088ff); }
+.type-success .notif-progress-fill { background: linear-gradient(90deg, #00ff88, #00cc66); }
+.type-warning .notif-progress-fill { background: linear-gradient(90deg, #ffaa00, #ff8800); }
+.type-error .notif-progress-fill { background: linear-gradient(90deg, #ff4444, #cc0000); }
+
+.btn-close-popup {
+    padding: 6px 18px;
+    border: none;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Orbitron', monospace;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-close-popup:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.type-error .btn-close-popup {
+    background: rgba(255, 68, 68, 0.2);
+    border-color: #ff4444;
+    color: #ff4444;
+}
+
+.type-error .btn-close-popup:hover {
+    background: #ff4444;
+    color: #000;
+}
+        
+        /* ============================================================
            NOTIFICATION TOAST - ADMIN
            ============================================================ */
         
@@ -4122,6 +4344,20 @@
                     <i class="fas fa-sync-alt"></i> Refresh Riwayat
                 </button>
             </div>
+            
+            <!-- KOTAK MERAH - TEMPAT POPUP MUNCUL -->
+            <div style="margin-top: 20px;">
+                <div style="color: #ff4444; font-size: 13px; font-weight: 700; margin-bottom: 10px;">
+                    <i class="fas fa-arrow-down"></i> PREVIEW PENGUMUMAN:
+                </div>
+                <div class="popup-container" id="popupContainer">
+                    <div class="empty-state" id="emptyState">
+                        <i class="fas fa-bell"></i>
+                        Belum ada pengumuman<br>
+                        <span style="font-size:12px;">Kirim pengumuman untuk melihat preview</span>
+                    </div>
+                </div>
+            </div>
         
             <div style="margin-top:30px;">
                 <h3 style="color:var(--neon-cyan);"><i class="fas fa-history"></i> Riwayat Pengumuman</h3>
@@ -5506,6 +5742,206 @@
         });
     }
     
+    // ============================================================
+    // FITUR PENGUMUMAN - ADMIN (VERSI REVISI)
+    // ============================================================
+    
+    // KIRIM PENGUMUMAN
+    async function sendAnnouncement() {
+        const title = document.getElementById('announcementTitle').value.trim();
+        const message = document.getElementById('announcementMessage').value.trim();
+        const type = document.getElementById('announcementType').value;
+        const target = document.getElementById('announcementTarget').value;
+        const duration = parseInt(document.getElementById('announcementDuration').value) || 5;
+    
+        if (!title) { showToast('❌ Judul harus diisi!'); return; }
+        if (!message) { showToast('❌ Isi pengumuman harus diisi!'); return; }
+        if (duration < 1) { showToast('❌ Durasi minimal 1 detik!'); return; }
+    
+        showLoading();
+        try {
+            // Simpan ke announcements (riwayat admin)
+            const announcementRef = await db.ref('announcements').push({
+                title: title,
+                message: message,
+                type: type,
+                target: target,
+                duration: duration,
+                sentAt: Date.now(),
+                sentBy: 'Admin'
+            });
+            const announcementId = announcementRef.key;
+    
+            // Dapatkan daftar user berdasarkan target
+            const usersSnap = await db.ref('users').once('value');
+            const users = usersSnap.val() || {};
+            let targetUsers = [];
+    
+            switch(target) {
+                case 'all': 
+                    targetUsers = Object.keys(users); 
+                    break;
+                case 'online': 
+                    targetUsers = Object.keys(users).filter(uid => users[uid].status === 'online'); 
+                    break;
+                case 'vip':
+                    const vipSnap = await db.ref('vip_members').once('value');
+                    const vipData = vipSnap.val() || {};
+                    targetUsers = Object.keys(vipData).filter(uid => vipData[uid].status === 'active');
+                    break;
+                case 'free':
+                    const vipSnap2 = await db.ref('vip_members').once('value');
+                    const vipData2 = vipSnap2.val() || {};
+                    const vipUsers = new Set(Object.keys(vipData2).filter(uid => vipData2[uid].status === 'active'));
+                    targetUsers = Object.keys(users).filter(uid => !vipUsers.has(uid));
+                    break;
+            }
+    
+            let sentCount = 0;
+            for (const uid of targetUsers) {
+                try {
+                    // Kirim ke user_notifications (untuk popup)
+                    await db.ref('user_notifications/' + uid + '/' + announcementId).set({
+                        title: title,
+                        message: message,
+                        type: type,
+                        duration: duration,
+                        sentAt: Date.now(),
+                        read: false
+                    });
+    
+                    // Kirim ke chat user (system message)
+                    await db.ref('chats/' + uid).push({
+                        sender: 'system',
+                        text: `📢 *${title}*\n\n${message}`,
+                        timestamp: Date.now(),
+                        isAnnouncement: true,
+                        announcementId: announcementId
+                    });
+    
+                    sentCount++;
+                } catch(e) { 
+                    console.error('Gagal kirim ke', uid, e); 
+                }
+            }
+    
+            // Kirim ke guest (belum login) via support_chats
+            try {
+                const supportSnap = await db.ref('support_chats').once('value');
+                const supportChats = supportSnap.val() || {};
+                for (const deviceId of Object.keys(supportChats)) {
+                    await db.ref('guest_notifications/' + deviceId + '/' + announcementId).set({
+                        title: title,
+                        message: message,
+                        type: type,
+                        duration: duration,
+                        sentAt: Date.now(),
+                        read: false
+                    });
+                    sentCount++;
+                }
+            } catch(e) { console.error('Gagal kirim ke guest:', e); }
+    
+            addActivityLog('Kirim Pengumuman', '"' + title + '" ke ' + sentCount + ' user (Target: ' + target + ')');
+            hideLoading();
+            
+            showAdminNotifToast('📢 Pengumuman Terkirim', 'Pengumuman "' + title + '" terkirim ke ' + sentCount + ' user', 'success');
+            showToast('✅ Pengumuman terkirim ke ' + sentCount + ' user!');
+            
+            // Reset form
+            document.getElementById('announcementTitle').value = '';
+            document.getElementById('announcementMessage').value = '';
+            loadAnnouncementHistory();
+    
+        } catch(error) { 
+            hideLoading(); 
+            showToast('Error: ' + error.message); 
+        }
+    }
+    
+    // LOAD RIWAYAT PENGUMUMAN
+    function loadAnnouncementHistory() {
+        db.ref('announcements').orderByChild('sentAt').limitToLast(50).on('value', (snap) => {
+            const announcements = snap.val() || {};
+            let html = '';
+            
+            Object.keys(announcements).sort((a,b) => (announcements[b].sentAt||0) - (announcements[a].sentAt||0)).forEach(key => {
+                const a = announcements[key];
+                const typeMap = {
+                    info: 'ℹ️ Info',
+                    success: '✅ Success',
+                    warning: '⚠️ Warning',
+                    error: '❌ Error'
+                };
+                const targetMap = {
+                    all: '📢 Semua User',
+                    online: '🟢 User Online',
+                    vip: '👑 User VIP',
+                    free: '🔓 User Free'
+                };
+                
+                const typeClass = a.type === 'error' ? 'error' : a.type === 'warning' ? 'warning' : a.type === 'success' ? 'success' : 'info';
+                const borderColor = a.type === 'error' ? '#ff4444' : a.type === 'warning' ? '#ffaa00' : a.type === 'success' ? '#00ff88' : '#00ffff';
+                
+                html += `
+                    <div class="update-item" style="border-left: 5px solid ${borderColor};">
+                        <div class="update-title">${escapeHtml(a.title)}</div>
+                        <div class="update-desc">${escapeHtml(a.message)}</div>
+                        <div class="update-meta">
+                            <span>${typeMap[a.type] || 'Info'}</span>
+                            <span>${targetMap[a.target] || 'Semua'}</span>
+                            <span>${a.sentAt ? new Date(a.sentAt).toLocaleString() : '-'}</span>
+                            <span>Durasi: ${a.duration || 5}s</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement('${key}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            const container = document.getElementById('announcementHistoryList');
+            if (container) {
+                container.innerHTML = html || '<div class="no-data">Belum ada pengumuman</div>';
+            }
+        });
+    }
+    
+    // HAPUS PENGUMUMAN
+    async function deleteAnnouncement(announcementId) {
+        showConfirm('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', async () => {
+            showLoading();
+            try {
+                await db.ref('announcements/' + announcementId).remove();
+                
+                // Hapus dari user_notifications semua user
+                const usersSnap = await db.ref('users').once('value');
+                const users = usersSnap.val() || {};
+                for (const uid of Object.keys(users)) {
+                    await db.ref('user_notifications/' + uid + '/' + announcementId).remove();
+                }
+                
+                // Hapus dari guest_notifications
+                await db.ref('guest_notifications').once('value', (snap) => {
+                    const guests = snap.val() || {};
+                    for (const deviceId of Object.keys(guests)) {
+                        db.ref('guest_notifications/' + deviceId + '/' + announcementId).remove();
+                    }
+                });
+                
+                addActivityLog('Hapus Pengumuman', 'Menghapus pengumuman ' + announcementId);
+                hideLoading();
+                showToast('Pengumuman dihapus!');
+                loadAnnouncementHistory();
+            } catch(error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+    
     // ==================== EDIT FREE UPDATE ====================
 
     function openEditFreeUpdate(updateId) {
@@ -6199,164 +6635,6 @@
         }
     
         requestAnimationFrame(updateNumber);
-    }
-    
-    // ==================== ANNOUNCEMENTS ====================
-    async function sendAnnouncement() {
-        const title = document.getElementById('announcementTitle').value.trim();
-        const message = document.getElementById('announcementMessage').value.trim();
-        const type = document.getElementById('announcementType').value;
-        const target = document.getElementById('announcementTarget').value;
-        const duration = parseInt(document.getElementById('announcementDuration').value) || 5;
-    
-        if (!title || !message) { 
-            showToast('Judul dan Isi pengumuman harus diisi!'); 
-            return; 
-        }
-    
-        showLoading();
-        try {
-            // Simpan ke announcements (untuk riwayat admin)
-            const announcementRef = await db.ref('announcements').push({
-                title, 
-                message, 
-                type, 
-                target, 
-                duration,
-                sentAt: Date.now(), 
-                sentBy: 'Admin'
-            });
-            const announcementId = announcementRef.key;
-    
-            // Dapatkan daftar user berdasarkan target
-            const usersSnap = await db.ref('users').once('value');
-            const users = usersSnap.val() || {};
-            let targetUsers = [];
-    
-            switch(target) {
-                case 'all': 
-                    targetUsers = Object.keys(users); 
-                    break;
-                case 'online': 
-                    targetUsers = Object.keys(users).filter(uid => users[uid].status === 'online'); 
-                    break;
-                case 'vip':
-                    const vipSnap = await db.ref('vip_members').once('value');
-                    const vipData = vipSnap.val() || {};
-                    targetUsers = Object.keys(vipData).filter(uid => vipData[uid].status === 'active');
-                    break;
-                case 'free':
-                    const vipSnap2 = await db.ref('vip_members').once('value');
-                    const vipData2 = vipSnap2.val() || {};
-                    const vipUsers = new Set(Object.keys(vipData2).filter(uid => vipData2[uid].status === 'active'));
-                    targetUsers = Object.keys(users).filter(uid => !vipUsers.has(uid));
-                    break;
-            }
-    
-            let sentCount = 0;
-            for (const uid of targetUsers) {
-                try {
-                    // Kirim ke chat user (system message)
-                    await db.ref('chats/' + uid).push({
-                        sender: 'system',
-                        text: `📢 *${title}*\n\n${message}`,
-                        timestamp: Date.now(),
-                        isAnnouncement: true,
-                        announcementId: announcementId
-                    });
-                    
-                    // Kirim ke user_notifications (untuk popup di user)
-                    await db.ref('user_notifications/' + uid + '/' + announcementId).set({
-                        title: title,
-                        message: message,
-                        type: type,
-                        duration: duration,
-                        sentAt: Date.now(),
-                        read: false
-                    });
-                    
-                    sentCount++;
-                } catch(e) { 
-                    console.error('Gagal kirim ke', uid, e); 
-                }
-            }
-    
-            addActivityLog('Kirim Pengumuman', '"' + title + '" ke ' + sentCount + ' user (Target: ' + target + ')');
-            hideLoading();
-            
-            // TAMPILKAN NOTIFIKASI KE ADMIN
-            showAdminNotifToast('📢 Pengumuman Terkirim', 'Pengumuman "' + title + '" terkirim ke ' + sentCount + ' user', 'success');
-            
-            showToast('✅ Pengumuman terkirim ke ' + sentCount + ' user!');
-            
-            // Reset form
-            document.getElementById('announcementTitle').value = '';
-            document.getElementById('announcementMessage').value = '';
-            loadAnnouncementHistory();
-    
-        } catch(error) { 
-            hideLoading(); 
-            showToast('Error: ' + error.message); 
-        }
-    }
-    
-    function loadAnnouncementHistory() {
-        db.ref('announcements').orderByChild('sentAt').limitToLast(50).on('value', (snap) => {
-            const announcements = snap.val() || {};
-            let html = '';
-            
-            Object.keys(announcements).sort((a,b) => (announcements[b].sentAt||0) - (announcements[a].sentAt||0)).forEach(key => {
-                const a = announcements[key];
-                const typeMap = {
-                    info: 'ℹ️ Info',
-                    success: '✅ Success',
-                    warning: '⚠️ Warning',
-                    error: '❌ Error'
-                };
-                const targetMap = {
-                    all: '📢 Semua User',
-                    online: '🟢 User Online',
-                    vip: '👑 User VIP',
-                    free: '🔓 User Free'
-                };
-                
-                html += `
-                    <div class="update-item" style="border-left: 5px solid ${a.type === 'error' ? '#ff4444' : a.type === 'warning' ? '#ffaa00' : a.type === 'success' ? '#00ff88' : '#00ffff'};">
-                        <div class="update-title">${escapeHtml(a.title)}</div>
-                        <div class="update-desc">${escapeHtml(a.message)}</div>
-                        <div class="update-meta">
-                            <span>${typeMap[a.type] || 'Info'}</span>
-                            <span>${targetMap[a.target] || 'Semua'}</span>
-                            <span>${a.sentAt ? new Date(a.sentAt).toLocaleString() : '-'}</span>
-                            <span>Durasi: ${a.duration || 5}s</span>
-                        </div>
-                        <div class="action-buttons">
-                            <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement('${key}')">
-                                <i class="fas fa-trash"></i> Hapus
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            document.getElementById('announcementHistoryList').innerHTML = html || '<div class="no-data">Belum ada pengumuman</div>';
-        });
-    }
-    
-    async function deleteAnnouncement(announcementId) {
-        showConfirm('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', async () => {
-            showLoading();
-            try {
-                await db.ref('announcements/' + announcementId).remove();
-                addActivityLog('Hapus Pengumuman', 'Menghapus pengumuman ' + announcementId);
-                hideLoading();
-                showToast('Pengumuman dihapus!');
-                loadAnnouncementHistory();
-            } catch(error) {
-                hideLoading();
-                showToast('Error: ' + error.message);
-            }
-        });
     }
 
     // ==================== FREE UPDATE HISTORY REAL-TIME ====================
