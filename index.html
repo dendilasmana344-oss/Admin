@@ -4481,6 +4481,10 @@
     let notificationAudio = null;
     let adminNotificationAudio = null;
     let supportUsersList = {};
+    let adminNotifPermission = false;
+    let adminUnreadCount = {};
+    let publicUnreadAdmin = 0;
+    let supportUnreadAdmin = 0;
     
     // Push Notification Setup
     let notificationPermissionGranted = false;
@@ -4999,88 +5003,112 @@
                     document.getElementById('currentMaintenanceStatus').style.display = 'none';
                     document.getElementById('maintenanceStatus').value = 'inactive';
                 }
-            } catch (error) { console.error(error); }
+                } catch (error) { console.error(error); }
+            }
+            
+            async function activateMaintenance() {
+        const title = document.getElementById('maintenanceTitle').value.trim();
+        const message = document.getElementById('maintenanceMessage').value.trim();
+        const hours = parseInt(document.getElementById('maintenanceHours').value) || 0;
+        const minutes = parseInt(document.getElementById('maintenanceMinutes').value) || 0;
+        const totalMinutes = (hours * 60) + minutes;
+        if (!title || !message) { showToast('Fill title and message!'); return; }
+        if (totalMinutes <= 0) { showToast('Duration must be > 0!'); return; }
+        const startTime = new Date().toISOString();
+        const endTime = new Date(Date.now() + totalMinutes * 60000).toISOString();
+        showLoading();
+        try {
+            await db.ref('maintenance').set({ 
+                status: 'active', 
+                title, 
+                message, 
+                hours, 
+                minutes, 
+                totalMinutes, 
+                startTime, 
+                endTime, 
+                updatedAt: Date.now() 
+            });
+            
+            // SIMPAN KE HISTORY MAINTENANCE
+            await db.ref('maintenance_history').push({
+                action: 'activated',
+                title: title,
+                message: message,
+                hours: hours,
+                minutes: minutes,
+                totalMinutes: totalMinutes,
+                startTime: startTime,
+                endTime: endTime,
+                timestamp: Date.now(),
+                activatedBy: 'Admin'
+            });
+            
+            addActivityLog('Activate Maintenance', 'Maintenance activated: ' + title);
+            hideLoading();
+            showToast('✅ Maintenance activated!');
+            loadMaintenanceStatus();
+            loadMaintenanceHistory();
+        } catch (error) { 
+            hideLoading(); 
+            showToast('Error: ' + error.message); 
         }
-        
-        async function activateMaintenance() {
-            const title = document.getElementById('maintenanceTitle').value.trim();
-            const message = document.getElementById('maintenanceMessage').value.trim();
-            const hours = parseInt(document.getElementById('maintenanceHours').value) || 0;
-            const minutes = parseInt(document.getElementById('maintenanceMinutes').value) || 0;
-            const totalMinutes = (hours * 60) + minutes;
-            if (!title || !message) { showToast('Fill title and message!'); return; }
-            if (totalMinutes <= 0) { showToast('Duration must be > 0!'); return; }
-            const startTime = new Date().toISOString();
-            const endTime = new Date(Date.now() + totalMinutes * 60000).toISOString();
+    }
+    
+    async function deactivateMaintenance() {
+        showConfirm('Deactivate Maintenance', 'Turn off maintenance mode?', async () => {
             showLoading();
             try {
-                await db.ref('maintenance').set({ status: 'active', title, message, hours, minutes, totalMinutes, startTime, endTime, updatedAt: Date.now() });
+                await db.ref('maintenance').set({ 
+                    status: 'inactive', 
+                    updatedAt: Date.now() 
+                });
                 
                 // SIMPAN KE HISTORY MAINTENANCE
                 await db.ref('maintenance_history').push({
-                    action: 'activated',
-                    title: title,
-                    message: message,
-                    hours: hours,
-                    minutes: minutes,
-                    totalMinutes: totalMinutes,
-                    startTime: startTime,
-                    endTime: endTime,
+                    action: 'deactivated',
                     timestamp: Date.now(),
-                    activatedBy: 'Admin'
+                    deactivatedBy: 'Admin'
                 });
                 
-                addActivityLog('Activate Maintenance', `Maintenance activated: ${title}`);
+                addActivityLog('Deactivate Maintenance', 'Maintenance deactivated');
                 hideLoading();
-                showToast('✅ Maintenance activated!');
+                showToast('✅ Maintenance deactivated!');
                 loadMaintenanceStatus();
                 loadMaintenanceHistory();
-            } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
-        }
-        
-        async function deactivateMaintenance() {
-            showConfirm('Deactivate Maintenance', 'Turn off maintenance mode?', async () => {
-                showLoading();
-                try {
-                    await db.ref('maintenance').set({ status: 'inactive', updatedAt: Date.now() });
-                    
-                    // SIMPAN KE HISTORY MAINTENANCE
-                    await db.ref('maintenance_history').push({
-                        action: 'deactivated',
-                        timestamp: Date.now(),
-                        deactivatedBy: 'Admin'
-                    });
-                    
-                    addActivityLog('Deactivate Maintenance', 'Maintenance deactivated');
-                    hideLoading();
-                    showToast('✅ Maintenance deactivated!');
-                    loadMaintenanceStatus();
-                    loadMaintenanceHistory();
-                } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
-            });
-        }
-        
-        function loadMaintenanceHistory() {
-            db.ref('maintenance_history').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
-                const history = snap.val() || {};
-                let html = '';
-                Object.keys(history).sort((a,b) => (history[b].timestamp||0) - (history[a].timestamp||0)).forEach(key => {
-                    const h = history[key];
-                    const action = h.action === 'activated' ? '🟢 Diaktifkan' : '🔴 Dinonaktifkan';
-                    const time = h.timestamp ? new Date(h.timestamp).toLocaleString('id-ID') : '-';
-                    html += `
-                        <div class="discount-card" style="border-color: ${h.action === 'activated' ? '#00ff88' : '#ff4444'};">
-                            <div class="discount-header">
-                                <span style="font-size:14px;">${action}</span>
-                                <span style="font-size:13px; color:#aaa;">${time}</span>
-                            </div>
-                            ${h.title ? `<div><strong>Title:</strong> ${h.title}</div>` : ''}
-                            ${h.message ? `<div><strong>Message:</strong> ${h.message}</div>` : ''}
-                            ${h.totalMinutes ? `<div><strong>Durasi:</strong> ${h.hours}h ${h.minutes}m (${h.totalMinutes} menit)</div>` : ''}
-                            ${h.startTime ? `<div><strong>Mulai:</strong> ${new Date(h.startTime).toLocaleString('id-ID')}</div>` : ''}
-                            ${h.endTime ? `<div><strong>Selesai:</strong> ${new Date(h.endTime).toLocaleString('id-ID')}</div>` : ''}
+            } catch (error) { 
+                hideLoading(); 
+                showToast('Error: ' + error.message); 
+            }
+        });
+    }
+    
+    function loadMaintenanceHistory() {
+        db.ref('maintenance_history').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
+            const history = snap.val() || {};
+            let html = '';
+            Object.keys(history).sort((a,b) => (history[b].timestamp||0) - (history[a].timestamp||0)).forEach(key => {
+                const h = history[key];
+                const action = h.action === 'activated' ? '🟢 Diaktifkan' : '🔴 Dinonaktifkan';
+                const time = h.timestamp ? new Date(h.timestamp).toLocaleString('id-ID') : '-';
+                html += `
+                    <div class="discount-card" style="border-color: ${h.action === 'activated' ? '#00ff88' : '#ff4444'};">
+                        <div class="discount-header">
+                            <span style="font-size:14px;">${action}</span>
+                            <span style="font-size:13px; color:#aaa;">${time}</span>
                         </div>
-                    `;
+                        ${h.title ? `<div><strong>Title:</strong> ${h.title}</div>` : ''}
+                        ${h.message ? `<div><strong>Message:</strong> ${h.message}</div>` : ''}
+                        ${h.totalMinutes ? `<div><strong>Durasi:</strong> ${h.hours}h ${h.minutes}m (${h.totalMinutes} menit)</div>` : ''}
+                        ${h.startTime ? `<div><strong>Mulai:</strong> ${new Date(h.startTime).toLocaleString('id-ID')}</div>` : ''}
+                        ${h.endTime ? `<div><strong>Selesai:</strong> ${new Date(h.endTime).toLocaleString('id-ID')}</div>` : ''}
+                        <div class="action-buttons">
+                            <button class="btn btn-danger btn-sm" onclick="deleteMaintenanceHistory('${key}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
             });
             const container = document.getElementById('maintenanceHistoryList');
             if (container) {
@@ -5088,6 +5116,22 @@
             }
         });
     }
+    
+    async function deleteMaintenanceHistory(historyId) {
+        showConfirm('Hapus Riwayat', 'Yakin ingin menghapus riwayat ini?', async () => {
+            showLoading();
+            try {
+                await db.ref('maintenance_history/' + historyId).remove();
+                addActivityLog('Delete Maintenance History', 'Menghapus riwayat maintenance');
+                hideLoading();
+                showToast('Riwayat dihapus!');
+                loadMaintenanceHistory();
+            } catch (error) {
+                hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    });
+}
     
     async function setMaintenanceKey() {
         const key = document.getElementById('maintenanceKeyInput').value.trim();
@@ -5108,16 +5152,6 @@
             hideLoading();
             showToast('Error: ' + error.message);
         }
-    }
-
-    function loadMaintenanceKey() {
-        db.ref('admin_config/maintenance_key').once('value', (snap) => {
-            if (snap.exists()) {
-                document.getElementById('maintenanceKeyInput').placeholder = 'Kunci saat ini: ' + snap.val();
-            } else {
-                document.getElementById('maintenanceKeyInput').placeholder = 'Belum ada kunci yang diset';
-            }
-        });
     }
     
     // ==================== LOAD ALL DATA ====================
@@ -6174,26 +6208,38 @@
         const type = document.getElementById('announcementType').value;
         const target = document.getElementById('announcementTarget').value;
         const duration = parseInt(document.getElementById('announcementDuration').value) || 5;
-
-        if (!title || !message) { showToast('Judul dan Isi pengumuman harus diisi!'); return; }
-
+    
+        if (!title || !message) { 
+            showToast('Judul dan Isi pengumuman harus diisi!'); 
+            return; 
+        }
+    
         showLoading();
         try {
             // Simpan ke announcements (untuk riwayat admin)
             const announcementRef = await db.ref('announcements').push({
-                title, message, type, target, duration,
-                sentAt: Date.now(), sentBy: 'Admin'
+                title, 
+                message, 
+                type, 
+                target, 
+                duration,
+                sentAt: Date.now(), 
+                sentBy: 'Admin'
             });
             const announcementId = announcementRef.key;
-
+    
             // Dapatkan daftar user berdasarkan target
             const usersSnap = await db.ref('users').once('value');
             const users = usersSnap.val() || {};
             let targetUsers = [];
-
+    
             switch(target) {
-                case 'all': targetUsers = Object.keys(users); break;
-                case 'online': targetUsers = Object.keys(users).filter(uid => users[uid].status === 'online'); break;
+                case 'all': 
+                    targetUsers = Object.keys(users); 
+                    break;
+                case 'online': 
+                    targetUsers = Object.keys(users).filter(uid => users[uid].status === 'online'); 
+                    break;
                 case 'vip':
                     const vipSnap = await db.ref('vip_members').once('value');
                     const vipData = vipSnap.val() || {};
@@ -6206,7 +6252,7 @@
                     targetUsers = Object.keys(users).filter(uid => !vipUsers.has(uid));
                     break;
             }
-
+    
             let sentCount = 0;
             for (const uid of targetUsers) {
                 try {
@@ -6218,8 +6264,8 @@
                         isAnnouncement: true,
                         announcementId: announcementId
                     });
-                
-                    // Kirim ke user_notifications (untuk popup)
+                    
+                    // Kirim ke user_notifications (untuk popup di user)
                     await db.ref('user_notifications/' + uid + '/' + announcementId).set({
                         title: title,
                         message: message,
@@ -6228,31 +6274,37 @@
                         sentAt: Date.now(),
                         read: false
                     });
-                
+                    
                     sentCount++;
-                } catch(e) { console.error('Gagal kirim ke', uid, e); }
+                } catch(e) { 
+                    console.error('Gagal kirim ke', uid, e); 
+                }
             }
-
-            addActivityLog('Kirim Pengumuman', `"${title}" ke ${sentCount} user (Target: ${target})`);
+    
+            addActivityLog('Kirim Pengumuman', '"' + title + '" ke ' + sentCount + ' user (Target: ' + target + ')');
             hideLoading();
-            showToast(`✅ Pengumuman terkirim ke ${sentCount} user!`);
-        
+            
+            // TAMPILKAN NOTIFIKASI KE ADMIN
+            showAdminNotifToast('📢 Pengumuman Terkirim', 'Pengumuman "' + title + '" terkirim ke ' + sentCount + ' user', 'success');
+            
+            showToast('✅ Pengumuman terkirim ke ' + sentCount + ' user!');
+            
             // Reset form
             document.getElementById('announcementTitle').value = '';
             document.getElementById('announcementMessage').value = '';
             loadAnnouncementHistory();
-
+    
         } catch(error) { 
             hideLoading(); 
             showToast('Error: ' + error.message); 
         }
     }
-
+    
     function loadAnnouncementHistory() {
-        db.ref('announcements').orderByChild('sentAt').limitToLast(50).once('value', (snap) => {
+        db.ref('announcements').orderByChild('sentAt').limitToLast(50).on('value', (snap) => {
             const announcements = snap.val() || {};
             let html = '';
-        
+            
             Object.keys(announcements).sort((a,b) => (announcements[b].sentAt||0) - (announcements[a].sentAt||0)).forEach(key => {
                 const a = announcements[key];
                 const typeMap = {
@@ -6267,7 +6319,7 @@
                     vip: '👑 User VIP',
                     free: '🔓 User Free'
                 };
-            
+                
                 html += `
                     <div class="update-item" style="border-left: 5px solid ${a.type === 'error' ? '#ff4444' : a.type === 'warning' ? '#ffaa00' : a.type === 'success' ? '#00ff88' : '#00ffff'};">
                         <div class="update-title">${escapeHtml(a.title)}</div>
@@ -6286,17 +6338,17 @@
                     </div>
                 `;
             });
-        
+            
             document.getElementById('announcementHistoryList').innerHTML = html || '<div class="no-data">Belum ada pengumuman</div>';
         });
     }
-
+    
     async function deleteAnnouncement(announcementId) {
         showConfirm('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', async () => {
             showLoading();
             try {
                 await db.ref('announcements/' + announcementId).remove();
-                addActivityLog('Hapus Pengumuman', `Menghapus pengumuman ${announcementId}`);
+                addActivityLog('Hapus Pengumuman', 'Menghapus pengumuman ' + announcementId);
                 hideLoading();
                 showToast('Pengumuman dihapus!');
                 loadAnnouncementHistory();
@@ -7145,32 +7197,31 @@
     // ============================================================
     // NOTIFICATION SYSTEM - ADMIN (UNIFIED)
     // ============================================================
-
-    let adminNotifPermission = false;
-    let adminUnreadCount = {};
-    let publicUnreadAdmin = 0;
-    let supportUnreadAdmin = 0;
-    
-    // Request permission notifikasi
-    async function requestAdminNotifPermission() {
-        if ('Notification' in window) {
-            const permission = await Notification.requestPermission();
-            adminNotifPermission = permission === 'granted';
-            if (adminNotifPermission && 'serviceWorker' in navigator) {
-                try {
-                    await navigator.serviceWorker.register('/sw.js');
-                    console.log('✅ Admin notification permission granted');
-                } catch(err) { console.log('Service Worker error:', err); }
-            }
-        }
-        return adminNotifPermission;
-    }
-    
-    // Tampilkan notifikasi toast admin
-    function showAdminNotifToast(title, message, type = 'info', duration = 5000) {
-        const container = document.getElementById('notificationContainer');
-        if (!container) return;
         
+        // Request permission notifikasi
+        async function requestAdminNotifPermission() {
+            if ('Notification' in window) {
+                const permission = await Notification.requestPermission();
+                adminNotifPermission = permission === 'granted';
+                if (adminNotifPermission && 'serviceWorker' in navigator) {
+                    try {
+                        await navigator.serviceWorker.register('/sw.js');
+                        console.log('✅ Admin notification permission granted');
+                    } catch(err) { console.log('Service Worker error:', err); }
+                }
+            }
+            return adminNotifPermission;
+        }
+        
+        // Tampilkan notifikasi toast admin
+        function showAdminNotifToast(title, message, type = 'info', duration = 5000) {
+        const container = document.getElementById('notificationContainer');
+        if (!container) {
+            console.log('❌ Container notifikasi tidak ditemukan!');
+            return;
+        }
+        
+        // Hapus notifikasi lama jika lebih dari 3
         const existing = container.querySelectorAll('.notification-toast');
         if (existing.length >= 3) {
             existing[0].classList.add('hide');
@@ -7178,7 +7229,7 @@
         }
         
         const toast = document.createElement('div');
-        toast.className = `notification-toast ${type}`;
+        toast.className = 'notification-toast ' + type;
         const icons = {
             info: 'fa-info-circle',
             success: 'fa-check-circle',
@@ -7209,18 +7260,63 @@
             }
         }, duration);
         
-        if (adminNotifPermission) {
+        // PLAY SUARA
+        playAdminNotificationSound();
+        
+        // Browser notification
+        if (notificationPermissionGranted) {
             try {
                 new Notification(title, {
                     body: message.replace(/<[^>]*>/g, ''),
-                    icon: 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg',
+                    icon: adminIcon,
                     vibrate: [200, 100, 200]
                 });
             } catch(e) {}
         }
         
-        playAdminNotifSound();
+        console.log('📢 Notifikasi Admin:', title, message);
     }
+    
+    // ============================================================
+    // NOTIFIKASI SUARA DENGAN FILE MP3 - ADMIN
+    // ============================================================
+    
+    function playAdminNotificationSound() {
+        try {
+            if (!adminNotificationAudio) {
+                adminNotificationAudio = new Audio('nada.mp3');
+                adminNotificationAudio.preload = 'auto';
+            }
+            adminNotificationAudio.currentTime = 0;
+            const playPromise = adminNotificationAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => playAdminFallbackSound());
+            }
+        } catch(e) {
+            playAdminFallbackSound();
+        }
+    }
+    
+    function playAdminFallbackSound() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 880;
+        gainNode.gain.value = 0.15;
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+        oscillator.stop(audioCtx.currentTime + 0.3);
+    } catch(e) {
+        console.log('Sound error:', e);
+    }
+}
+
+function playNotificationSound() {
+    playAdminNotificationSound();
+}
     
     // ============================================================
     // NOTIFICATION SYSTEM - ADMIN (LEGACY WRAPPER)
@@ -7237,51 +7333,6 @@
         return await requestAdminNotifPermission();
     }
 
-    // Wrapper untuk play sound
-    // ============================================================
-    // NOTIFIKASI SUARA DENGAN FILE MP3 - ADMIN
-    // ============================================================
-
-    function playAdminNotificationSound() {
-        try {
-            if (!adminNotificationAudio) {
-                adminNotificationAudio = new Audio('nada.mp3');
-                adminNotificationAudio.preload = 'auto';
-            }
-            adminNotificationAudio.currentTime = 0;
-            const playPromise = adminNotificationAudio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => playAdminFallbackSound());
-            }
-        } catch(e) {
-            playAdminFallbackSound();
-        }
-    }
-
-    function playAdminFallbackSound() {
-        try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-        
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-        
-            oscillator.frequency.value = 880;
-            gainNode.gain.value = 0.15;
-        
-            oscillator.start();
-            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
-            oscillator.stop(audioCtx.currentTime + 0.3);
-        } catch(e) {
-            console.log('Sound error:', e);
-        }
-    }
-    
-    function playNotificationSound() {
-        playAdminNotificationSound();
-    }
-    
     // ===== PRIVATE CHAT NOTIFICATION =====
     function setupPrivateChatNotifAdmin() {
         db.ref('chats').on('child_added', (snap) => {
