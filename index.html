@@ -4982,11 +4982,19 @@
                 <div style="display:flex; align-items:center; gap:12px;">
                     <span style="color:#ff4444; font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> Mode Hapus Aktif</span>
                     <span style="color:#fff; font-size:13px;">Pilih pesan dengan <strong>klik</strong> pada pesan</span>
-                    <span style="color:#ffaa00; font-size:13px;" id="selectedCount">0 pesan</span>
+                    <span style="color:#ffaa00; font-size:13px;" id="selectedCount">0</span>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button class="btn btn-success btn-sm" onclick="confirmDeleteSelectedMessages()"><i class="fas fa-check"></i> Hapus Terpilih</button>
                     <button class="btn btn-secondary btn-sm" onclick="cancelDeleteMode()"><i class="fas fa-times"></i> Batal</button>
+                </div>
+            </div>
+        
+            <div class="chat-container" style="height: 500px; position: relative;">
+                <div class="chat-messages" id="publicChatMessages" style="font-size: 13px;"></div>
+                <div class="chat-input-area" style="margin-top: 15px;">
+                    <input type="text" class="chat-input" id="publicChatInput" placeholder="Send message as admin...">
+                    <button class="chat-send-btn" onclick="sendPublicMessageAsAdmin()"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
