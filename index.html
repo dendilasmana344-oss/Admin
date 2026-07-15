@@ -8667,9 +8667,13 @@
             
             // ===== KLIK UNTUK PILIH (DELETE MODE) =====
             if (deleteModeActive) {
+                wrapper.style.cursor = 'pointer';
                 wrapper.onclick = function(e) {
-                    // Cegah jika klik di dalam tombol atau link
-                    if (e.target.closest('button') || e.target.closest('a')) return;
+                    // Cegah jika klik di dalam tombol, link, atau checkbox
+                    if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.chat-delete-checkbox')) {
+                        return;
+                    }
+                    console.log('Wrapper clicked for:', key);
                     toggleSelectMessage(key);
                 };
             }
@@ -8685,11 +8689,18 @@
                 checkbox.style.cursor = 'pointer';
                 checkbox.style.marginTop = '10px';
                 checkbox.style.marginRight = '5px';
+                checkbox.style.flexShrink = '0';
                 checkbox.checked = selectedMessages.has(key);
+                checkbox.dataset.messageId = key;
+    
+                // Perbaiki event onchange
                 checkbox.onchange = function(e) {
                     e.stopPropagation();
-                    toggleSelectMessage(key);
+                    const id = this.dataset.messageId;
+                    console.log('Checkbox clicked for:', id);
+                    toggleSelectMessage(id);
                 };
+    
                 wrapper.appendChild(checkbox);
             }
             
@@ -8859,14 +8870,20 @@
             const deleteBtn = document.getElementById('deleteChatModeBtn');
     
             if (deleteModeActive) {
-                deleteBar.style.display = 'flex';
-                deleteBtn.innerHTML = '<i class="fas fa-times"></i> Batal Hapus';
-                deleteBtn.style.background = 'linear-gradient(135deg, #00ff88, #00cc66)';
+                if (deleteBar) deleteBar.style.display = 'flex';
+                if (deleteBtn) {
+                    deleteBtn.innerHTML = '<i class="fas fa-times"></i> Batal Hapus';
+                    deleteBtn.style.background = 'linear-gradient(135deg, #00ff88, #00cc66)';
+                }
+                selectedMessages.clear();
+                updateSelectedCount();
                 loadPublicChat(); // Refresh untuk menampilkan checkbox
             } else {
-                deleteBar.style.display = 'none';
-                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan';
-                deleteBtn.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
+                if (deleteBar) deleteBar.style.display = 'none';
+                if (deleteBtn) {
+                    deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan';
+                    deleteBtn.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
+                }
                 selectedMessages.clear();
                 updateSelectedCount();
                 loadPublicChat(); // Refresh untuk menghilangkan checkbox
@@ -8876,57 +8893,79 @@
         function toggleSelectMessage(messageId) {
             if (!deleteModeActive) return;
     
+            // Cari wrapper dengan data-id
             const wrapper = document.querySelector(`.chat-message-wrapper[data-id="${messageId}"]`);
-            if (!wrapper) return;
+            if (!wrapper) {
+                console.log('Wrapper tidak ditemukan untuk ID:', messageId);
+                return;
+            }
+    
+            // Cari checkbox di dalam wrapper
+            const checkbox = wrapper.querySelector('.chat-delete-checkbox');
     
             if (selectedMessages.has(messageId)) {
+                // Hapus dari selected
                 selectedMessages.delete(messageId);
                 wrapper.classList.remove('selected');
                 wrapper.style.border = 'none';
                 wrapper.style.padding = '0';
                 wrapper.style.borderRadius = '0';
+                if (checkbox) checkbox.checked = false;
             } else {
+                // Tambah ke selected
                 selectedMessages.add(messageId);
                 wrapper.classList.add('selected');
                 wrapper.style.border = '2px solid #00ff88';
                 wrapper.style.borderRadius = '10px';
                 wrapper.style.padding = '5px';
+                if (checkbox) checkbox.checked = true;
             }
+    
             updateSelectedCount();
+            console.log('Selected messages:', selectedMessages.size);
         }
 
         function updateSelectedCount() {
-            document.getElementById('selectedCount').textContent = selectedMessages.size + ' pesan';
+            const el = document.getElementById('selectedCount');
+            if (el) {
+                el.textContent = selectedMessages.size + ' pesan';
+                console.log('Selected count updated:', selectedMessages.size);
+            }
         }
 
         function confirmDeleteSelectedMessages() {
+            console.log('Jumlah pesan dipilih:', selectedMessages.size);
+    
             if (selectedMessages.size === 0) {
                 showToast('Pilih pesan yang akan dihapus terlebih dahulu!');
                 return;
             }
     
-            // Gunakan confirm bawaan browser dulu untuk test
+            // Tampilkan konfirmasi
             if (confirm(`Yakin ingin menghapus ${selectedMessages.size} pesan?`)) {
                 showLoading();
-                try {
-                    const promises = [];
-                    selectedMessages.forEach(async (messageId) => {
-                        promises.push(db.ref(`all_comments/${messageId}`).remove());
-                    });
-                    Promise.all(promises).then(() => {
-                        addActivityLog('Delete Messages', `Deleted ${selectedMessages.size} public messages`);
+        
+                // Buat array untuk menyimpan promise
+                const deletePromises = [];
+                const messageIds = Array.from(selectedMessages);
+        
+                messageIds.forEach((messageId) => {
+                    deletePromises.push(db.ref(`all_comments/${messageId}`).remove());
+                });
+        
+                Promise.all(deletePromises)
+                    .then(() => {
+                        addActivityLog('Delete Messages', `Deleted ${messageIds.length} public messages`);
                         hideLoading();
-                        showToast(`${selectedMessages.size} pesan berhasil dihapus!`);
+                        showToast(`${messageIds.length} pesan berhasil dihapus!`);
                         cancelDeleteMode();
                         loadPublicChat();
-                    }).catch((error) => {
+                    })
+                    .catch((error) => {
+                        console.error('Error deleting messages:', error);
                         hideLoading();
                         showToast('Error: ' + error.message);
                     });
-                } catch (error) {
-                    hideLoading();
-                    showToast('Error: ' + error.message);
-                }
             }
         }
 
