@@ -8652,7 +8652,8 @@
         sorted.forEach(function(key) {
             const msg = messages[key];
             const isAdmin = msg.uid === 'ADMIN';
-        
+            const isSelected = selectedMessages.has(key);
+    
             // ===== BUAT WRAPPER =====
             const wrapper = document.createElement('div');
             wrapper.className = `message-wrapper ${isAdmin ? 'admin' : 'customer'}`;
@@ -8662,50 +8663,51 @@
             wrapper.style.gap = '10px';
             wrapper.style.marginBottom = '10px';
             wrapper.style.width = '100%';
-        
+            wrapper.style.padding = '5px';
+            wrapper.style.borderRadius = '10px';
+            wrapper.style.border = isSelected ? '2px solid #00ff88' : '2px solid transparent';
+    
             // ===== CHECKBOX (DELETE MODE) =====
-            if (deleteModeActive) {
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'chat-delete-checkbox';
-                checkbox.style.width = '18px';
-                checkbox.style.height = '18px';
-                checkbox.style.accentColor = '#00ff88';
-                checkbox.style.cursor = 'pointer';
-                checkbox.style.marginTop = '10px';
-                checkbox.style.marginRight = '5px';
-                checkbox.style.flexShrink = '0';
-                checkbox.checked = selectedMessages.has(key);
-                checkbox.dataset.messageId = key;
-            
-                // Event checkbox - gunakan closure dengan key
-                checkbox.onchange = (function(msgId) {
-                    return function(e) {
-                        e.stopPropagation();
-                        console.log('Checkbox clicked for:', msgId);
-                        toggleSelectMessage(msgId);
-                    };
-                })(key);
-            
-                wrapper.appendChild(checkbox);
-            }
-        
-            // ===== KLIK UNTUK PILIH (DELETE MODE) =====
+            const checkboxWrapper = document.createElement('div');
+            checkboxWrapper.style.display = deleteModeActive ? 'flex' : 'none';
+            checkboxWrapper.style.alignItems = 'center';
+            checkboxWrapper.style.justifyContent = 'center';
+            checkboxWrapper.style.marginRight = '5px';
+            checkboxWrapper.style.flexShrink = '0';
+            checkboxWrapper.style.minWidth = '30px';
+    
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'chat-delete-checkbox';
+            checkbox.style.width = '20px';
+            checkbox.style.height = '20px';
+            checkbox.style.accentColor = '#00ff88';
+            checkbox.style.cursor = 'pointer';
+            checkbox.checked = isSelected;
+            checkbox.dataset.messageId = key;
+    
+            checkbox.onchange = function(e) {
+                e.stopPropagation();
+                const msgId = this.dataset.messageId;
+                console.log('Checkbox clicked for:', msgId);
+                toggleSelectMessage(msgId);
+            };
+    
+            checkboxWrapper.appendChild(checkbox);
+    
+            // ===== KLIK WRAPPER =====
             if (deleteModeActive) {
                 wrapper.style.cursor = 'pointer';
-                // Event klik wrapper - gunakan closure dengan key
-                wrapper.onclick = (function(msgId) {
-                    return function(e) {
-                        // Cegah jika klik di dalam tombol, link, atau checkbox
-                        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.chat-delete-checkbox')) {
-                            return;
-                        }
-                        console.log('Wrapper clicked for:', msgId);
-                        toggleSelectMessage(msgId);
-                    };
-                })(key);
+                wrapper.onclick = function(e) {
+                    if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input[type="checkbox"]')) {
+                        return;
+                    }
+                    const msgId = this.dataset.messageId;
+                    console.log('Wrapper clicked for:', msgId);
+                    toggleSelectMessage(msgId);
+                };
             }
-        
+    
             // ===== AVATAR =====
             const avatar = document.createElement('img');
             avatar.className = 'chat-avatar';
@@ -8715,7 +8717,7 @@
             avatar.style.border = '2px solid var(--neon-cyan)';
             avatar.style.objectFit = 'cover';
             avatar.style.flexShrink = '0';
-        
+    
             if (isAdmin) {
                 avatar.src = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
             } else {
@@ -8723,15 +8725,14 @@
             }
             avatar.alt = 'Avatar';
             avatar.onerror = function() { this.src = 'https://via.placeholder.com/35/00ffff/000000?text=U'; };
-            wrapper.appendChild(avatar);
-        
+    
             // ===== CONTENT =====
             const contentDiv = document.createElement('div');
             contentDiv.style.flex = '1';
             contentDiv.style.display = 'flex';
             contentDiv.style.flexDirection = 'column';
             contentDiv.style.minWidth = '0';
-        
+    
             // Nama Pengirim
             const sender = document.createElement('div');
             sender.className = 'message-sender';
@@ -8746,7 +8747,7 @@
                 sender.style.color = 'var(--neon-cyan)';
             }
             contentDiv.appendChild(sender);
-        
+    
             // ===== BUBBLE PESAN =====
             const bubble = document.createElement('div');
             bubble.className = `message ${isAdmin ? 'admin' : 'customer'}`;
@@ -8756,7 +8757,7 @@
             bubble.style.padding = '12px 18px';
             bubble.style.marginBottom = '4px';
             bubble.style.display = 'inline-block';
-        
+    
             if (isAdmin) {
                 bubble.style.alignSelf = 'flex-start';
                 bubble.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
@@ -8768,14 +8769,14 @@
                 bubble.style.color = '#000';
                 bubble.style.borderTopRightRadius = '4px';
             }
-        
+    
             let msgText = escapeHtml(msg.text || '');
             if (msg.edited) {
                 msgText += ' <span style="color:#888; font-size:10px;">(diedit oleh ' + (msg.editedBy || 'Admin') + ')</span>';
             }
             bubble.innerHTML = msgText;
-        
-            // ===== ICON EDIT (Admin bisa edit SEMUA) =====
+    
+            // ===== ICON EDIT =====
             if (!deleteModeActive) {
                 const editIcon = document.createElement('span');
                 editIcon.className = 'message-edit-icon';
@@ -8799,7 +8800,7 @@
                 };
                 bubble.appendChild(editIcon);
             }
-        
+    
             // File
             if (msg.fileUrl) {
                 const fileDiv = document.createElement('div');
@@ -8807,7 +8808,7 @@
                 fileDiv.innerHTML = `<img src="${msg.fileUrl}" style="max-width:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileUrl}')">`;
                 bubble.appendChild(fileDiv);
             }
-        
+    
             // Waktu
             const time = document.createElement('div');
             time.className = 'message-time';
@@ -8817,14 +8818,16 @@
             time.style.textAlign = 'right';
             time.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-';
             bubble.appendChild(time);
-        
+    
             contentDiv.appendChild(bubble);
+            wrapper.appendChild(checkboxWrapper);
+            wrapper.appendChild(avatar);
             wrapper.appendChild(contentDiv);
             chatBox.appendChild(wrapper);
         });
     
         chatBox.scrollTop = chatBox.scrollHeight;
-        console.log('Messages displayed, deleteMode:', deleteModeActive, 'selected:', selectedMessages.size);
+        updateSelectedCount();
     }
 
     function updatePublicChatBadge() {
@@ -8872,7 +8875,7 @@
             deleteModeActive = !deleteModeActive;
             const deleteBar = document.getElementById('deleteModeBar');
             const deleteBtn = document.getElementById('deleteChatModeBtn');
-    
+
             if (deleteModeActive) {
                 if (deleteBar) deleteBar.style.display = 'flex';
                 if (deleteBtn) {
@@ -8899,39 +8902,34 @@
                 console.log('Delete mode not active');
                 return;
             }
-    
+
             console.log('toggleSelectMessage called for:', messageId);
-    
-            // Cari wrapper dengan data-id
+
+            // Cari wrapper
             const wrapper = document.querySelector(`.chat-message-wrapper[data-id="${messageId}"]`);
             if (!wrapper) {
                 console.log('Wrapper tidak ditemukan untuk ID:', messageId);
                 return;
             }
-    
-            // Cari checkbox di dalam wrapper
+
+            // Cari checkbox
             const checkbox = wrapper.querySelector('.chat-delete-checkbox');
-    
+
             if (selectedMessages.has(messageId)) {
                 // Hapus dari selected
                 selectedMessages.delete(messageId);
-                wrapper.classList.remove('selected');
-                wrapper.style.border = 'none';
-                wrapper.style.padding = '0';
-                wrapper.style.borderRadius = '0';
+                wrapper.style.border = '2px solid transparent';
                 if (checkbox) checkbox.checked = false;
                 console.log('Removed from selection:', messageId);
             } else {
                 // Tambah ke selected
                 selectedMessages.add(messageId);
-                wrapper.classList.add('selected');
                 wrapper.style.border = '2px solid #00ff88';
-                wrapper.style.borderRadius = '10px';
-                wrapper.style.padding = '5px';
                 if (checkbox) checkbox.checked = true;
                 console.log('Added to selection:', messageId);
             }
-    
+
+            // Update counter
             updateSelectedCount();
             console.log('Total selected:', selectedMessages.size);
         }
@@ -8948,13 +8946,14 @@
             console.log('=== CONFIRM DELETE ===');
             console.log('Selected messages:', Array.from(selectedMessages));
             console.log('Total:', selectedMessages.size);
-    
+
             if (selectedMessages.size === 0) {
                 showToast('Pilih pesan yang akan dihapus terlebih dahulu!');
                 return;
             }
-    
-            if (confirm(`Yakin ingin menghapus ${selectedMessages.size} pesan?`)) {
+
+            // Gunakan confirm bawaan browser
+            if (confirm('Yakin ingin menghapus ' + selectedMessages.size + ' pesan?')) {
                 showLoading();
         
                 const messageIds = Array.from(selectedMessages);
@@ -8962,7 +8961,7 @@
         
                 const deletePromises = messageIds.map(function(messageId) {
                     console.log('Deleting:', messageId);
-                    return db.ref(`all_comments/${messageId}`).remove();
+                    return db.ref('all_comments/' + messageId).remove();
                 });
         
                 Promise.all(deletePromises)
@@ -8978,6 +8977,8 @@
                         hideLoading();
                         showToast('Error: ' + error.message);
                     });
+            } else {
+                console.log('User cancelled deletion');
             }
         }
 
