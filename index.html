@@ -4963,15 +4963,33 @@
     </div>
     
     <!-- ============================================================
-         PUBLIC CHAT TAB
-         ============================================================ -->
+     PUBLIC CHAT TAB
+     ============================================================ -->
     <div id="public_chat" class="tab-content">
         <div class="card">
             <div class="card-title">
                 <i class="fas fa-globe"></i> Public Chat Management 
-                <button class="btn btn-danger btn-sm" id="deleteChatModeBtn" onclick="toggleDeleteMode()" style="margin-left: auto;"><i class="fas fa-trash-alt"></i> Hapus Pesan</button>
-                <button class="btn btn-primary btn-sm" onclick="loadPublicChat()" style="margin-left: 10px;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="btn btn-danger btn-sm" id="deleteChatModeBtn" onclick="toggleDeleteMode()" style="margin-left: auto;">
+                    <i class="fas fa-trash-alt"></i> Hapus Pesan
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="loadPublicChat()" style="margin-left: 10px;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
             </div>
+        
+            <!-- DELETE BAR -->
+            <div id="deleteModeBar" style="display:none; background:rgba(255,68,68,0.15); border:2px solid #ff4444; border-radius:15px; padding:12px 18px; margin-bottom:15px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="color:#ff4444; font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> Mode Hapus Aktif</span>
+                    <span style="color:#fff; font-size:13px;">Pilih pesan dengan <strong>klik</strong> pada pesan</span>
+                    <span style="color:#ffaa00; font-size:13px;" id="selectedCount">0</span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-success btn-sm" onclick="confirmDeleteSelectedMessages()"><i class="fas fa-check"></i> Hapus Terpilih</button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelDeleteMode()"><i class="fas fa-times"></i> Batal</button>
+                </div>
+            </div>
+        
             <div class="chat-container" style="height: 500px; position: relative;">
                 <div class="chat-messages" id="publicChatMessages" style="font-size: 13px;"></div>
                 <div class="chat-input-area" style="margin-top: 15px;">
@@ -8621,106 +8639,178 @@
     }
 
     function displayPublicChatMessages(messages) {
-    const chatBox = document.getElementById('publicChatMessages');
-    if (!chatBox) return;
-    chatBox.innerHTML = '';
-    const sorted = Object.keys(messages).sort((a, b) => (messages[a].timestamp || 0) - (messages[b].timestamp || 0));
-    if (sorted.length === 0) { chatBox.innerHTML = '<div class="no-data" style="padding: 30px; text-align: center;">Belum ada pesan</div>'; return; }
-    
-    sorted.forEach(key => {
-        const msg = messages[key];
-        const isAdmin = msg.uid === 'ADMIN';
-        const isCustomer = msg.uid !== 'ADMIN';
+        const chatBox = document.getElementById('publicChatMessages');
+        if (!chatBox) return;
+        chatBox.innerHTML = '';
         
-        // ===== BUAT WRAPPER =====
-        const wrapper = document.createElement('div');
-        wrapper.className = `message-wrapper ${isAdmin ? 'admin' : 'customer'}`;
-        wrapper.dataset.messageId = key;
-        wrapper.style.display = 'flex';
-        wrapper.style.alignItems = 'flex-start';
-        wrapper.style.gap = '10px';
-        wrapper.style.marginBottom = '10px';
-        
-        // ===== AVATAR =====
-        const avatar = document.createElement('img');
-        avatar.className = 'chat-avatar';
-        avatar.style.width = '35px';
-        avatar.style.height = '35px';
-        avatar.style.borderRadius = '50%';
-        avatar.style.border = '2px solid var(--neon-cyan)';
-        avatar.style.objectFit = 'cover';
-        avatar.style.flexShrink = '0';
-        
-        if (isAdmin) {
-            avatar.src = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
-        } else {
-            avatar.src = 'https://via.placeholder.com/35/00ffff/000000?text=U';
-        }
-        avatar.alt = 'Avatar';
-        avatar.onerror = function() { this.src = 'https://via.placeholder.com/35/00ffff/000000?text=U'; };
-        wrapper.appendChild(avatar);
-        
-        // ===== CONTENT =====
-        const contentDiv = document.createElement('div');
-        contentDiv.style.flex = '1';
-        contentDiv.style.display = 'flex';
-        contentDiv.style.flexDirection = 'column';
-        
-        // Nama Pengirim
-        const sender = document.createElement('div');
-        sender.className = 'message-sender';
-        sender.style.fontSize = '12px';
-        sender.style.fontWeight = 'bold';
-        sender.style.marginBottom = '3px';
-        if (isAdmin) {
-            sender.textContent = '👑 Admin';
-            sender.style.color = '#ff4444';
-        } else {
-            sender.textContent = '👤 ' + escapeHtml(msg.uid || 'Unknown');
-            sender.style.color = 'var(--neon-cyan)';
-        }
-        contentDiv.appendChild(sender);
-        
-        // Isi Pesan
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${isAdmin ? 'admin' : 'customer'}`;
-        
-        let msgText = escapeHtml(msg.text || '');
-        if (msg.edited) {
-            msgText += ' <span style="color:#888; font-size:10px;">(diedit oleh ' + (msg.editedBy || 'Admin') + ')</span>';
-        }
-        msgDiv.innerHTML = msgText;
-        
-        // ===== ICON EDIT (Admin bisa edit SEMUA) =====
-        const editIcon = document.createElement('span');
-        editIcon.className = 'message-edit-icon';
-        editIcon.innerHTML = '<i class="fas fa-pen"></i>';
-        editIcon.style.marginLeft = '8px';
-        editIcon.style.cursor = 'pointer';
-        editIcon.style.fontSize = '12px';
-        editIcon.style.color = '#888';
-        editIcon.onclick = function(e) {
-            e.stopPropagation();
-            openEditMessagePopupAdmin(key, msg.text || '', 'public_chat', msg.uid || 'public');
-        };
-        msgDiv.appendChild(editIcon);
-        
-        // File
-        if (msg.fileUrl) {
-            msgDiv.innerHTML += `<div><img src="${msg.fileUrl}" style="max-width:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileUrl}')"></div>`;
+        const sorted = Object.keys(messages).sort((a, b) => (messages[a].timestamp || 0) - (messages[b].timestamp || 0));
+        if (sorted.length === 0) {
+            chatBox.innerHTML = '<div class="no-data" style="padding: 30px; text-align: center;">Belum ada pesan</div>';
+            return;
         }
         
-        // Waktu
-        const time = document.createElement('div');
-        time.className = 'message-time';
-        time.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-';
-        msgDiv.appendChild(time);
-        contentDiv.appendChild(msgDiv);
-        wrapper.appendChild(contentDiv);
-        chatBox.appendChild(wrapper);
-    });
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
+        sorted.forEach(key => {
+            const msg = messages[key];
+            const isAdmin = msg.uid === 'ADMIN';
+            const isCustomer = msg.uid !== 'ADMIN';
+            
+            // ===== BUAT WRAPPER =====
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${isAdmin ? 'admin' : 'customer'}`;
+            wrapper.dataset.messageId = key;
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'flex-start';
+            wrapper.style.gap = '10px';
+            wrapper.style.marginBottom = '10px';
+            wrapper.style.width = '100%';
+            wrapper.style.cursor = deleteModeActive ? 'pointer' : 'default';
+            
+            // ===== KLIK UNTUK PILIH (DELETE MODE) =====
+            if (deleteModeActive) {
+                wrapper.onclick = function(e) {
+                    // Cegah jika klik di dalam tombol atau link
+                    if (e.target.closest('button') || e.target.closest('a')) return;
+                    toggleSelectMessage(key);
+                };
+            }
+            
+            // ===== CHECKBOX (DELETE MODE) =====
+            if (deleteModeActive) {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'chat-delete-checkbox';
+                checkbox.style.width = '18px';
+                checkbox.style.height = '18px';
+                checkbox.style.accentColor = '#00ff88';
+                checkbox.style.cursor = 'pointer';
+                checkbox.style.marginTop = '10px';
+                checkbox.style.marginRight = '5px';
+                checkbox.checked = selectedMessages.has(key);
+                checkbox.onchange = function(e) {
+                    e.stopPropagation();
+                    toggleSelectMessage(key);
+                };
+                wrapper.appendChild(checkbox);
+            }
+            
+            // ===== AVATAR =====
+            const avatar = document.createElement('img');
+            avatar.className = 'chat-avatar';
+            avatar.style.width = '35px';
+            avatar.style.height = '35px';
+            avatar.style.borderRadius = '50%';
+            avatar.style.border = '2px solid var(--neon-cyan)';
+            avatar.style.objectFit = 'cover';
+            avatar.style.flexShrink = '0';
+            
+            if (isAdmin) {
+                avatar.src = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
+            } else {
+                avatar.src = 'https://via.placeholder.com/35/00ffff/000000?text=U';
+            }
+            avatar.alt = 'Avatar';
+            avatar.onerror = function() { this.src = 'https://via.placeholder.com/35/00ffff/000000?text=U'; };
+            wrapper.appendChild(avatar);
+            
+            // ===== CONTENT =====
+            const contentDiv = document.createElement('div');
+            contentDiv.style.flex = '1';
+            contentDiv.style.display = 'flex';
+            contentDiv.style.flexDirection = 'column';
+            contentDiv.style.minWidth = '0';
+            
+            // Nama Pengirim
+            const sender = document.createElement('div');
+            sender.className = 'message-sender';
+            sender.style.fontSize = '12px';
+            sender.style.fontWeight = 'bold';
+            sender.style.marginBottom = '3px';
+            if (isAdmin) {
+                sender.textContent = '👑 Admin';
+                sender.style.color = '#ff4444';
+            } else {
+                sender.textContent = '👤 ' + escapeHtml(msg.uid || 'Unknown');
+                sender.style.color = 'var(--neon-cyan)';
+            }
+            contentDiv.appendChild(sender);
+            
+            // ===== BUBBLE PESAN =====
+            const bubble = document.createElement('div');
+            bubble.className = `message ${isAdmin ? 'admin' : 'customer'}`;
+            bubble.style.maxWidth = '80%';
+            bubble.style.wordWrap = 'break-word';
+            bubble.style.borderRadius = '18px';
+            bubble.style.padding = '12px 18px';
+            bubble.style.marginBottom = '4px';
+            bubble.style.display = 'inline-block';
+            
+            if (isAdmin) {
+                bubble.style.alignSelf = 'flex-start';
+                bubble.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
+                bubble.style.color = 'white';
+                bubble.style.borderTopLeftRadius = '4px';
+            } else {
+                bubble.style.alignSelf = 'flex-end';
+                bubble.style.background = 'linear-gradient(135deg, var(--neon-cyan), #0088ff)';
+                bubble.style.color = '#000';
+                bubble.style.borderTopRightRadius = '4px';
+            }
+            
+            let msgText = escapeHtml(msg.text || '');
+            if (msg.edited) {
+                msgText += ' <span style="color:#888; font-size:10px;">(diedit oleh ' + (msg.editedBy || 'Admin') + ')</span>';
+            }
+            bubble.innerHTML = msgText;
+            
+            // ===== ICON EDIT (Admin bisa edit SEMUA) =====
+            if (!deleteModeActive) {
+                const editIcon = document.createElement('span');
+                editIcon.className = 'message-edit-icon';
+                editIcon.innerHTML = '<i class="fas fa-pen"></i>';
+                editIcon.style.marginLeft = '8px';
+                editIcon.style.cursor = 'pointer';
+                editIcon.style.fontSize = '12px';
+                editIcon.style.color = '#888';
+                editIcon.style.opacity = '0.5';
+                editIcon.onmouseenter = function() {
+                    this.style.opacity = '1';
+                    this.style.color = 'var(--neon-cyan)';
+                };
+                editIcon.onmouseleave = function() {
+                    this.style.opacity = '0.5';
+                    this.style.color = '#888';
+                };
+                editIcon.onclick = function(e) {
+                    e.stopPropagation();
+                    openEditMessagePopupAdmin(key, msg.text || '', 'public_chat', msg.uid || 'public');
+                };
+                bubble.appendChild(editIcon);
+            }
+            
+            // File
+            if (msg.fileUrl) {
+                const fileDiv = document.createElement('div');
+                fileDiv.style.marginTop = '8px';
+                fileDiv.innerHTML = `<img src="${msg.fileUrl}" style="max-width:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileUrl}')">`;
+                bubble.appendChild(fileDiv);
+            }
+            
+            // Waktu
+            const time = document.createElement('div');
+            time.className = 'message-time';
+            time.style.fontSize = '9px';
+            time.style.opacity = '0.6';
+            time.style.marginTop = '6px';
+            time.style.textAlign = 'right';
+            time.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-';
+            bubble.appendChild(time);
+            
+            contentDiv.appendChild(bubble);
+            wrapper.appendChild(contentDiv);
+            chatBox.appendChild(wrapper);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
     function updatePublicChatBadge() {
         const fiveMinAgo = Date.now() - 300000;
@@ -8759,67 +8849,89 @@
             finally { hideLoading(); }
         }
         
+        // ============================================================
+        // PUBLIC CHAT - DELETE MODE
+        // ============================================================
+
         function toggleDeleteMode() {
             deleteModeActive = !deleteModeActive;
-            const chatContainer = document.querySelector('#public_chat .chat-container');
             const deleteBar = document.getElementById('deleteModeBar');
             const deleteBtn = document.getElementById('deleteChatModeBtn');
+    
             if (deleteModeActive) {
-                chatContainer.classList.add('chat-delete-mode');
-                deleteBar.classList.add('active');
-                if (deleteBtn) { deleteBtn.style.background = 'linear-gradient(135deg, #00ff88, #00cc66)'; deleteBtn.innerHTML = '<i class="fas fa-check"></i> Mode Hapus Aktif'; }
-                loadPublicChat();
+                deleteBar.style.display = 'flex';
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i> Batal Hapus';
+                deleteBtn.style.background = 'linear-gradient(135deg, #00ff88, #00cc66)';
+                loadPublicChat(); // Refresh untuk menampilkan checkbox
             } else {
-                chatContainer.classList.remove('chat-delete-mode');
-                deleteBar.classList.remove('active');
+                deleteBar.style.display = 'none';
+                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan';
+                deleteBtn.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
                 selectedMessages.clear();
                 updateSelectedCount();
-                if (deleteBtn) { deleteBtn.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)'; deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan'; }
-                loadPublicChat();
+                loadPublicChat(); // Refresh untuk menghilangkan checkbox
             }
         }
-    
+
         function toggleSelectMessage(messageId) {
             if (!deleteModeActive) return;
+    
+            const wrapper = document.querySelector(`.chat-message-wrapper[data-id="${messageId}"]`);
+            if (!wrapper) return;
+    
             if (selectedMessages.has(messageId)) {
                 selectedMessages.delete(messageId);
-                document.querySelector(`.chat-message-wrapper[data-id="${messageId}"]`).classList.remove('selected');
+                wrapper.classList.remove('selected');
+                wrapper.style.border = 'none';
             } else {
                 selectedMessages.add(messageId);
-                document.querySelector(`.chat-message-wrapper[data-id="${messageId}"]`).classList.add('selected');
+                wrapper.classList.add('selected');
+                wrapper.style.border = '2px solid #00ff88';
+                wrapper.style.borderRadius = '10px';
+                wrapper.style.padding = '5px';
             }
             updateSelectedCount();
         }
-    
-        function updateSelectedCount() { document.getElementById('selectedCount').textContent = selectedMessages.size; }
-    
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedMessages.size + ' pesan';
+        }
+
         function confirmDeleteSelectedMessages() {
-            if (selectedMessages.size === 0) { showToast('Pilih pesan yang akan dihapus terlebih dahulu!'); return; }
+            if (selectedMessages.size === 0) {
+                showToast('Pilih pesan yang akan dihapus terlebih dahulu!');
+                return;
+            }
+    
             showConfirm('Hapus Pesan', `Yakin ingin menghapus ${selectedMessages.size} pesan?`, async () => {
                 showLoading();
                 try {
                     const promises = [];
-                    selectedMessages.forEach(async (messageId) => { promises.push(db.ref(`all_comments/${messageId}`).remove()); });
+                    selectedMessages.forEach(async (messageId) => {
+                        promises.push(db.ref(`all_comments/${messageId}`).remove());
+                    });
                     await Promise.all(promises);
                     addActivityLog('Delete Messages', `Deleted ${selectedMessages.size} public messages`);
                     hideLoading();
                     showToast(`${selectedMessages.size} pesan berhasil dihapus!`);
                     cancelDeleteMode();
                     loadPublicChat();
-                } catch (error) { hideLoading(); showToast('Error: ' + error.message); }
+                } catch (error) {
+                    hideLoading();
+                    showToast('Error: ' + error.message);
+                }
             });
         }
-    
+
         function cancelDeleteMode() {
             deleteModeActive = false;
             selectedMessages.clear();
             updateSelectedCount();
-            const chatContainer = document.querySelector('#public_chat .chat-container');
             const deleteBar = document.getElementById('deleteModeBar');
             const deleteBtn = document.getElementById('deleteChatModeBtn');
-            chatContainer.classList.remove('chat-delete-mode');
-            deleteBar.classList.remove('active');
-            if (deleteBtn) { deleteBtn.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)'; deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan'; }
+            deleteBar.style.display = 'none';
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Pesan';
+            deleteBtn.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
             loadPublicChat();
         }
     
