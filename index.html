@@ -5076,12 +5076,13 @@
     </div>
 
     <!-- ============================================================
-         DISCOUNTS TAB
-         ============================================================ -->
+     DISCOUNTS TAB
+     ============================================================ -->
     <div id="discounts" class="tab-content">
         <div class="card">
             <div class="card-title glow-cyan"><i class="fas fa-tags"></i> Global Discount Settings</div>
         
+            <!-- ===== STATUS DISKON GLOBAL ===== -->
             <div id="currentDiscountStatus" style="margin-bottom: 20px; display: none;">
                 <div style="background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,255,136,0.05)); border: 2px solid #00ff88; border-radius: 20px; padding: 20px;">
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
@@ -5096,30 +5097,39 @@
                 </div>
             </div>
         
-            <div class="modal-form-group">
-                <label class="modal-label"><i class="fas fa-percent"></i> Persentase Diskon (%)</label>
-                <input type="number" class="modal-input" id="discountPercentage" placeholder="0" min="0" max="100" value="0">
-                <small style="color: #888;">Masukkan angka 0-100. Contoh: 50 = diskon 50%</small>
+            <!-- ===== LIST DISKON ===== -->
+            <div id="discountsList" style="margin-top: 20px;"></div>
+        
+            <!-- ===== FORM BUAT DISKON GLOBAL ===== -->
+            <div style="margin-top: 30px; border-top: 2px solid rgba(0,255,255,0.2); padding-top: 25px;">
+                <h3 style="color: var(--neon-cyan); margin-bottom: 20px;" class="glow-cyan"><i class="fas fa-plus-circle"></i> Buat Diskon Global</h3>
+            
+                <div class="modal-form-group">
+                    <label class="modal-label"><i class="fas fa-percent"></i> Persentase Diskon (%)</label>
+                    <input type="number" class="modal-input" id="discountPercentage" placeholder="0" min="0" max="100" value="0">
+                    <small style="color: #888;">Masukkan angka 0-100. Contoh: 50 = diskon 50%</small>
+                </div>
+        
+                <div class="modal-form-group">
+                    <label class="modal-label"><i class="fas fa-calendar-alt"></i> Masa Berlaku (Hari)</label>
+                    <input type="number" class="modal-input" id="discountDuration" placeholder="7" min="1" value="7">
+                    <small style="color: #888;">Diskon akan berakhir setelah jumlah hari ini</small>
+                </div>
+        
+                <div class="modal-form-group">
+                    <label class="modal-label"><i class="fas fa-money-bill"></i> Minimal Pembelian (Opsional)</label>
+                    <input type="number" class="modal-input" id="discountMinPurchase" placeholder="0" min="0" value="0">
+                    <small style="color: #888;">Minimal harga paket agar diskon berlaku. 0 = tanpa batas</small>
+                </div>
+        
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="activateGlobalDiscount()"><i class="fas fa-play"></i> Aktifkan Diskon Global</button>
+                    <button class="btn btn-danger" onclick="deactivateGlobalDiscount()"><i class="fas fa-stop"></i> Nonaktifkan Diskon</button>
+                </div>
             </div>
         
-            <div class="modal-form-group">
-                <label class="modal-label"><i class="fas fa-calendar-alt"></i> Masa Berlaku (Hari)</label>
-                <input type="number" class="modal-input" id="discountDuration" placeholder="7" min="1" value="7">
-                <small style="color: #888;">Diskon akan berakhir setelah jumlah hari ini</small>
-            </div>
-        
-            <div class="modal-form-group">
-                <label class="modal-label"><i class="fas fa-money-bill"></i> Minimal Pembelian (Opsional)</label>
-                <input type="number" class="modal-input" id="discountMinPurchase" placeholder="0" min="0" value="0">
-                <small style="color: #888;">Minimal harga paket agar diskon berlaku. 0 = tanpa batas</small>
-            </div>
-        
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="activateGlobalDiscount()"><i class="fas fa-play"></i> Aktifkan Diskon Global</button>
-                <button class="btn btn-danger" onclick="deactivateGlobalDiscount()"><i class="fas fa-stop"></i> Nonaktifkan Diskon</button>
-            </div>
-        
-            <div style="margin-top: 30px;">
+            <!-- ===== RIWAYAT DISKON ===== -->
+            <div style="margin-top: 30px; border-top: 2px solid rgba(255,170,0,0.3); padding-top: 25px;">
                 <h3 style="color: #ffaa00; margin-bottom: 15px;" class="glow-gold"><i class="fas fa-history"></i> Riwayat Diskon</h3>
                 <div id="discountHistoryList"></div>
             </div>
@@ -6430,6 +6440,9 @@
         el.classList.add('selected');
     }
     
+    // ============================================================
+    // VIDEO POPUP ADMIN - LENGKAP
+    // ============================================================
     function loadVideoPopupStatus() {
         db.ref('admin_config/video_popup').on('value', (snap) => {
             const data = snap.val();
@@ -6530,26 +6543,25 @@
         });
     }
 
+     // ============================================================
+    // MAINTENANCE - LENGKAP
     // ============================================================
-    // MAINTENANCE FUNCTIONS
-    // ============================================================
-    async function loadMaintenanceStatus() {
+    async function setMaintenanceKey() {
+        const key = document.getElementById('maintenanceKeyInput').value.trim();
+        if (!key) { showToast('Masukkan kunci terlebih dahulu!'); return; }
+        if (key.length < 4) { showToast('Kunci minimal 4 karakter!'); return; }
+
+        showLoading();
         try {
-            const snap = await db.ref('maintenance').once('value');
-            const m = snap.val();
-            if (m && m.status === 'active') {
-                document.getElementById('currentMaintenanceStatus').style.display = 'block';
-                document.getElementById('maintenanceStatus').value = 'active';
-                document.getElementById('maintenanceDetails').innerHTML = `<div><strong>Title:</strong> ${m.title || '-'}</div><div><strong>Message:</strong> ${m.message || '-'}</div><div><strong>Started:</strong> ${m.startTime ? new Date(m.startTime).toLocaleString() : '-'}</div><div><strong>Estimate End:</strong> ${m.endTime ? new Date(m.endTime).toLocaleString() : '-'}</div>`;
-                document.getElementById('maintenanceTitle').value = m.title || '';
-                document.getElementById('maintenanceMessage').value = m.message || '';
-                document.getElementById('maintenanceHours').value = m.hours || 2;
-                document.getElementById('maintenanceMinutes').value = m.minutes || 0;
-            } else {
-                document.getElementById('currentMaintenanceStatus').style.display = 'none';
-                document.getElementById('maintenanceStatus').value = 'inactive';
-            }
-        } catch (error) { console.error(error); }
+            await db.ref('admin_config/maintenance_key').set(key);
+            addActivityLog('Set Maintenance Key', 'Kunci akses maintenance diubah');
+            hideLoading();
+            showToast('✅ Kunci maintenance berhasil disimpan!');
+            document.getElementById('maintenanceKeyInput').value = '';
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
     }
     
     async function activateMaintenance() {
@@ -6627,38 +6639,25 @@
         });
     }
     
-    function loadMaintenanceHistory() {
-        db.ref('maintenance_history').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
-            const history = snap.val() || {};
-            let html = '';
-            Object.keys(history).sort((a,b) => (history[b].timestamp||0) - (history[a].timestamp||0)).forEach(key => {
-                const h = history[key];
-                const action = h.action === 'activated' ? '🟢 Diaktifkan' : '🔴 Dinonaktifkan';
-                const time = h.timestamp ? new Date(h.timestamp).toLocaleString('id-ID') : '-';
-                html += `
-                    <div class="discount-card" style="border-color: ${h.action === 'activated' ? '#00ff88' : '#ff4444'};">
-                        <div class="discount-header">
-                            <span style="font-size:14px;">${action}</span>
-                            <span style="font-size:13px; color:#aaa;">${time}</span>
-                        </div>
-                        ${h.title ? `<div><strong>Title:</strong> ${h.title}</div>` : ''}
-                        ${h.message ? `<div><strong>Message:</strong> ${h.message}</div>` : ''}
-                        ${h.totalMinutes ? `<div><strong>Durasi:</strong> ${h.hours}h ${h.minutes}m (${h.totalMinutes} menit)</div>` : ''}
-                        ${h.startTime ? `<div><strong>Mulai:</strong> ${new Date(h.startTime).toLocaleString('id-ID')}</div>` : ''}
-                        ${h.endTime ? `<div><strong>Selesai:</strong> ${new Date(h.endTime).toLocaleString('id-ID')}</div>` : ''}
-                        <div class="action-buttons">
-                            <button class="btn btn-danger btn-sm" onclick="deleteMaintenanceHistory('${key}')">
-                                <i class="fas fa-trash"></i> Hapus
-                            </button>
-                        </div>
-                    </div>
-                `;
+    function loadMaintenanceStatus() {
+        try {
+            const snap = db.ref('maintenance').once('value');
+            snap.then((s) => {
+                const m = s.val();
+                if (m && m.status === 'active') {
+                    document.getElementById('currentMaintenanceStatus').style.display = 'block';
+                    document.getElementById('maintenanceStatus').value = 'active';
+                    document.getElementById('maintenanceDetails').innerHTML = `<div><strong>Title:</strong> ${m.title || '-'}</div><div><strong>Message:</strong> ${m.message || '-'}</div><div><strong>Started:</strong> ${m.startTime ? new Date(m.startTime).toLocaleString() : '-'}</div><div><strong>Estimate End:</strong> ${m.endTime ? new Date(m.endTime).toLocaleString() : '-'}</div>`;
+                    document.getElementById('maintenanceTitle').value = m.title || '';
+                    document.getElementById('maintenanceMessage').value = m.message || '';
+                    document.getElementById('maintenanceHours').value = m.hours || 2;
+                    document.getElementById('maintenanceMinutes').value = m.minutes || 0;
+                } else {
+                    document.getElementById('currentMaintenanceStatus').style.display = 'none';
+                    document.getElementById('maintenanceStatus').value = 'inactive';
+                }
             });
-            const container = document.getElementById('maintenanceHistoryList');
-            if (container) {
-                container.innerHTML = html || '<div class="no-data">Belum ada riwayat maintenance</div>';
-            }
-        });
+        } catch (error) { console.error(error); }
     }
     
     async function deleteMaintenanceHistory(historyId) {
@@ -6675,24 +6674,6 @@
                 showToast('Error: ' + error.message);
             }
         });
-    }
-    
-    async function setMaintenanceKey() {
-        const key = document.getElementById('maintenanceKeyInput').value.trim();
-        if (!key) { showToast('Masukkan kunci terlebih dahulu!'); return; }
-        if (key.length < 4) { showToast('Kunci minimal 4 karakter!'); return; }
-
-        showLoading();
-        try {
-            await db.ref('admin_config/maintenance_key').set(key);
-            addActivityLog('Set Maintenance Key', 'Kunci akses maintenance diubah');
-            hideLoading();
-            showToast('✅ Kunci maintenance berhasil disimpan!');
-            document.getElementById('maintenanceKeyInput').value = '';
-        } catch (error) {
-            hideLoading();
-            showToast('Error: ' + error.message);
-        }
     }
 
     // ============================================================
@@ -7228,7 +7209,7 @@
     });
 
     // ============================================================
-    // EDIT VIP - Quota/Season
+    // EDIT VIP - Quota/Season (LENGKAP)
     // ============================================================
     
     function openEditVIP(uid) {
@@ -7384,39 +7365,47 @@
     }
 
     // ============================================================
-    // DISCOUNTS
+    // DISCOUNTS - LENGKAP
     // ============================================================
     function loadDiscounts() { 
-        let html = ''; 
-        Object.keys(allDiscounts).forEach(code => { 
-            const d = allDiscounts[code]; 
-            const expiry = new Date(d.expiryDate); 
-            const isExpired = expiry < new Date(); 
-            const isActive = d.active === true && !isExpired;
-            html += `
-                <div class="discount-card">
-                    <div class="discount-header">
-                        <span class="discount-code">${code}</span>
-                        <span class="discount-percent">${d.percentage}%</span>
-                        <span class="discount-status-badge ${isActive ? 'active' : 'inactive'}">${isActive ? '✅ AKTIF' : '⛔ NONAKTIF'}</span>
+        db.ref('discounts').once('value', (snap) => {
+            const data = snap.val() || {};
+            let html = '';
+            
+            Object.keys(data).forEach(code => {
+                const d = data[code];
+                const expiry = new Date(d.expiryDate);
+                const isExpired = expiry < new Date();
+                const isActive = d.active === true && !isExpired;
+                
+                html += `
+                    <div class="discount-card" style="border-color: ${isActive ? '#00ff88' : '#ff4444'};">
+                        <div class="discount-header">
+                            <span class="discount-code">${code}</span>
+                            <span class="discount-percent">${d.percentage}%</span>
+                            <span class="discount-status-badge ${isActive ? 'active' : 'inactive'}">${isActive ? '✅ AKTIF' : '⛔ NONAKTIF'}</span>
+                        </div>
+                        <div class="discount-details">
+                            <div><span class="detail-label">Min Pembelian:</span> <span class="detail-value">Rp ${formatRupiah(d.minPurchase || 0)}</span></div>
+                            <div><span class="detail-label">Berlaku hingga:</span> <span class="detail-value">${expiry.toLocaleDateString('id-ID')}</span></div>
+                            <div><span class="detail-label">Deskripsi:</span> <span class="detail-value" style="color:#ccc; font-size:12px;">${d.description || '-'}</span></div>
+                            <div><span class="detail-label">Dibuat:</span> <span class="detail-value" style="font-size:12px; color:#888;">${d.createdAt ? new Date(d.createdAt).toLocaleString('id-ID') : '-'}</span></div>
+                        </div>
+                        
+                        <div class="discount-actions">
+                            ${isActive ? 
+                                `<button class="btn-deactivate-discount" onclick="toggleDiscountStatus('${code}', false)"><i class="fas fa-stop"></i> Nonaktifkan</button>` :
+                                `<button class="btn-activate-discount" onclick="toggleDiscountStatus('${code}', true)"><i class="fas fa-play"></i> Aktifkan</button>`
+                            }
+                            <button class="btn-edit-discount" onclick="openEditDiscountModal('${code}')"><i class="fas fa-edit"></i> Edit</button>
+                            <button class="btn-delete-discount" onclick="deleteDiscount('${code}')"><i class="fas fa-trash"></i> Hapus</button>
+                        </div>
                     </div>
-                    <div class="discount-details">
-                        <div><span class="detail-label">Min:</span> Rp ${formatRupiah(d.minPurchase || 0)}</div>
-                        <div><span class="detail-label">Expiry:</span> ${expiry.toLocaleDateString()}</div>
-                        <div><span class="detail-label">Deskripsi:</span> ${d.description || '-'}</div>
-                    </div>
-                    <div class="discount-actions">
-                        ${isActive ? 
-                            `<button class="btn-deactivate-discount" onclick="toggleDiscountStatus('${code}', false)"><i class="fas fa-stop"></i> Nonaktifkan</button>` :
-                            `<button class="btn-activate-discount" onclick="toggleDiscountStatus('${code}', true)"><i class="fas fa-play"></i> Aktifkan</button>`
-                        }
-                        <button class="btn-edit-discount" onclick="openEditDiscountModal('${code}')"><i class="fas fa-edit"></i> Edit</button>
-                        <button class="btn-delete-discount" onclick="deleteDiscount('${code}')"><i class="fas fa-trash"></i> Hapus</button>
-                    </div>
-                </div>
-            `; 
-        }); 
-        document.getElementById('discountsList').innerHTML = html || '<div class="no-data">No discounts</div>'; 
+                `;
+            });
+            
+            document.getElementById('discountsList').innerHTML = html || '<div class="no-data">Belum ada diskon</div>';
+        });
     }
     
     async function toggleDiscountStatus(code, active) {
@@ -7442,11 +7431,76 @@
     
     function openDiscountModal() { document.getElementById('discountModal').classList.add('active'); }
     function closeDiscountModal() { document.getElementById('discountModal').classList.remove('active'); }
-    async function addDiscount() { const code = document.getElementById('discountCode').value.trim().toUpperCase(); const percent = parseInt(document.getElementById('discountPercent').value); const min = parseInt(document.getElementById('discountMin').value) || 0; const expiryDays = parseInt(document.getElementById('discountExpiry').value) || 7; if (!code || !percent || percent < 1 || percent > 100) { showToast('Invalid input!'); return; } const expiry = new Date(); expiry.setDate(expiry.getDate() + expiryDays); showLoading(); try { await db.ref(`discounts/${code}`).set({ code, percentage: percent, minPurchase: min, expiryDate: expiry.toISOString(), active: true, createdAt: new Date().toISOString() }); addActivityLog('Add Discount', `Added discount: ${code} (${percent}%)`); hideLoading(); showToast('Discount added!'); closeDiscountModal(); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
-    async function deleteDiscount(code) { showConfirm('Delete Discount', `Delete discount ${code}?`, async () => { showLoading(); try { await db.ref(`discounts/${code}`).remove(); await db.ref('discount_history').push({ action: 'deleted', code: code, timestamp: Date.now(), note: 'Diskon dihapus oleh admin' }); addActivityLog('Delete Discount', `Deleted discount: ${code}`); hideLoading(); showToast('Discount deleted!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+    
+    async function addDiscount() {
+        const code = document.getElementById('discountCode').value.trim().toUpperCase();
+        const percent = parseInt(document.getElementById('discountPercent').value);
+        const min = parseInt(document.getElementById('discountMin').value) || 0;
+        const expiryDays = parseInt(document.getElementById('discountExpiry').value) || 7;
+        
+        if (!code || !percent || percent < 1 || percent > 100) {
+            showToast('Invalid input!');
+            return;
+        }
+        
+        const expiry = new Date();
+        expiry.setDate(expiry.getDate() + expiryDays);
+        
+        showLoading();
+        try {
+            await db.ref(`discounts/${code}`).set({
+                code,
+                percentage: percent,
+                minPurchase: min,
+                expiryDate: expiry.toISOString(),
+                active: true,
+                createdAt: new Date().toISOString()
+            });
+            await db.ref('discount_history').push({
+                action: 'created',
+                code: code,
+                percentage: percent,
+                minPurchase: min,
+                expiryDays: expiryDays,
+                timestamp: Date.now(),
+                note: 'Diskon baru dibuat oleh admin'
+            });
+            addActivityLog('Add Discount', `Added discount: ${code} (${percent}%)`);
+            hideLoading();
+            showToast('Discount added!');
+            closeDiscountModal();
+            loadAllData();
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+    
+    async function deleteDiscount(code) {
+        showConfirm('Hapus Diskon', `Yakin ingin menghapus diskon "${code}"?`, async () => {
+            showLoading();
+            try {
+                await db.ref('discounts/' + code).remove();
+                await db.ref('discount_history').push({
+                    action: 'deleted',
+                    code: code,
+                    timestamp: Date.now(),
+                    note: 'Diskon dihapus oleh admin'
+                });
+                addActivityLog('Delete Discount', `Deleted discount: ${code}`);
+                hideLoading();
+                showToast('Discount deleted!');
+                loadDiscounts();
+                loadAllData();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
 
     // ============================================================
-    // GLOBAL DISCOUNT
+    // GLOBAL DISCOUNT - LENGKAP
     // ============================================================
     function loadGlobalDiscountStatus() {
         db.ref('global_discount').on('value', (snap) => {
@@ -7464,54 +7518,6 @@
                 `;
             } else {
                 statusDiv.style.display = 'none';
-            }
-        });
-    }
-    
-    function loadDiscountHistory() {
-        db.ref('discount_history').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
-            const history = snap.val() || {};
-            let html = '';
-            Object.keys(history).sort((a,b) => (history[b].timestamp||0) - (history[a].timestamp||0)).forEach(key => {
-                const h = history[key];
-                const action = h.action === 'activated' ? '✅ Diaktifkan' : h.action === 'deactivated' ? '⛔ Dinonaktifkan' : h.action === 'edited' ? '✏️ Diedit' : h.action === 'deleted' ? '🗑️ Dihapus' : '📝 ' + h.action;
-                const time = h.timestamp ? new Date(h.timestamp).toLocaleString() : '-';
-                const color = h.action === 'activated' ? '#00ff88' : h.action === 'deactivated' ? '#ff4444' : h.action === 'edited' ? '#ffaa00' : h.action === 'deleted' ? '#ff4444' : '#ffaa00';
-                html += `
-                    <div class="discount-card" style="border-color: ${color};">
-                        <div class="discount-header">
-                            <span style="font-size:14px;">${action}</span>
-                            <span style="font-size:13px; color:#aaa;">${time}</span>
-                        </div>
-                        ${h.code ? `<div><strong>Kode:</strong> <span style="color:var(--neon-cyan);">${h.code}</span></div>` : ''}
-                        ${h.percentage > 0 ? `<div><strong>Diskon:</strong> ${h.percentage}%</div>` : ''}
-                        ${h.minPurchase > 0 ? `<div><strong>Min Pembelian:</strong> Rp ${formatRupiah(h.minPurchase)}</div>` : ''}
-                        ${h.expiryDays ? `<div><strong>Durasi:</strong> ${h.expiryDays} hari</div>` : ''}
-                        ${h.note ? `<div style="color:#ffaa00;">${h.note}</div>` : ''}
-                        <div class="discount-actions" style="margin-top:10px;">
-                            <button class="history-delete-btn" onclick="deleteDiscountHistory('${key}')">
-                                <i class="fas fa-trash"></i> Hapus Riwayat
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('discountHistoryList').innerHTML = html || '<div class="no-data">Belum ada riwayat diskon</div>';
-        });
-    }
-    
-    async function deleteDiscountHistory(historyId) {
-        showConfirm('Hapus Riwayat', 'Yakin ingin menghapus riwayat ini?', async () => {
-            showLoading();
-            try {
-                await db.ref('discount_history/' + historyId).remove();
-                addActivityLog('Delete Discount History', `Riwayat diskon ${historyId} dihapus`);
-                hideLoading();
-                showToast('Riwayat dihapus!');
-                loadDiscountHistory();
-            } catch (error) {
-                hideLoading();
-                showToast('Error: ' + error.message);
             }
         });
     }
@@ -7591,7 +7597,7 @@
     }
     
     // ============================================================
-    // EDIT DISCOUNT MODAL
+    // EDIT DISCOUNT MODAL - LENGKAP
     // ============================================================
     function openEditDiscountModal(code) {
         editingDiscountCode = code;
@@ -7634,6 +7640,7 @@
         try {
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + expiryDays);
+            
             await db.ref('discounts/' + code).update({
                 percentage: percent,
                 minPurchase: min,
@@ -7643,6 +7650,7 @@
                 active: status === 'active',
                 updatedAt: Date.now()
             });
+            
             await db.ref('discount_history').push({
                 action: 'edited',
                 code: code,
@@ -7652,6 +7660,7 @@
                 timestamp: Date.now(),
                 note: 'Diskon diedit oleh admin'
             });
+            
             addActivityLog('Edit Discount', `Diskon ${code} diedit - ${percent}%`);
             showToast('✅ Diskon berhasil diupdate!');
             closeEditDiscountModal();
@@ -7663,6 +7672,66 @@
         } finally {
             hideLoading();
         }
+    }
+    
+    function loadDiscountHistory() {
+        db.ref('discount_history').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
+            const history = snap.val() || {};
+            let html = '';
+            
+            Object.keys(history).sort((a,b) => (history[b].timestamp||0) - (history[a].timestamp||0)).forEach(key => {
+                const h = history[key];
+                const action = h.action === 'created' ? '🟢 Dibuat' :
+                              h.action === 'activated' ? '✅ Diaktifkan' :
+                              h.action === 'deactivated' ? '⛔ Dinonaktifkan' :
+                              h.action === 'edited' ? '✏️ Diedit' :
+                              h.action === 'deleted' ? '🗑️ Dihapus' : '📝 ' + h.action;
+                
+                const time = h.timestamp ? new Date(h.timestamp).toLocaleString('id-ID') : '-';
+                const color = h.action === 'created' ? '#00ff88' :
+                              h.action === 'activated' ? '#00ff88' :
+                              h.action === 'deactivated' ? '#ff4444' :
+                              h.action === 'edited' ? '#ffaa00' :
+                              h.action === 'deleted' ? '#ff4444' : '#ffaa00';
+                
+                html += `
+                    <div class="discount-card" style="border-color: ${color};">
+                        <div class="discount-header">
+                            <span style="font-size:14px;">${action}</span>
+                            <span style="font-size:13px; color:#aaa;">${time}</span>
+                        </div>
+                        ${h.code ? `<div><strong>Kode:</strong> <span style="color:var(--neon-cyan);">${h.code}</span></div>` : ''}
+                        ${h.percentage > 0 ? `<div><strong>Diskon:</strong> ${h.percentage}%</div>` : ''}
+                        ${h.minPurchase > 0 ? `<div><strong>Min Pembelian:</strong> Rp ${formatRupiah(h.minPurchase)}</div>` : ''}
+                        ${h.expiryDays ? `<div><strong>Durasi:</strong> ${h.expiryDays} hari</div>` : ''}
+                        ${h.note ? `<div style="color:#ffaa00;">${h.note}</div>` : ''}
+                        <div class="discount-actions" style="margin-top:10px;">
+                            <button class="history-delete-btn" onclick="deleteDiscountHistory('${key}')">
+                                <i class="fas fa-trash"></i> Hapus Riwayat
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('discountHistoryList').innerHTML = html || '<div class="no-data">Belum ada riwayat diskon</div>';
+        });
+    }
+    
+    async function deleteDiscountHistory(historyId) {
+        showConfirm('Hapus Riwayat', 'Yakin ingin menghapus riwayat ini?', async () => {
+            showLoading();
+            try {
+                await db.ref('discount_history/' + historyId).remove();
+                addActivityLog('Delete Discount History', `Riwayat diskon ${historyId} dihapus`);
+                hideLoading();
+                showToast('Riwayat dihapus!');
+                loadDiscountHistory();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
     }
 
     // ============================================================
@@ -7929,7 +7998,7 @@
     }
 
     // ============================================================
-    // PENGUMUMAN ADMIN  (DEMO1)
+    // ANNOUNCEMENT - ADMIN (LENGKAP)
     // ============================================================
     async function sendAnnouncement() {
         const title = document.getElementById('announcementTitle').value.trim();
@@ -8023,116 +8092,12 @@
             document.getElementById('announcementMessage').value = '';
             loadAnnouncementHistory();
     
-            // TAMPILKAN PREVIEW POPUP DI KOTAK MERAH
             tampilkanPopupPreview({ title, message, type, duration, sentAt: Date.now() });
     
         } catch(error) { 
             hideLoading(); 
             showToast('Error: ' + error.message); 
         }
-    }
-    
-    // TAMPILKAN PREVIEW POPUP DI KOTAK MERAH (DEMO1)
-    function tampilkanPopupPreview(data) {
-        const container = document.getElementById('popupContainer');
-        const emptyState = document.getElementById('emptyState');
-    
-        if (emptyState) emptyState.style.display = 'none';
-    
-        const oldPopup = container.querySelector('.notification-popup');
-        if (oldPopup) oldPopup.remove();
-    
-        clearTimers();
-    
-        const popup = document.createElement('div');
-        popup.className = `notification-popup type-${data.type}`;
-        popup.id = 'activeNotification';
-    
-        const typeMap = {
-            info: { icon: 'fa-info-circle', label: 'ℹ️ INFO' },
-            success: { icon: 'fa-check-circle', label: '✅ SUCCESS' },
-            warning: { icon: 'fa-exclamation-triangle', label: '⚠️ WARNING' },
-            error: { icon: 'fa-times-circle', label: '❌ ERROR' }
-        };
-    
-        const info = typeMap[data.type] || typeMap.info;
-        const duration = data.duration || 5;
-    
-        popup.innerHTML = `
-            <div class="notif-header">
-                <div class="notif-icon"><i class="fas ${info.icon}"></i></div>
-                <div class="notif-title">${escapeHtml(data.title)}</div>
-                <span class="notif-badge">${info.label}</span>
-            </div>
-            <div class="notif-message">${escapeHtml(data.message)}</div>
-            <div class="notif-footer">
-                <span class="notif-time">${new Date(data.sentAt).toLocaleString('id-ID')}</span>
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <span class="notif-countdown" id="countdownDisplay">${duration}s</span>
-                    <button class="btn-close-popup" onclick="tutupPopupPreview()">
-                        <i class="fas fa-times"></i> Tutup
-                    </button>
-                </div>
-            </div>
-            <div class="notif-progress">
-                <div class="notif-progress-fill" id="progressFill" style="width:100%;"></div>
-            </div>
-        `;
-    
-        container.appendChild(popup);
-        playNotificationSound();
-        startCountdown(duration);
-    
-        popupTimer = setTimeout(() => {
-            tutupPopupPreview();
-        }, duration * 1000);
-    }
-    
-    function startCountdown(totalSeconds) {
-        let remaining = totalSeconds;
-    
-        countdownTimer = setInterval(() => {
-            remaining--;
-            const display = document.getElementById('countdownDisplay');
-            if (display) {
-                display.textContent = remaining + 's';
-                if (remaining <= 5) {
-                    display.style.color = '#ff4444';
-                    display.style.animation = 'neonPulse 0.5s infinite';
-                }
-            }
-        }, 1000);
-    
-        let progress = 100;
-        const step = 100 / totalSeconds;
-    
-        progressTimer = setInterval(() => {
-            progress -= step;
-            const fill = document.getElementById('progressFill');
-            if (fill) {
-                fill.style.width = Math.max(0, progress) + '%';
-            }
-        }, 1000);
-    }
-    
-    function clearTimers() {
-        if (popupTimer) { clearTimeout(popupTimer); popupTimer = null; }
-        if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
-        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-    }
-    
-    function tutupPopupPreview() {
-        const popup = document.getElementById('activeNotification');
-        if (popup) {
-            popup.classList.add('hide');
-            setTimeout(() => {
-                popup.remove();
-                const emptyState = document.getElementById('emptyState');
-                if (emptyState) emptyState.style.display = 'block';
-                clearTimers();
-            }, 400);
-        }
-        clearTimers();
     }
     
     function loadAnnouncementHistory() {
@@ -8682,7 +8647,7 @@
     }
 
     // ============================================================
-    // CONFIRM DELETE MESSAGE - ADMIN
+    // CONFIRM DELETE MESSAGE - ADMIN (LENGKAP)
     // ============================================================
     function confirmDeleteMessageAdmin(messageId, source, uid) {
         showConfirm('Hapus Pesan', 'Yakin ingin menghapus pesan ini?', async () => {
@@ -8704,7 +8669,6 @@
                 hideLoading();
                 showToast('✅ Pesan dihapus!');
                 
-                // Refresh chat
                 if (source === 'private_chat') {
                     loadUserChat();
                 } else if (source === 'public_chat') {
@@ -8850,7 +8814,7 @@
     }
     
     // ============================================================
-    // BUKA DETAIL PACKAGE (DARI EYE ICON)
+    // PACKAGE DETAIL - ADMIN (LENGKAP)
     // ============================================================
     function openPackageDetailAdmin(index) {
         db.ref('admin_config/premium_packages').once('value', (snap) => {
@@ -8977,7 +8941,7 @@
     function deleteLeaderboard(uid) { showToast('Removed from display'); loadLeaderboard(); }
     
     // ============================================================
-    // SHOW LEADERBOARD NOTIFICATION - KIRIM KE SEMUA USER
+    // SHOW LEADERBOARD NOTIFICATION - LENGKAP
     // ============================================================
     async function showLeaderboardNotification() {
         const totals = {};
@@ -9023,7 +8987,6 @@
                     }
                 }
                 
-                // Kirim ke guest notifications juga
                 try {
                     const guestSnap = await db.ref('guest_notifications').once('value');
                     const guests = guestSnap.val() || {};
@@ -9052,7 +9015,7 @@
     }
 
     // ============================================================
-    // PRIVATE CHAT
+    // PRIVATE CHAT - LENGKAP
     // ============================================================
     async function loadChatUsers() { 
         try {
@@ -9465,9 +9428,8 @@
     }
     
     // ============================================================
-    // PUBLIC CHAT - DELETE MODE (PERBAIKAN)
+    // PUBLIC CHAT - DELETE MODE (LENGKAP - PERBAIKAN)
     // ============================================================
-
     function toggleDeleteMode() {
         deleteModeActive = !deleteModeActive;
         const deleteBar = document.getElementById('deleteModeBar');
@@ -9500,28 +9462,12 @@
     }
 
     function toggleSelectMessage(messageId) {
-        console.log('=== toggleSelectMessage CALLED ===');
-        console.log('Message ID:', messageId);
-        console.log('Delete mode active:', deleteModeActive);
+        if (!deleteModeActive) return;
+        if (!messageId) return;
 
-        if (!deleteModeActive) {
-            console.log('Delete mode not active - ignoring');
-            return;
-        }
-
-        if (!messageId) {
-            console.log('No message ID provided');
-            return;
-        }
-
-        // Cari wrapper dengan data-message-id
         const wrapper = document.querySelector('.message-wrapper[data-message-id="' + messageId + '"]');
-        if (!wrapper) {
-            console.log('Wrapper tidak ditemukan untuk ID:', messageId);
-            return;
-        }
+        if (!wrapper) return;
 
-        // Cari checkbox di dalam wrapper
         const checkbox = wrapper.querySelector('.chat-delete-checkbox');
 
         if (selectedMessages.has(messageId)) {
@@ -9529,17 +9475,14 @@
             wrapper.style.border = '3px solid transparent';
             wrapper.style.backgroundColor = 'transparent';
             if (checkbox) checkbox.checked = false;
-            console.log('Removed from selection:', messageId);
         } else {
             selectedMessages.add(messageId);
             wrapper.style.border = '3px solid #00ff88';
             wrapper.style.backgroundColor = 'rgba(0, 255, 136, 0.1)';
             if (checkbox) checkbox.checked = true;
-            console.log('Added to selection:', messageId);
         }
 
         updateSelectedCount();
-        console.log('Total selected:', selectedMessages.size);
     }
 
     function updateSelectedCount() {
@@ -9547,15 +9490,10 @@
         if (el) {
             el.textContent = selectedMessages.size + ' pesan dipilih';
             el.style.color = selectedMessages.size > 0 ? '#00ff88' : '#ffaa00';
-            console.log('Selected count updated:', selectedMessages.size);
         }
     }
 
     function confirmDeleteSelectedMessages() {
-        console.log('=== CONFIRM DELETE ===');
-        console.log('Selected messages:', Array.from(selectedMessages));
-        console.log('Total:', selectedMessages.size);
-
         if (selectedMessages.size === 0) {
             showToast('Pilih pesan yang akan dihapus terlebih dahulu!');
             return;
@@ -9565,8 +9503,6 @@
             showLoading();
         
             const messageIds = Array.from(selectedMessages);
-            console.log('Deleting messages:', messageIds);
-        
             let deletedCount = 0;
             let errorCount = 0;
         
@@ -9574,7 +9510,6 @@
                 try {
                     await db.ref('all_comments/' + messageId).remove();
                     deletedCount++;
-                    console.log('Deleted:', messageId);
                 } catch (error) {
                     errorCount++;
                     console.error('Error deleting:', messageId, error);
@@ -9594,7 +9529,6 @@
     }
 
     function cancelDeleteMode() {
-        console.log('Cancel delete mode');
         deleteModeActive = false;
         selectedMessages.clear();
         updateSelectedCount();
@@ -9619,7 +9553,7 @@
     }
 
     // ============================================================
-    // SUPPORT CHAT ADMIN (DEMO2)
+    // SUPPORT CHAT ADMIN - LENGKAP
     // ============================================================
     let supportUsersLoading = false;
     
@@ -9701,6 +9635,433 @@
             supportUsersLoading = false;
             showToast('Error loading users: ' + error.message);
         });
+    }
+    
+    function loadSupportChat() {
+        const select = document.getElementById('chatSupportSelect');
+        const deviceId = select.value;
+        const input = document.getElementById('chatSupportAdminInput');
+        const sendBtn = document.getElementById('chatSupportAdminSend');
+        const uploadBtn = document.getElementById('chatSupportAdminUpload');
+        const messagesContainer = document.getElementById('chatSupportMessagesAdmin');
+        
+        if (!deviceId) {
+            input.disabled = true;
+            sendBtn.disabled = true;
+            uploadBtn.disabled = true;
+            messagesContainer.innerHTML = '<div class="chat-support-msg-admin system">Pilih user di atas untuk mulai chat support.</div>';
+            document.getElementById('supportDeviceInfo').textContent = 'Device ID: -';
+            if (supportAdminListener) {
+                db.ref('support_chats/' + currentSupportDeviceId).off('value', supportAdminListener);
+                supportAdminListener = null;
+            }
+            return;
+        }
+    
+        currentSupportDeviceId = deviceId;
+        input.disabled = false;
+        sendBtn.disabled = false;
+        uploadBtn.disabled = false;
+    
+        db.ref('support_chats/' + deviceId).once('value', (snap) => {
+            const chatData = snap.val() || {};
+            document.getElementById('supportDeviceInfo').textContent = `Device ID: ${deviceId.substring(0, 20)}... | UID: ${chatData.uid || 'Unknown'}`;
+        });
+    
+        db.ref('support_chats/' + deviceId).update({ adminRead: true, adminReadAt: Date.now() });
+    
+        const badge = document.getElementById('supportChatBadge');
+        if (badge) {
+            const currentBadge = parseInt(badge.textContent) || 0;
+            if (currentBadge > 0) {
+                badge.textContent = currentBadge > 1 ? currentBadge - 1 : '';
+                if (badge.textContent === '' || badge.textContent === '0') {
+                    badge.classList.remove('show');
+                }
+            }
+        }
+    
+        if (supportAdminListener) {
+            db.ref('support_chats/' + currentSupportDeviceId).off('value', supportAdminListener);
+            supportAdminListener = null;
+        }
+    
+        supportAdminListener = db.ref('support_chats/' + deviceId + '/messages')
+            .orderByChild('timestamp')
+            .limitToLast(50)
+            .on('value', (snap) => {
+                const messages = snap.val() || {};
+                messagesContainer.innerHTML = '';
+    
+                if (Object.keys(messages).length === 0) {
+                    messagesContainer.innerHTML = `
+                        <div class="chat-support-msg-admin system">Belum ada pesan. Mulai chat dengan user ini.</div>
+                    `;
+                    return;
+                }
+    
+                const sortedKeys = Object.keys(messages).sort((a, b) => messages[a].timestamp - messages[b].timestamp);
+    
+                sortedKeys.forEach(key => {
+                    const msg = messages[key];
+                    const isUser = msg.sender === 'user';
+                    const isAdmin = msg.sender === 'admin';
+    
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'support-message-wrapper';
+                    wrapper.style.display = 'flex';
+                    wrapper.style.alignItems = 'flex-start';
+                    wrapper.style.gap = '10px';
+                    wrapper.style.marginBottom = '12px';
+                    wrapper.style.width = '100%';
+                    wrapper.dataset.messageId = key;
+    
+                    const avatar = document.createElement('img');
+                    avatar.className = 'chat-avatar';
+                    avatar.style.width = '35px';
+                    avatar.style.height = '35px';
+                    avatar.style.borderRadius = '50%';
+                    avatar.style.border = '2px solid var(--neon-cyan)';
+                    avatar.style.objectFit = 'cover';
+                    avatar.style.flexShrink = '0';
+    
+                    if (isAdmin) {
+                        avatar.src = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
+                    } else if (isUser) {
+                        avatar.src = 'https://via.placeholder.com/35/00ffff/000000?text=U';
+                    } else {
+                        avatar.src = 'https://via.placeholder.com/35/ffaa00/000000?text=S';
+                    }
+                    avatar.alt = 'Avatar';
+                    avatar.onerror = function() { this.src = 'https://via.placeholder.com/35/00ffff/000000?text=U'; };
+                    wrapper.appendChild(avatar);
+    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.style.flex = '1';
+                    contentDiv.style.display = 'flex';
+                    contentDiv.style.flexDirection = 'column';
+                    contentDiv.style.minWidth = '0';
+    
+                    const bubble = document.createElement('div');
+                    bubble.className = `chat-support-msg-admin ${isUser ? 'user' : 'admin'}`;
+                    bubble.style.maxWidth = '80%';
+                    bubble.style.wordWrap = 'break-word';
+                    bubble.style.borderRadius = '18px';
+                    bubble.style.padding = '10px 16px';
+                    bubble.style.marginBottom = '4px';
+                    bubble.style.display = 'inline-block';
+                    
+                    if (isUser) {
+                        bubble.style.alignSelf = 'flex-end';
+                        bubble.style.background = 'linear-gradient(135deg, var(--neon-cyan), #0088ff)';
+                        bubble.style.color = '#000';
+                        bubble.style.borderTopRightRadius = '4px';
+                    } else if (isAdmin) {
+                        bubble.style.alignSelf = 'flex-start';
+                        bubble.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
+                        bubble.style.color = 'white';
+                        bubble.style.borderTopLeftRadius = '4px';
+                    } else {
+                        bubble.style.alignSelf = 'center';
+                        bubble.style.background = 'rgba(255, 170, 0, 0.2)';
+                        bubble.style.border = '1px solid #ffaa00';
+                        bubble.style.color = '#ffaa00';
+                        bubble.style.fontSize = '12px';
+                        bubble.style.textAlign = 'center';
+                        bubble.style.maxWidth = '90%';
+                    }
+    
+                    const senderName = document.createElement('div');
+                    senderName.style.fontSize = '11px';
+                    senderName.style.fontWeight = 'bold';
+                    senderName.style.marginBottom = '4px';
+                    senderName.style.display = 'flex';
+                    senderName.style.alignItems = 'center';
+                    senderName.style.gap = '6px';
+    
+                    if (isUser) {
+                        senderName.textContent = '👤 ' + (msg.uid || 'User');
+                        senderName.style.color = '#000';
+                    } else if (isAdmin) {
+                        senderName.textContent = '👑 Admin';
+                        senderName.style.color = 'white';
+                    } else {
+                        senderName.textContent = '📢 System';
+                        senderName.style.color = '#ffaa00';
+                    }
+                    bubble.appendChild(senderName);
+    
+                    const msgContent = document.createElement('div');
+                    msgContent.style.fontSize = '13px';
+                    msgContent.style.lineHeight = '1.5';
+                    
+                    let textContent = escapeHtml(msg.text || '');
+                    if (msg.edited) {
+                        textContent += ' <span style="color:#888; font-size:10px;">(diedit oleh ' + (msg.editedBy || 'Admin') + ')</span>';
+                    }
+                    msgContent.innerHTML = textContent;
+                    bubble.appendChild(msgContent);
+    
+                    if (msg.fileData && msg.fileData.url) {
+                        const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
+                        const fileDiv = document.createElement('div');
+                        fileDiv.style.marginTop = '8px';
+                        
+                        if (isImage) {
+                            fileDiv.innerHTML = `
+                                <img src="${msg.fileData.url}" style="max-width:150px; max-height:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileData.url}')">
+                                <div style="font-size:10px; color:#888; margin-top:4px;">${escapeHtml(msg.fileData.name || 'Image')}</div>
+                            `;
+                        } else {
+                            fileDiv.innerHTML = `
+                                <a href="${msg.fileData.url}" target="_blank" style="color:#00ff88; text-decoration:none; font-size:12px;">
+                                    <i class="fas fa-file"></i> ${escapeHtml(msg.fileData.name || 'File')}
+                                </a>
+                            `;
+                        }
+                        bubble.appendChild(fileDiv);
+                    }
+    
+                    const editIcon = document.createElement('span');
+                    editIcon.className = 'message-edit-icon';
+                    editIcon.innerHTML = '<i class="fas fa-pen"></i>';
+                    editIcon.style.marginLeft = '10px';
+                    editIcon.style.cursor = 'pointer';
+                    editIcon.style.fontSize = '12px';
+                    editIcon.style.color = '#888';
+                    editIcon.style.opacity = '0.5';
+                    editIcon.style.transition = 'all 0.3s';
+                    
+                    editIcon.onmouseenter = function() {
+                        this.style.opacity = '1';
+                        this.style.color = 'var(--neon-cyan)';
+                    };
+                    editIcon.onmouseleave = function() {
+                        this.style.opacity = '0.5';
+                        this.style.color = '#888';
+                    };
+                    
+                    editIcon.onclick = function(e) {
+                        e.stopPropagation();
+                        openEditMessagePopupAdmin(key, msg.text || '', 'support_chat', currentSupportDeviceId);
+                    };
+                    bubble.appendChild(editIcon);
+    
+                    const deleteIcon = document.createElement('span');
+                    deleteIcon.className = 'message-delete-icon';
+                    deleteIcon.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteIcon.style.marginLeft = '6px';
+                    deleteIcon.style.cursor = 'pointer';
+                    deleteIcon.style.fontSize = '12px';
+                    deleteIcon.style.color = '#888';
+                    deleteIcon.style.opacity = '0.5';
+                    deleteIcon.style.transition = 'all 0.3s';
+                    
+                    deleteIcon.onmouseenter = function() {
+                        this.style.opacity = '1';
+                        this.style.color = '#ff4444';
+                    };
+                    deleteIcon.onmouseleave = function() {
+                        this.style.opacity = '0.5';
+                        this.style.color = '#888';
+                    };
+                    
+                    deleteIcon.onclick = function(e) {
+                        e.stopPropagation();
+                        confirmDeleteMessageAdmin(key, 'support_chat', currentSupportDeviceId);
+                    };
+                    bubble.appendChild(deleteIcon);
+    
+                    const time = document.createElement('div');
+                    time.style.fontSize = '9px';
+                    time.style.opacity = '0.6';
+                    time.style.marginTop = '6px';
+                    time.style.textAlign = 'right';
+                    time.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-';
+                    bubble.appendChild(time);
+    
+                    contentDiv.appendChild(bubble);
+                    wrapper.appendChild(contentDiv);
+                    messagesContainer.appendChild(wrapper);
+                });
+    
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+    }
+    
+    function sendSupportAdminMessage() {
+        const input = document.getElementById('chatSupportAdminInput');
+        const text = input.value.trim();
+        if (!text || !currentSupportDeviceId) return;
+        const msgData = {
+            uid: 'Admin',
+            deviceId: currentSupportDeviceId,
+            text: text,
+            sender: 'admin',
+            timestamp: Date.now(),
+            isSupport: true
+        };
+        db.ref('support_chats/' + currentSupportDeviceId + '/messages').push(msgData);
+        db.ref('support_chats/' + currentSupportDeviceId).update({
+            lastMessage: text,
+            lastSender: 'admin',
+            lastTimestamp: Date.now(),
+            adminRead: true
+        });
+        input.value = '';
+    }
+    
+    function uploadSupportAdminFile() {
+        if (!currentSupportDeviceId) {
+            showToast('Pilih user terlebih dahulu!');
+            return;
+        }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            showLoading();
+            try {
+                const fileUrl = await uploadToImgbb(file);
+                const fileSize = formatFileSize(file.size);
+                const msgData = {
+                    uid: 'Admin',
+                    deviceId: currentSupportDeviceId,
+                    text: `📎 Mengirim file: ${file.name}`,
+                    sender: 'admin',
+                    timestamp: Date.now(),
+                    isSupport: true,
+                    fileData: {
+                        name: file.name,
+                        url: fileUrl,
+                        size: file.size,
+                        sizeFormatted: fileSize,
+                        type: file.type,
+                        timestamp: Date.now()
+                    }
+                };
+                await db.ref('support_chats/' + currentSupportDeviceId + '/messages').push(msgData);
+                await db.ref('support_chats/' + currentSupportDeviceId).update({
+                    lastMessage: `📎 ${file.name}`,
+                    lastSender: 'admin',
+                    lastTimestamp: Date.now(),
+                    adminRead: true
+                });
+                hideLoading();
+                showToast('File terkirim!');
+            } catch (error) {
+                hideLoading();
+                showToast('Gagal upload: ' + error.message);
+            }
+        };
+        input.click();
+    }
+    
+    // ============================================================
+    // TAMPILKAN POPUP PREVIEW (DEMO1) - LENGKAP
+    // ============================================================
+    function tampilkanPopupPreview(data) {
+        const container = document.getElementById('popupContainer');
+        const emptyState = document.getElementById('emptyState');
+    
+        if (emptyState) emptyState.style.display = 'none';
+    
+        const oldPopup = container.querySelector('.notification-popup');
+        if (oldPopup) oldPopup.remove();
+    
+        clearTimers();
+    
+        const popup = document.createElement('div');
+        popup.className = `notification-popup type-${data.type}`;
+        popup.id = 'activeNotification';
+    
+        const typeMap = {
+            info: { icon: 'fa-info-circle', label: 'ℹ️ INFO' },
+            success: { icon: 'fa-check-circle', label: '✅ SUCCESS' },
+            warning: { icon: 'fa-exclamation-triangle', label: '⚠️ WARNING' },
+            error: { icon: 'fa-times-circle', label: '❌ ERROR' }
+        };
+    
+        const info = typeMap[data.type] || typeMap.info;
+        const duration = data.duration || 5;
+    
+        popup.innerHTML = `
+            <div class="notif-header">
+                <div class="notif-icon"><i class="fas ${info.icon}"></i></div>
+                <div class="notif-title">${escapeHtml(data.title)}</div>
+                <span class="notif-badge">${info.label}</span>
+            </div>
+            <div class="notif-message">${escapeHtml(data.message)}</div>
+            <div class="notif-footer">
+                <span class="notif-time">${new Date(data.sentAt).toLocaleString('id-ID')}</span>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span class="notif-countdown" id="countdownDisplay">${duration}s</span>
+                    <button class="btn-close-popup" onclick="tutupPopupPreview()">
+                        <i class="fas fa-times"></i> Tutup
+                    </button>
+                </div>
+            </div>
+            <div class="notif-progress">
+                <div class="notif-progress-fill" id="progressFill" style="width:100%;"></div>
+            </div>
+        `;
+    
+        container.appendChild(popup);
+        playNotificationSound();
+        startCountdown(duration);
+    
+        popupTimer = setTimeout(() => {
+            tutupPopupPreview();
+        }, duration * 1000);
+    }
+    
+    function startCountdown(totalSeconds) {
+        let remaining = totalSeconds;
+    
+        countdownTimer = setInterval(() => {
+            remaining--;
+            const display = document.getElementById('countdownDisplay');
+            if (display) {
+                display.textContent = remaining + 's';
+                if (remaining <= 5) {
+                    display.style.color = '#ff4444';
+                    display.style.animation = 'neonPulse 0.5s infinite';
+                }
+            }
+        }, 1000);
+    
+        let progress = 100;
+        const step = 100 / totalSeconds;
+    
+        progressTimer = setInterval(() => {
+            progress -= step;
+            const fill = document.getElementById('progressFill');
+            if (fill) {
+                fill.style.width = Math.max(0, progress) + '%';
+            }
+        }, 1000);
+    }
+    
+    function clearTimers() {
+        if (popupTimer) { clearTimeout(popupTimer); popupTimer = null; }
+        if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+    }
+    
+    function tutupPopupPreview() {
+        const popup = document.getElementById('activeNotification');
+        if (popup) {
+            popup.classList.add('hide');
+            setTimeout(() => {
+                popup.remove();
+                const emptyState = document.getElementById('emptyState');
+                if (emptyState) emptyState.style.display = 'block';
+                clearTimers();
+            }, 400);
+        }
+        clearTimers();
     }
     
     // ============================================================
@@ -10237,7 +10598,7 @@
     }
     
     // ============================================================
-    // EDIT MESSAGE - ADMIN PANEL
+    // EDIT MESSAGE - ADMIN PANEL (LENGKAP)
     // ============================================================
     function openEditMessagePopupAdmin(messageId, currentText, source, uid, chatType) {
         editingMessageDataAdmin = {
@@ -10350,7 +10711,7 @@
     }
 
     // ============================================================
-    // CREATE USER - ADMIN
+    // CREATE USER - ADMIN (LENGKAP)
     // ============================================================
     async function createNewUser() {
         const username = document.getElementById('createUsername').value.trim();
@@ -10381,7 +10742,6 @@
             });
             
             await db.ref('saldo/' + username).set({ amount: 0, created: Date.now() });
-            
             await db.ref('security_answers/' + username).set(securityAnswer.toLowerCase().trim());
             
             addActivityLog('Create User', `Membuat user baru: ${username}`);
