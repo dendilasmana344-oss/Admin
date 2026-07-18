@@ -6840,7 +6840,7 @@
     async function deleteVIP(uid, id) { showConfirm('Delete VIP', `Delete VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).remove(); addActivityLog('Delete VIP', `Deleted VIP for ${uid}`); hideLoading(); showToast('VIP deleted!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
 
     // ============================================================
-    // CUSTOMERS
+    // LOAD CUSTOMERS - ADMIN (TAMPILKAN SEMUA DATA)
     // ============================================================
     function loadCustomers() {
         let customers = [];
@@ -6864,13 +6864,20 @@
                 lastIP: user.lastIP || '-',
                 device: user.device || '-',
                 deviceId: user.deviceId || '-',
-                registrasiIP: user.registrasiIP || '-'
+                registrasiIP: user.registrasiIP || '-',
+                registrasiDevice: user.registrasiDevice || '-'
             }); 
         });
-        customers.sort((a, b) => { if (a.lastLogin !== '-' && b.lastLogin !== '-') return new Date(b.lastLogin) - new Date(a.lastLogin); return 0; });
+        customers.sort((a, b) => { 
+            if (a.lastLogin !== '-' && b.lastLogin !== '-') return new Date(b.lastLogin) - new Date(a.lastLogin); 
+            return 0; 
+        });
         window.allCustomers = customers;
         displayCustomers();
     }
+    // ============================================================
+    // DISPLAY CUSTOMERS - ADMIN (TAMPILKAN DEVICE ID & IP)
+    // ============================================================
     function displayCustomers() {
         let filtered = window.allCustomers || [];
         const search = document.getElementById('customerSearch')?.value.toLowerCase() || '';
@@ -6886,7 +6893,7 @@
             const statusText = c.banned ? 'BANNED' : (c.status === 'online' ? 'Online' : 'Offline');
             const customerClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline');
             const saldoId = 'saldoEdit_' + c.uid;
-            
+        
             html += `
                 <div class="customer-item ${customerClass}">
                     <div class="customer-header">
@@ -6918,16 +6925,24 @@
                             <span class="detail-value ip-address">${c.lastIP || c.registrasiIP || '-'}</span>
                         </div>
                         <div class="detail-item">
+                            <span class="detail-label"><i class="fas fa-flag"></i> Registrasi IP</span>
+                            <span class="detail-value ip-address">${c.registrasiIP || '-'}</span>
+                        </div>
+                        <div class="detail-item">
                             <span class="detail-label"><i class="fas fa-mobile-alt"></i> Device</span>
                             <span class="detail-value device">${c.device ? c.device.substring(0, 50) + (c.device.length > 50 ? '...' : '') : '-'}</span>
                         </div>
-                        <div class="detail-item">
+                        <div class="detail-item" style="grid-column: span 2;">
                             <span class="detail-label"><i class="fas fa-fingerprint"></i> Device ID</span>
-                            <span class="detail-value device-id">${c.deviceId || '-'}</span>
+                            <span class="detail-value device-id" style="font-size:12px; word-break:break-all;">${c.deviceId || '-'}</span>
                         </div>
-                        ${c.registrasiIP ? `<div class="detail-item"><span class="detail-label"><i class="fas fa-flag"></i> Registrasi IP</span><span class="detail-value ip-address">${c.registrasiIP}</span></div>` : ''}
+                        <div class="detail-item" style="grid-column: span 2;">
+                            <span class="detail-label"><i class="fas fa-fingerprint"></i> Registrasi Device ID</span>
+                            <span class="detail-value device-id" style="font-size:12px; word-break:break-all;">${c.registrasiDevice || '-'}</span>
+                        </div>
                     </div>
-                    
+                
+                    <!-- SALDO EDIT -->
                     <div class="saldo-edit-row">
                         <span style="color: #aaa; font-size: 12px; min-width: 80px;">
                             <i class="fas fa-wallet"></i> Edit Saldo:
@@ -6945,7 +6960,7 @@
                             </button>
                         </div>
                     </div>
-                    
+                
                     <div class="action-buttons">
                         <button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')">Reset PIN</button>
                         ${c.banned ? `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')">Unban</button>` : `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')">Ban</button>`}
@@ -7995,6 +8010,48 @@
         } finally {
             hideLoading();
         }
+    }
+    
+    // ============================================================
+    // DEVICE FINGERPRINT - UNIK DAN KONSISTEN
+    // ============================================================
+    function getDeviceFingerprint() {
+        // Cek localStorage dulu
+        let savedFingerprint = localStorage.getItem('device_fingerprint');
+        if (savedFingerprint) {
+            console.log('✅ Device ID loaded from storage:', savedFingerprint);
+            return savedFingerprint;
+        }
+    
+        // Buat fingerprint dari banyak komponen
+        const components = [
+            navigator.userAgent,
+            screen.width + 'x' + screen.height,
+            screen.colorDepth,
+            navigator.language,
+            navigator.platform,
+            navigator.hardwareConcurrency || '',
+            navigator.deviceMemory || '',
+            new Date().getTimezoneOffset(),
+            !!navigator.maxTouchPoints,
+            screen.availWidth + 'x' + screen.availHeight,
+            // Tambahkan timestamp untuk memastikan unik
+            Date.now().toString(36)
+        ];
+    
+        const combined = components.join('|');
+        let hash = 0;
+        for (let i = 0; i < combined.length; i++) {
+            const char = combined.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        const fp = 'FP_' + Math.abs(hash).toString(36).toUpperCase();
+    
+        // Simpan ke localStorage
+        localStorage.setItem('device_fingerprint', fp);
+        console.log('🆕 New Device ID created:', fp);
+        return fp;
     }
 
     // ============================================================
@@ -10711,19 +10768,19 @@
     }
 
     // ============================================================
-    // CREATE USER - ADMIN (LENGKAP)
+    // CREATE NEW USER - ADMIN (DENGAN DEVICE ID & IP DUMMY)
     // ============================================================
     async function createNewUser() {
         const username = document.getElementById('createUsername').value.trim();
         const pin = document.getElementById('createPin').value.trim();
         const securityAnswer = document.getElementById('createSecurityAnswer').value.trim();
-        
+    
         if (!username) { showToast('❌ Username harus diisi!'); return; }
         if (!pin || pin.length !== 6) { showToast('❌ PIN harus 6 digit angka!'); return; }
         if (!securityAnswer) { showToast('❌ Jawaban keamanan harus diisi!'); return; }
         if (username.length < 3) { showToast('❌ Username minimal 3 karakter!'); return; }
         if (username.includes(' ')) { showToast('❌ Username tidak boleh mengandung spasi!'); return; }
-        
+    
         showLoading();
         try {
             const userSnap = await db.ref('users/' + username).once('value');
@@ -10732,29 +10789,46 @@
                 hideLoading();
                 return;
             }
-            
+        
+            // BUAT DEVICE ID UNIK UNTUK USER BARU
+            const deviceId = 'ADMIN_' + Date.now().toString(36).toUpperCase() + '_' + Math.random().toString(36).substring(2, 6).toUpperCase();
+            const ipAddress = 'Admin Created';
+            const userAgent = 'Admin Created User';
+        
             await db.ref('users/' + username).set({
                 uid: username,
                 pin: pin,
                 status: 'active',
                 registeredAt: new Date().toISOString(),
-                createdBy: 'Admin'
+                createdBy: 'Admin',
+                lastIP: ipAddress,
+                device: userAgent,
+                deviceId: deviceId,
+                registrasiIP: ipAddress,
+                registrasiDevice: deviceId
             });
-            
+        
             await db.ref('saldo/' + username).set({ amount: 0, created: Date.now() });
             await db.ref('security_answers/' + username).set(securityAnswer.toLowerCase().trim());
-            
-            addActivityLog('Create User', `Membuat user baru: ${username}`);
+        
+            // Kirim notifikasi ke chat user
+            await db.ref('chats/' + username).push({
+                sender: 'system',
+                text: `👋 *AKUN ANDA DIBUAT OLEH ADMIN*\n\nUID: ${username}\nPIN: ${pin}\nDevice ID: ${deviceId}\n\nSilakan login menggunakan username dan PIN di atas.`,
+                timestamp: Date.now()
+            });
+        
+            addActivityLog('Create User', `Membuat user baru: ${username} (Device ID: ${deviceId})`);
             hideLoading();
-            showToast(`✅ User ${username} berhasil dibuat!`);
-            
+            showToast(`✅ User ${username} berhasil dibuat! Device ID: ${deviceId}`);
+        
             document.getElementById('createUsername').value = '';
             document.getElementById('createPin').value = '';
             document.getElementById('createSecurityAnswer').value = '';
-            
+        
             loadUserList();
             loadAllData();
-            
+        
         } catch (error) {
             hideLoading();
             showToast('Error: ' + error.message);
