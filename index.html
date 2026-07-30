@@ -4840,6 +4840,8 @@
     </style>
 
     <!-- Firebase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 </head>
@@ -4930,6 +4932,73 @@
                 <div class="dashboard-card"><div class="dashboard-icon vip"><i class="fas fa-crown"></i></div><div class="card-value vip" id="totalVIP">0</div><div class="card-label">Total VIP Orders</div><div class="card-sub" id="pendingVIP">0 Pending</div></div>
                 <div class="dashboard-card"><div class="dashboard-icon users"><i class="fas fa-users"></i></div><div class="card-value users" id="totalUsers">0</div><div class="card-label">Total Users</div><div class="card-sub" id="activeUsers">0 Online</div></div>
                 <div class="dashboard-card"><div class="dashboard-icon revenue"><i class="fas fa-dollar-sign"></i></div><div class="card-value revenue" id="totalRevenue">Rp 0</div><div class="card-label">Total Revenue</div></div>
+            </div>
+        </div>
+        <!-- GRAFIK 3D MODERN - Dashboard Admin -->
+        <div class="card" style="border-color: rgba(0,255,255,0.4);">
+            <div class="card-title glow-cyan">
+                <i class="fas fa-chart-simple"></i> ANALYTICS DASHBOARD
+                <span style="font-size:12px; color:#888; margin-left:auto;">
+                    <i class="fas fa-circle" style="color:#00ff88;"></i> Real-Time
+                </span>
+            </div>
+    
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:15px;">
+                <!-- Grafik Registrasi User -->
+                <div style="background:rgba(0,0,0,0.5); border-radius:25px; padding:20px; border:1px solid rgba(0,255,255,0.2); position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(0,255,255,0.05) 0%, transparent 70%); animation: spin 25s linear infinite; z-index:0;"></div>
+                    <div style="position:relative; z-index:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <span style="color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:14px; font-weight:bold;">
+                                <i class="fas fa-user-plus" style="color:#00ff88;"></i> Registrasi User
+                            </span>
+                            <span id="regUserCount" style="color:#00ff88; font-size:18px; font-weight:bold;">0</span>
+                        </div>
+                        <canvas id="regChart" style="height:180px; width:100%;"></canvas>
+                    </div>
+                </div>
+        
+                <!-- Grafik User Login -->
+                <div style="background:rgba(0,0,0,0.5); border-radius:25px; padding:20px; border:1px solid rgba(0,255,255,0.2); position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(0,255,255,0.05) 0%, transparent 70%); animation: spin 25s linear infinite; z-index:0;"></div>
+                    <div style="position:relative; z-index:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <span style="color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:14px; font-weight:bold;">
+                                <i class="fas fa-sign-in-alt" style="color:#ffaa00;"></i> User Login
+                            </span>
+                            <span id="loginUserCount" style="color:#ffaa00; font-size:18px; font-weight:bold;">0</span>
+                        </div>
+                        <canvas id="loginChart" style="height:180px; width:100%;"></canvas>
+                    </div>
+                </div>
+        
+                <!-- Grafik Deposit -->
+                <div style="background:rgba(0,0,0,0.5); border-radius:25px; padding:20px; border:1px solid rgba(0,255,255,0.2); position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(0,255,255,0.05) 0%, transparent 70%); animation: spin 25s linear infinite; z-index:0;"></div>
+                    <div style="position:relative; z-index:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <span style="color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:14px; font-weight:bold;">
+                                <i class="fas fa-coins" style="color:#00ffff;"></i> Deposit
+                            </span>
+                            <span id="depositUserCount" style="color:#00ffff; font-size:18px; font-weight:bold;">0</span>
+                        </div>
+                        <canvas id="depositChart" style="height:180px; width:100%;"></canvas>
+                    </div>
+                </div>
+        
+                <!-- Grafik Pembelian VIP -->
+                <div style="background:rgba(0,0,0,0.5); border-radius:25px; padding:20px; border:1px solid rgba(0,255,255,0.2); position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(0,255,255,0.05) 0%, transparent 70%); animation: spin 25s linear infinite; z-index:0;"></div>
+                    <div style="position:relative; z-index:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <span style="color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:14px; font-weight:bold;">
+                                <i class="fas fa-crown" style="color:#ffd700;"></i> Pembelian VIP
+                            </span>
+                            <span id="vipUserCount" style="color:#ffd700; font-size:18px; font-weight:bold;">0</span>
+                        </div>
+                        <canvas id="vipChart" style="height:180px; width:100%;"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card"><div class="card-title glow-cyan"><i class="fas fa-clock"></i> Recent Orders</div><div id="recentOrders" style="max-height:300px; overflow-y:auto;"></div></div>
@@ -7058,47 +7127,76 @@
         let filtered = window.allVIPMembers || []; 
         const search = document.getElementById('vipMemberSearch')?.value.toLowerCase() || ''; 
         if (search) filtered = filtered.filter(m => m.uid.toLowerCase().includes(search)); 
+        
+        if (filtered.length === 0) {
+            document.getElementById('vipMemberList').innerHTML = '<div class="no-data">Tidak ada member VIP aktif</div>';
+            return;
+        }
+        
         let html = ''; 
         filtered.forEach(m => { 
             const isPermanent = m.isPermanent; 
             let progress = 0, statusText = 'Active', statusColor = '#4caf50'; 
+            let detailText = '';
+            
             if (m.updateType === 'quota') { 
                 const used = m.updatesUsed || 0, total = m.updateQuota || 0; 
                 progress = total > 0 ? (used / total) * 100 : 0; 
                 const remaining = total - used; 
                 if (used >= total) { statusText = 'Habis'; statusColor = '#f44336'; } 
-                else if (remaining <= 2) { statusText = `Sisa ${remaining}`; statusColor = '#ff9800'; } 
-            } 
+                else if (remaining <= 2) { statusText = `Sisa ${remaining}`; statusColor = '#ff9800'; }
+                detailText = `Quota: ${used}/${total}`;
+            } else if (m.updateType === 'unlimited') {
+                detailText = `Durasi: ${m.packageMonths || 0} Bulan`;
+            } else if (isPermanent) {
+                detailText = '♾️ LIFETIME';
+            }
+            
             html += `
-                <div class="vip-card ${isPermanent ? 'permanent' : ''}">
-                    <div class="vip-card-header">
-                        <span class="vip-card-uid" onclick="copyUID('${m.uid}')">${m.uid}</span>
-                        ${isPermanent ? '<span class="vip-badge">PERMANENT</span>' : ''}
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <span class="vip-edit-icon" onclick="openEditVIP('${m.uid}')" title="Edit VIP">
-                                <i class="fas fa-edit"></i>
-                            </span>
-                            <div class="vip-eye-icon" onclick="openVIPDetail('${m.uid}')" title="Lihat Detail VIP">
-                                <i class="fas fa-eye"></i>
+                <div class="vip-card ${isPermanent ? 'permanent' : ''}" style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="vip-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <span class="vip-card-uid" onclick="copyUID('${m.uid}')" style="font-family:monospace; font-size:16px; font-weight:bold; color:#ffd700; cursor:pointer;">
+                            <i class="fas fa-user"></i> ${m.uid}
+                        </span>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            ${isPermanent ? '<span class="vip-badge" style="background:linear-gradient(135deg,#ffd700,#ffaa00); color:#000; padding:4px 14px; border-radius:20px; font-size:11px; font-weight:bold;">PERMANENT</span>' : ''}
+                            <span style="font-size:12px; color:${statusColor}; font-weight:bold;">${statusText}</span>
+                            <div style="display:flex; gap:6px;">
+                                <span class="vip-edit-icon" onclick="openEditVIP('${m.uid}')" title="Edit VIP" style="color:#ffaa00; cursor:pointer; padding:4px 8px; transition:all 0.3s;">
+                                    <i class="fas fa-edit"></i>
+                                </span>
+                                <div class="vip-eye-icon" onclick="openVIPDetail('${m.uid}')" title="Lihat Detail VIP" style="width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,0.8); border:2px solid var(--neon-cyan); color:var(--neon-cyan); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s; font-size:14px;">
+                                    <i class="fas fa-eye"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:15px 0; word-break:break-word;">
-                        <div><span class="detail-label">Package:</span> <span style="color:#fff;">${m.package || 'VIP'}</span></div>
-                        <div><span class="detail-label">Price:</span> <span style="color:#ffd700;">Rp ${formatRupiah(m.price)}</span></div>
-                        <div><span class="detail-label">Tipe:</span> <span style="color:${m.updateType === 'quota' ? '#00ff88' : '#2196f3'};">${m.updateType || 'quota'}</span></div>
-                        <div><span class="detail-label">Updates:</span> <span style="color:#ffd700;">${m.updateType === 'quota' ? `${m.updatesUsed || 0}/${m.updateQuota}` : m.isPermanent ? '∞ (Lifetime)' : '∞ (Unlimited)'}</span></div>
-                        <div><span class="detail-label">Durasi:</span> <span style="color:#ffaa00;">${m.isPermanent ? 'Seumur Hidup' : m.updateType === 'unlimited' && m.packageMonths ? m.packageMonths + ' Bulan' : '-'}</span></div>
-                        <div><span class="detail-label">Status:</span> <span style="color:${statusColor}">${statusText}</span></div>
+                    
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; background:rgba(0,0,0,0.3); padding:12px 16px; border-radius:15px;">
+                        <div><span class="detail-label" style="color:#888; font-size:11px;">Paket</span><br><span style="color:#fff; font-size:13px; font-weight:bold;">${m.package || 'VIP'}</span></div>
+                        <div><span class="detail-label" style="color:#888; font-size:11px;">Harga</span><br><span style="color:#ffd700; font-size:13px; font-weight:bold;">Rp ${formatRupiah(m.price)}</span></div>
+                        <div><span class="detail-label" style="color:#888; font-size:11px;">Tipe</span><br><span style="color:${m.updateType === 'quota' ? '#00ff88' : '#2196f3'}; font-size:13px; font-weight:bold;">${m.updateType || 'quota'}</span></div>
+                        <div><span class="detail-label" style="color:#888; font-size:11px;">Detail</span><br><span style="color:#ffaa00; font-size:13px; font-weight:bold;">${detailText}</span></div>
                     </div>
-                    <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
-                    <div class="action-buttons">
-                        <button class="btn btn-danger btn-sm" onclick="removeVIP('${m.uid}')">Remove VIP</button>
+                    
+                    ${m.updateType === 'quota' ? `
+                    <div class="progress-bar" style="height:6px; background:#333; border-radius:4px; overflow:hidden;">
+                        <div class="progress-fill" style="height:100%; background:linear-gradient(90deg, #ffd700, #ffaa00); width:${progress}%; transition:width 0.3s;"></div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="action-buttons" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:5px;">
+                        <button class="btn btn-danger btn-sm" onclick="removeVIP('${m.uid}')" style="padding:6px 16px; font-size:11px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer;">
+                            <i class="fas fa-times"></i> Remove VIP
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="forceLogout('${m.uid}')" style="padding:6px 16px; font-size:11px; background:linear-gradient(135deg,#2196f3,#1976d2); color:white; border:none; border-radius:15px; cursor:pointer;">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
                     </div>
                 </div>
             `; 
         }); 
-        document.getElementById('vipMemberList').innerHTML = html || '<div class="no-data">No active VIP members</div>'; 
+        document.getElementById('vipMemberList').innerHTML = html; 
     }
     
     // ============================================================
@@ -7780,6 +7878,75 @@
     function closeUpdateModal() { document.getElementById('updateModal').classList.remove('active'); }
     async function createFileUpdate() { const title = document.getElementById('updateTitle').value.trim(); const desc = document.getElementById('updateDescription').value.trim(); const link = document.getElementById('updateLink').value.trim(); const version = document.getElementById('updateVersion').value.trim(); const expiry = parseInt(document.getElementById('updateExpiry').value) || 7; if (!title || !desc || !link) { showToast('Please fill all fields!'); return; } showLoading(); try { await db.ref('global_updates').push({ title, description: desc, link, version, expiry_days: expiry, created_at: new Date().toISOString(), status: 'active' }); addActivityLog('Create VIP Update', `Created update: ${title}`); hideLoading(); showToast('Update created!'); closeUpdateModal(); loadFileUpdates(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
     async function deleteFileUpdate(updateId) { showConfirm('Delete Update', 'Delete this update?', async () => { showLoading(); try { await db.ref(`global_updates/${updateId}`).remove(); addActivityLog('Delete VIP Update', `Deleted update ${updateId}`); hideLoading(); showToast('Update deleted!'); loadFileUpdates(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
+    async function sendBroadcastVIPUpdate(updateId) {
+        showConfirm('Kirim ke Semua VIP', 
+            `Yakin ingin mengirim update ini ke SEMUA user VIP aktif?\n\nUpdate akan dikirim dan quota user VIP tipe QUOTA akan berkurang 1.`, 
+            async () => {
+                showLoading();
+                try {
+                    const snap = await db.ref('global_updates/' + updateId).once('value');
+                    const update = snap.val();
+                    if (!update) {
+                        showToast('Update tidak ditemukan!');
+                        hideLoading();
+                        return;
+                    }
+                    
+                    const vipSnap = await db.ref('vip_members').once('value');
+                    const allVIPs = vipSnap.val() || {};
+                    let successCount = 0;
+                    
+                    Object.keys(allVIPs).forEach(uid => {
+                        if (allVIPs[uid].status === 'active') {
+                            const vipData = allVIPs[uid];
+                            // Kirim ke chat user
+                            db.ref('chats/' + uid).push({
+                                sender: 'system',
+                                text: `📢 *VIP UPDATE BARU!\n\nTitle: ${update.title}\nVersion: ${update.version || 'v2.0'}\nDescription: ${update.description || ''}\n\n⬇️ Download: ${update.link}\n\n⚠️ Quota update Anda akan berkurang 1.`,
+                                timestamp: Date.now()
+                            });
+                            
+                            // Kurangi quota jika tipe quota
+                            if (vipData.updateType === 'quota') {
+                                const currentUsed = vipData.updatesUsed || 0;
+                                const totalQuota = vipData.updateQuota || 0;
+                                const newUsed = currentUsed + 1;
+                                
+                                db.ref('vip_members/' + uid).update({
+                                    updatesUsed: newUsed,
+                                    lastUpdateUsed: Date.now(),
+                                    lastUpdateTitle: update.title
+                                });
+                                
+                                if (newUsed >= totalQuota) {
+                                    db.ref('vip_members/' + uid).update({
+                                        status: 'expired',
+                                        expiredReason: 'Quota habis setelah broadcast update'
+                                    });
+                                    
+                                    db.ref('chats/' + uid).push({
+                                        sender: 'system',
+                                        text: `⚠️ *QUOTA HABIS!\n\nQuota update Anda telah habis. Status VIP Anda akan diturunkan menjadi FREE.\nSilakan perpanjang VIP untuk mendapatkan akses kembali.`,
+                                        timestamp: Date.now()
+                                    });
+                                }
+                            }
+                            
+                            successCount++;
+                        }
+                    });
+                    
+                    addActivityLog('Broadcast VIP Update', `Update "${update.title}" dikirim ke ${successCount} user VIP`);
+                    hideLoading();
+                    showToast(`✅ Update dikirim ke ${successCount} user VIP!`);
+                    
+                } catch (error) {
+                    hideLoading();
+                    showToast('Error: ' + error.message);
+                }
+            }
+        );
+    }
 
     // ============================================================
     // EDIT VIP UPDATE
@@ -8401,34 +8568,63 @@
     // FREE UPDATE STATS REAL-TIME
     // ============================================================
     function loadFreeUpdateStatsRealtime() {
+        // Hapus listener lama jika ada
         if (freeStatsListener) {
-            freeStatsListener();
+            db.ref('free_updates/views').off('value', freeStatsListener);
             freeStatsListener = null;
         }
-    
+        
         freeStatsListener = db.ref('free_updates/views').on('value', (snap) => {
             const views = snap.val() || {};
             const users = Object.keys(views).length;
             let totalViews = 0;
             let userList = [];
-        
+            
             Object.keys(views).forEach(uid => {
                 const count = Object.keys(views[uid] || {}).length;
                 totalViews += count;
                 userList.push({ uid, views: count });
             });
-        
+            
+            // Animasi angka
             animateNumber('freeStatsUsers', users);
             animateNumber('freeStatsViews', totalViews);
             const avg = users ? (totalViews / users).toFixed(1) : '0';
             animateNumber('freeStatsAvg', avg);
-        
+            
             let userHtml = '';
             userList.sort((a,b) => b.views - a.views).forEach(u => {
                 userHtml += `<div class="user-item"><span class="user-uid">${escapeHtml(u.uid)}</span><span class="user-views">${u.views} views</span></div>`;
             });
             document.getElementById('freeUsersList').innerHTML = userHtml || '<div class="no-data">No views yet</div>';
         });
+        
+        // Juga update history secara real-time
+        db.ref('free_updates/all').orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
+            const updates = snap.val() || {};
+            let html = '';
+            Object.keys(updates).sort((a,b) => (updates[b].timestamp||0) - (updates[a].timestamp||0)).forEach(key => {
+                const u = updates[key];
+                html += `
+                    <div class="update-item">
+                        <div class="update-title">📢 ${escapeHtml(u.title || 'Free Update')}</div>
+                        <div class="update-desc">${escapeHtml(u.description || '')}</div>
+                        <div class="update-meta">
+                            <span>${u.version || 'v1.0'}</span>
+                            <span>${u.timestamp ? new Date(u.timestamp).toLocaleString() : '-'}</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-warning btn-sm" onclick="openEditFreeUpdate('${key}')"><i class="fas fa-edit"></i> Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteFreeUpdate('${key}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('freeUpdateHistory').innerHTML = html || '<div class="no-data">No update history</div>';
+        });
+        
+        // Tampilkan toast notifikasi
+        showToast('🔄 Live Mode aktif - Data update real-time!');
     }
 
     function animateNumber(elementId, targetValue) {
@@ -8746,24 +8942,52 @@
     function loadPackages() { 
         db.ref('admin_config/premium_packages').once('value', snap => { 
             const packages = snap.val() || []; 
-            let html = ''; 
+            if (packages.length === 0) {
+                document.getElementById('packagesList').innerHTML = '<div class="no-data">Belum ada package</div>';
+                return;
+            }
+            
+            let html = `
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:15px;">
+            `;
+            
             packages.forEach((pkg, idx) => { 
-                html += `<div class="discount-card">
-                    <div class="discount-header">
-                        <span class="discount-code" style="color:var(--neon-cyan);">${pkg.label}</span>
-                        <span class="discount-percent" style="background:var(--neon-cyan);">Rp ${formatRupiah(pkg.price)}</span>
+                const typeLabel = pkg.type === 'quota' ? '📦 Quota' : pkg.type === 'unlimited' ? '♾️ Unlimited' : '👑 Lifetime';
+                const quotaText = pkg.type === 'quota' ? `${pkg.quota || 0}x` : pkg.type === 'lifetime' ? '∞' : '∞';
+                
+                html += `
+                    <div class="package-card-admin" style="background:rgba(0,0,0,0.6); border:2px solid rgba(0,255,255,0.3); border-radius:20px; padding:18px 16px; transition:all 0.3s; position:relative; cursor:default;">
+                        <div class="package-eye-icon" onclick="openPackageDetailAdmin(${idx})" style="position:absolute; top:12px; right:12px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.85); border:2px solid var(--neon-cyan); color:var(--neon-cyan); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s; z-index:10;">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        
+                        <div class="package-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                            <span class="package-label" style="font-family:'Orbitron',monospace; font-size:16px; font-weight:bold; color:var(--neon-cyan);">${escapeHtml(pkg.label)}</span>
+                            <span class="package-price" style="font-size:18px; font-weight:bold; color:#00ff88; font-family:'Orbitron',monospace;">Rp ${formatRupiah(pkg.price)}</span>
+                        </div>
+                        
+                        <div class="package-info" style="display:flex; gap:12px; flex-wrap:wrap; font-size:12px; color:#aaa; margin:8px 0;">
+                            <span style="background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:15px; border:1px solid rgba(0,255,255,0.15); color:#ffaa00;">${typeLabel}</span>
+                            <span style="background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:15px; border:1px solid rgba(0,255,255,0.15); color:#00ff88;">Update: ${quotaText}</span>
+                            ${pkg.durationMonths ? `<span style="background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:15px; border:1px solid rgba(0,255,255,0.15); color:#2196f3;">${pkg.durationMonths} Bulan</span>` : ''}
+                        </div>
+                        
+                        ${pkg.description ? `<div style="font-size:12px; color:#ccc; margin:6px 0 12px 0; padding:8px 12px; background:rgba(0,0,0,0.3); border-radius:12px;">${escapeHtml(pkg.description)}</div>` : ''}
+                        
+                        <div class="package-actions" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+                            <button class="btn-edit-package" onclick="openEditPackage(${idx})" style="background:linear-gradient(135deg,#ffaa00,#ff8800); color:#000; border:none; padding:6px 16px; border-radius:18px; font-weight:bold; cursor:pointer; transition:all 0.3s; font-size:11px; font-family:'Orbitron',monospace; display:flex; align-items:center; gap:5px;">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn-delete-package" onclick="deletePackage(${idx})" style="background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; padding:6px 16px; border-radius:18px; font-weight:bold; cursor:pointer; transition:all 0.3s; font-size:11px; font-family:'Orbitron',monospace; display:flex; align-items:center; gap:5px;">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
                     </div>
-                    <div class="discount-details">
-                        <div><span class="detail-label">Type:</span> ${pkg.type}</div>
-                        <div><span class="detail-label">Description:</span> ${pkg.description || '-'}</div>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn btn-warning btn-sm" onclick="openEditPackage(${idx})"><i class="fas fa-edit"></i> Edit</button>
-                        <button class="btn btn-danger btn-sm" onclick="deletePackage(${idx})">Delete</button>
-                    </div>
-                </div>`; 
+                `; 
             }); 
-            document.getElementById('packagesList').innerHTML = html || '<div class="no-data">No packages</div>'; 
+            
+            html += '</div>';
+            document.getElementById('packagesList').innerHTML = html; 
         }); 
     }
     
@@ -9119,36 +9343,158 @@
         input.disabled = false; 
         sendBtn.disabled = false; 
     
+        // Tambahkan toolbar untuk delete
+        const chatContainer = document.querySelector('#chat .chat-container');
+        let toolbar = document.getElementById('privateChatDeleteToolbar');
+        if (!toolbar) {
+            toolbar = document.createElement('div');
+            toolbar.id = 'privateChatDeleteToolbar';
+            toolbar.style.cssText = 'display:flex; gap:10px; margin-bottom:10px; align-items:center; flex-wrap:wrap;';
+            toolbar.innerHTML = `
+                <button class="btn btn-danger btn-sm" onclick="togglePrivateDeleteMode()" style="padding:6px 16px; font-size:11px;">
+                    <i class="fas fa-trash-alt"></i> Hapus Pesan
+                </button>
+                <span id="privateSelectedCount" style="color:#ffaa00; font-size:12px; display:none;">0 pesan dipilih</span>
+                <button id="privateSelectAllBtn" class="btn btn-info btn-sm" onclick="selectAllPrivateMessages()" style="display:none; padding:6px 16px; font-size:11px;">
+                    <i class="fas fa-check-double"></i> Pilih Semua
+                </button>
+                <button id="privateDeleteSelectedBtn" class="btn btn-danger btn-sm" onclick="deleteSelectedPrivateMessages()" style="display:none; padding:6px 16px; font-size:11px;">
+                    <i class="fas fa-trash"></i> Hapus Terpilih
+                </button>
+            `;
+            chatContainer.insertBefore(toolbar, chatContainer.firstChild);
+        }
+    
         if (chatListener) db.ref('chats/' + currentChatUser).off('value', chatListener); 
+    
+        let privateDeleteMode = false;
+        let privateSelectedMessages = new Set();
     
         chatListener = db.ref('chats/' + currentChatUser).limitToLast(50).on('value', snap => { 
             const messages = snap.val(); 
             const chatBox = document.getElementById('chatMessages'); 
             chatBox.innerHTML = ''; 
             if (messages) { 
-                Object.keys(messages).sort((a,b) => messages[a].timestamp - messages[b].timestamp).forEach(key => { 
-                    const msg = messages[key]; 
-                    const div = document.createElement('div'); 
-                    div.className = `message ${msg.sender === 'customer' ? 'customer' : msg.sender === 'admin' ? 'admin' : 'system'}`; 
-                    let content = msg.sender ? `<div class="message-sender">${msg.sender === 'customer' ? '👤 Customer' : msg.sender === 'admin' ? '👑 Admin' : '📢 System'}</div>` : ''; 
-                    content += `<div>${escapeHtml(msg.text || '')}</div>`; 
+                Object.keys(messages).sort((a,b) => (messages[a].timestamp||0) - (messages[b].timestamp||0)).forEach(key => { 
+                    const msg = messages[key];
+                    const isSelected = privateSelectedMessages.has(key);
+                    
+                    // ===== BUAT WRAPPER =====
+                    const wrapper = document.createElement('div');
+                    wrapper.style.cssText = `display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; padding:8px; border-radius:12px; border:${isSelected ? '3px solid #00ff88' : '3px solid transparent'}; background:${isSelected ? 'rgba(0,255,136,0.1)' : 'transparent'};`;
+                    wrapper.setAttribute('data-msg-id', key);
+                    
+                    // ===== CHECKBOX =====
+                    const checkboxDiv = document.createElement('div');
+                    checkboxDiv.style.cssText = `display:${privateDeleteMode ? 'flex' : 'none'}; align-items:center; justify-content:center; margin-right:8px; flex-shrink:0;`;
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.style.cssText = 'width:18px; height:18px; accent-color:#00ff88; cursor:pointer;';
+                    checkbox.checked = isSelected;
+                    checkbox.onclick = function(e) {
+                        e.stopPropagation();
+                        togglePrivateMessageSelection(key);
+                    };
+                    checkboxDiv.appendChild(checkbox);
+                    wrapper.appendChild(checkboxDiv);
+                    
+                    // ===== AVATAR =====
+                    const avatar = document.createElement('img');
+                    avatar.style.cssText = 'width:32px; height:32px; border-radius:50%; border:2px solid var(--neon-cyan); object-fit:cover; flex-shrink:0;';
+                    if (msg.sender === 'admin') {
+                        avatar.src = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
+                    } else {
+                        avatar.src = 'https://via.placeholder.com/32/00ffff/000000?text=U';
+                    }
+                    wrapper.appendChild(avatar);
+                    
+                    // ===== PESAN =====
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `message ${msg.sender === 'customer' ? 'customer' : msg.sender === 'admin' ? 'admin' : 'system'}`;
+                    msgDiv.style.cssText = `max-width:80%; word-wrap:break-word; border-radius:18px; padding:10px 16px; ${msg.sender === 'customer' ? 'background:linear-gradient(135deg, var(--neon-cyan), #0088ff); color:#000; border-top-right-radius:4px;' : msg.sender === 'admin' ? 'background:linear-gradient(135deg, #ff4444, #cc0000); color:white; border-top-left-radius:4px;' : 'background:rgba(255,170,0,0.2); border:1px solid #ffaa00; color:#ffaa00; font-size:12px; text-align:center; max-width:90%;'}`;
+                    
+                    let content = msg.sender ? `<div style="font-size:11px; font-weight:bold; margin-bottom:4px; ${msg.sender === 'customer' ? 'color:#000;' : msg.sender === 'admin' ? 'color:white;' : 'color:#ffaa00;'}">${msg.sender === 'customer' ? '👤 Customer' : msg.sender === 'admin' ? '👑 Admin' : '📢 System'}</div>` : '';
+                    content += `<div style="font-size:13px; line-height:1.5;">${escapeHtml(msg.text || '')}</div>`;
                     if (msg.fileData && msg.fileData.url) {
                         const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
                         if (isImage) {
-                            content += `<div class="file-preview-item" style="margin-top: 10px;"><img src="${msg.fileData.url}" onclick="window.open('${msg.fileData.url}')" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 10px;"><div class="file-info"><div class="file-name">${escapeHtml(msg.fileData.name || 'Image')}</div><div class="file-size">${msg.fileData.sizeFormatted || formatFileSize(msg.fileData.size || 0)}</div></div><button class="file-download-btn" onclick="downloadFile('${msg.fileData.url}', '${escapeHtml(msg.fileData.name || 'file')}')"><i class="fas fa-download"></i></button></div>`;
-                        } else {
-                            content += `<div class="file-preview-item" style="margin-top: 10px;"><i class="fas fa-file" style="font-size: 30px; color: #ffaa00;"></i><div class="file-info"><div class="file-name">${escapeHtml(msg.fileData.name || 'File')}</div><div class="file-size">${msg.fileData.sizeFormatted || formatFileSize(msg.fileData.size || 0)}</div></div><button class="file-download-btn" onclick="downloadFile('${msg.fileData.url}', '${escapeHtml(msg.fileData.name || 'file')}')"><i class="fas fa-download"></i></button></div>`;
+                            content += `<div style="margin-top:8px;"><img src="${msg.fileData.url}" onclick="window.open('${msg.fileData.url}')" style="cursor:pointer; width:50px; height:50px; object-fit:cover; border-radius:10px;"><div style="font-size:10px; color:#888;">${escapeHtml(msg.fileData.name || 'Image')}</div></div>`;
                         }
                     }
-                    content += `<div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`; 
-                    div.innerHTML = content; 
-                    chatBox.appendChild(div); 
+                    content += `<div style="font-size:9px; opacity:0.6; margin-top:6px; text-align:right;">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`;
+                    msgDiv.innerHTML = content;
+                    wrapper.appendChild(msgDiv);
+                    
+                    chatBox.appendChild(wrapper);
                 }); 
                 chatBox.scrollTop = chatBox.scrollHeight; 
             } else { 
                 chatBox.innerHTML = '<div class="no-data">Belum ada pesan</div>'; 
             } 
         }); 
+        
+        // Fungsi untuk toggle delete mode
+        window.togglePrivateDeleteMode = function() {
+            privateDeleteMode = !privateDeleteMode;
+            if (!privateDeleteMode) {
+                privateSelectedMessages.clear();
+            }
+            document.getElementById('privateSelectedCount').style.display = privateDeleteMode ? 'inline' : 'none';
+            document.getElementById('privateSelectAllBtn').style.display = privateDeleteMode ? 'inline-flex' : 'none';
+            document.getElementById('privateDeleteSelectedBtn').style.display = privateDeleteMode ? 'inline-flex' : 'none';
+            updatePrivateSelectedCount();
+            loadUserChat();
+        };
+        
+        function togglePrivateMessageSelection(key) {
+            if (!privateDeleteMode) return;
+            if (privateSelectedMessages.has(key)) {
+                privateSelectedMessages.delete(key);
+            } else {
+                privateSelectedMessages.add(key);
+            }
+            updatePrivateSelectedCount();
+            loadUserChat();
+        }
+        
+        function updatePrivateSelectedCount() {
+            document.getElementById('privateSelectedCount').textContent = privateSelectedMessages.size + ' pesan dipilih';
+            document.getElementById('privateSelectedCount').style.display = privateDeleteMode ? 'inline' : 'none';
+        }
+        
+        window.selectAllPrivateMessages = function() {
+            if (!privateDeleteMode) return;
+            const chatBox = document.getElementById('chatMessages');
+            const wrappers = chatBox.querySelectorAll('[data-msg-id]');
+            wrappers.forEach(el => {
+                const key = el.getAttribute('data-msg-id');
+                if (key) privateSelectedMessages.add(key);
+            });
+            updatePrivateSelectedCount();
+            loadUserChat();
+        };
+        
+        window.deleteSelectedPrivateMessages = function() {
+            if (privateSelectedMessages.size === 0) {
+                showToast('Pilih pesan yang akan dihapus!');
+                return;
+            }
+            showConfirm('Hapus Pesan', `Hapus ${privateSelectedMessages.size} pesan?`, async () => {
+                showLoading();
+                let deleted = 0;
+                for (const key of privateSelectedMessages) {
+                    try {
+                        await db.ref('chats/' + currentChatUser + '/' + key).remove();
+                        deleted++;
+                    } catch(e) { console.error(e); }
+                }
+                privateSelectedMessages.clear();
+                updatePrivateSelectedCount();
+                hideLoading();
+                showToast(`✅ ${deleted} pesan dihapus!`);
+                loadUserChat();
+            });
+        };
     }
     
     async function sendAdminMessage() { 
@@ -10227,248 +10573,248 @@
                     contentDiv.style.flex = '1';
                     contentDiv.style.display = 'flex';
                     contentDiv.style.flexDirection = 'column';
-                    contentDiv.style.minWidth = '0';
-    
-                    const bubble = document.createElement('div');
-                    bubble.className = `chat-support-msg-admin ${isUser ? 'user' : 'admin'}`;
-                    bubble.style.maxWidth = '80%';
-                    bubble.style.wordWrap = 'break-word';
-                    bubble.style.borderRadius = '18px';
-                    bubble.style.padding = '10px 16px';
-                    bubble.style.marginBottom = '4px';
-                    bubble.style.display = 'inline-block';
-                    
-                    if (isUser) {
-                        bubble.style.alignSelf = 'flex-end';
-                        bubble.style.background = 'linear-gradient(135deg, var(--neon-cyan), #0088ff)';
-                        bubble.style.color = '#000';
-                        bubble.style.borderTopRightRadius = '4px';
-                    } else if (isAdmin) {
-                        bubble.style.alignSelf = 'flex-start';
-                        bubble.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
-                        bubble.style.color = 'white';
-                        bubble.style.borderTopLeftRadius = '4px';
-                    } else {
-                        bubble.style.alignSelf = 'center';
-                        bubble.style.background = 'rgba(255, 170, 0, 0.2)';
-                        bubble.style.border = '1px solid #ffaa00';
-                        bubble.style.color = '#ffaa00';
-                        bubble.style.fontSize = '12px';
-                        bubble.style.textAlign = 'center';
-                        bubble.style.maxWidth = '90%';
-                    }
-    
-                    const senderName = document.createElement('div');
-                    senderName.style.fontSize = '11px';
-                    senderName.style.fontWeight = 'bold';
-                    senderName.style.marginBottom = '4px';
-                    senderName.style.display = 'flex';
-                    senderName.style.alignItems = 'center';
-                    senderName.style.gap = '6px';
-    
-                    if (isUser) {
-                        senderName.textContent = '👤 ' + (msg.uid || 'User');
-                        senderName.style.color = '#000';
-                    } else if (isAdmin) {
-                        senderName.textContent = '👑 Admin';
-                        senderName.style.color = 'white';
-                    } else {
-                        senderName.textContent = '📢 System';
-                        senderName.style.color = '#ffaa00';
-                    }
-                    bubble.appendChild(senderName);
-    
-                    const msgContent = document.createElement('div');
-                    msgContent.style.fontSize = '13px';
-                    msgContent.style.lineHeight = '1.5';
-                    
-                    let textContent = escapeHtml(msg.text || '');
-                    if (msg.edited) {
-                        textContent += ' <span style="color:#888; font-size:10px;">(diedit oleh ' + (msg.editedBy || 'Admin') + ')</span>';
-                    }
-                    msgContent.innerHTML = textContent;
-                    bubble.appendChild(msgContent);
-    
-                    if (msg.fileData && msg.fileData.url) {
-                        const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
-                        const fileDiv = document.createElement('div');
-                        fileDiv.style.marginTop = '8px';
+                        contentDiv.style.minWidth = '0';
+        
+                        const bubble = document.createElement('div');
+                        bubble.className = `chat-support-msg-admin ${isUser ? 'user' : 'admin'}`;
+                        bubble.style.maxWidth = '80%';
+                        bubble.style.wordWrap = 'break-word';
+                        bubble.style.borderRadius = '18px';
+                        bubble.style.padding = '10px 16px';
+                        bubble.style.marginBottom = '4px';
+                        bubble.style.display = 'inline-block';
                         
-                        if (isImage) {
-                            fileDiv.innerHTML = `
-                                <img src="${msg.fileData.url}" style="max-width:150px; max-height:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileData.url}')">
-                                <div style="font-size:10px; color:#888; margin-top:4px;">${escapeHtml(msg.fileData.name || 'Image')}</div>
-                            `;
+                        if (isUser) {
+                            bubble.style.alignSelf = 'flex-end';
+                            bubble.style.background = 'linear-gradient(135deg, var(--neon-cyan), #0088ff)';
+                            bubble.style.color = '#000';
+                            bubble.style.borderTopRightRadius = '4px';
+                        } else if (isAdmin) {
+                            bubble.style.alignSelf = 'flex-start';
+                            bubble.style.background = 'linear-gradient(135deg, #ff4444, #cc0000)';
+                            bubble.style.color = 'white';
+                            bubble.style.borderTopLeftRadius = '4px';
                         } else {
-                            fileDiv.innerHTML = `
-                                <a href="${msg.fileData.url}" target="_blank" style="color:#00ff88; text-decoration:none; font-size:12px;">
-                                    <i class="fas fa-file"></i> ${escapeHtml(msg.fileData.name || 'File')}
-                                </a>
-                            `;
+                            bubble.style.alignSelf = 'center';
+                            bubble.style.background = 'rgba(255, 170, 0, 0.2)';
+                            bubble.style.border = '1px solid #ffaa00';
+                            bubble.style.color = '#ffaa00';
+                            bubble.style.fontSize = '12px';
+                            bubble.style.textAlign = 'center';
+                            bubble.style.maxWidth = '90%';
                         }
-                        bubble.appendChild(fileDiv);
-                    }
-    
-                    // ICON EDIT
-                    const editIcon = document.createElement('span');
-                    editIcon.className = 'message-edit-icon';
-                    editIcon.innerHTML = '<i class="fas fa-pen"></i>';
-                    editIcon.style.marginLeft = '10px';
-                    editIcon.style.cursor = 'pointer';
-                    editIcon.style.fontSize = '12px';
-                    editIcon.style.color = '#888';
-                    editIcon.style.opacity = '0.5';
-                    editIcon.style.transition = 'all 0.3s';
-                    
-                    editIcon.onmouseenter = function() {
-                        this.style.opacity = '1';
-                        this.style.color = 'var(--neon-cyan)';
-                    };
-                    editIcon.onmouseleave = function() {
-                        this.style.opacity = '0.5';
-                        this.style.color = '#888';
-                    };
-                    
-                    editIcon.onclick = function(e) {
-                        e.stopPropagation();
-                        openEditMessagePopupAdmin(key, msg.text || '', 'support_chat', currentSupportDeviceId);
-                    };
-                    bubble.appendChild(editIcon);
-    
-                    // ICON DELETE
-                    const deleteIcon = document.createElement('span');
-                    deleteIcon.className = 'message-delete-icon';
-                    deleteIcon.innerHTML = '<i class="fas fa-trash"></i>';
-                    deleteIcon.style.marginLeft = '6px';
-                    deleteIcon.style.cursor = 'pointer';
-                    deleteIcon.style.fontSize = '12px';
-                    deleteIcon.style.color = '#888';
-                    deleteIcon.style.opacity = '0.5';
-                    deleteIcon.style.transition = 'all 0.3s';
-                    
-                    deleteIcon.onmouseenter = function() {
-                        this.style.opacity = '1';
-                        this.style.color = '#ff4444';
-                    };
-                    deleteIcon.onmouseleave = function() {
-                        this.style.opacity = '0.5';
-                        this.style.color = '#888';
-                    };
-                    
-                    deleteIcon.onclick = function(e) {
-                        e.stopPropagation();
-                        confirmDeleteMessageAdmin(key, 'support_chat', currentSupportDeviceId);
-                    };
-                    bubble.appendChild(deleteIcon);
-    
-                    const time = document.createElement('div');
-                    time.style.fontSize = '9px';
-                    time.style.opacity = '0.6';
-                    time.style.marginTop = '6px';
-                    time.style.textAlign = 'right';
-                    time.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-';
-                    bubble.appendChild(time);
-    
-                    contentDiv.appendChild(bubble);
-                    wrapper.appendChild(contentDiv);
-                    messagesContainer.appendChild(wrapper);
+        
+                        const senderName = document.createElement('div');
+                        senderName.style.fontSize = '11px';
+                        senderName.style.fontWeight = 'bold';
+                        senderName.style.marginBottom = '4px';
+                        senderName.style.display = 'flex';
+                        senderName.style.alignItems = 'center';
+                        senderName.style.gap = '6px';
+        
+                        if (isUser) {
+                            senderName.textContent = '👤 ' + (msg.uid || 'User');
+                            senderName.style.color = '#000';
+                        } else if (isAdmin) {
+                            senderName.textContent = '👑 Admin';
+                            senderName.style.color = 'white';
+                        } else {
+                            senderName.textContent = '📢 System';
+                            senderName.style.color = '#ffaa00';
+                        }
+                        bubble.appendChild(senderName);
+        
+                        const msgContent = document.createElement('div');
+                        msgContent.style.fontSize = '13px';
+                        msgContent.style.lineHeight = '1.5';
+                        
+                        let textContent = escapeHtml(msg.text || '');
+                        if (msg.edited) {
+                            textContent += ' <span style="color:#888; font-size:10px;">(diedit oleh ' + (msg.editedBy || 'Admin') + ')</span>';
+                        }
+                        msgContent.innerHTML = textContent;
+                        bubble.appendChild(msgContent);
+        
+                        if (msg.fileData && msg.fileData.url) {
+                            const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
+                            const fileDiv = document.createElement('div');
+                            fileDiv.style.marginTop = '8px';
+                            
+                            if (isImage) {
+                                fileDiv.innerHTML = `
+                                    <img src="${msg.fileData.url}" style="max-width:150px; max-height:150px; border-radius:10px; cursor:pointer;" onclick="window.open('${msg.fileData.url}')">
+                                    <div style="font-size:10px; color:#888; margin-top:4px;">${escapeHtml(msg.fileData.name || 'Image')}</div>
+                                `;
+                            } else {
+                                fileDiv.innerHTML = `
+                                    <a href="${msg.fileData.url}" target="_blank" style="color:#00ff88; text-decoration:none; font-size:12px;">
+                                        <i class="fas fa-file"></i> ${escapeHtml(msg.fileData.name || 'File')}
+                                    </a>
+                                `;
+                            }
+                            bubble.appendChild(fileDiv);
+                        }
+        
+                        // ICON EDIT
+                        const editIcon = document.createElement('span');
+                        editIcon.className = 'message-edit-icon';
+                        editIcon.innerHTML = '<i class="fas fa-pen"></i>';
+                        editIcon.style.marginLeft = '10px';
+                        editIcon.style.cursor = 'pointer';
+                        editIcon.style.fontSize = '12px';
+                        editIcon.style.color = '#888';
+                        editIcon.style.opacity = '0.5';
+                        editIcon.style.transition = 'all 0.3s';
+                        
+                        editIcon.onmouseenter = function() {
+                            this.style.opacity = '1';
+                            this.style.color = 'var(--neon-cyan)';
+                        };
+                        editIcon.onmouseleave = function() {
+                            this.style.opacity = '0.5';
+                            this.style.color = '#888';
+                        };
+                        
+                        editIcon.onclick = function(e) {
+                            e.stopPropagation();
+                            openEditMessagePopupAdmin(key, msg.text || '', 'support_chat', currentSupportDeviceId);
+                        };
+                        bubble.appendChild(editIcon);
+        
+                        // ICON DELETE
+                        const deleteIcon = document.createElement('span');
+                        deleteIcon.className = 'message-delete-icon';
+                        deleteIcon.innerHTML = '<i class="fas fa-trash"></i>';
+                        deleteIcon.style.marginLeft = '6px';
+                        deleteIcon.style.cursor = 'pointer';
+                        deleteIcon.style.fontSize = '12px';
+                        deleteIcon.style.color = '#888';
+                        deleteIcon.style.opacity = '0.5';
+                        deleteIcon.style.transition = 'all 0.3s';
+                        
+                        deleteIcon.onmouseenter = function() {
+                            this.style.opacity = '1';
+                            this.style.color = '#ff4444';
+                        };
+                        deleteIcon.onmouseleave = function() {
+                            this.style.opacity = '0.5';
+                            this.style.color = '#888';
+                        };
+                        
+                        deleteIcon.onclick = function(e) {
+                            e.stopPropagation();
+                            confirmDeleteMessageAdmin(key, 'support_chat', currentSupportDeviceId);
+                        };
+                        bubble.appendChild(deleteIcon);
+        
+                        const time = document.createElement('div');
+                        time.style.fontSize = '9px';
+                        time.style.opacity = '0.6';
+                        time.style.marginTop = '6px';
+                        time.style.textAlign = 'right';
+                        time.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-';
+                        bubble.appendChild(time);
+        
+                        contentDiv.appendChild(bubble);
+                        wrapper.appendChild(contentDiv);
+                        messagesContainer.appendChild(wrapper);
+                    });
+        
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 });
-    
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function sendSupportAdminMessage() {
+            const input = document.getElementById('chatSupportAdminInput');
+            const text = input.value.trim();
+            if (!text || !currentSupportDeviceId) return;
+            const msgData = {
+                uid: 'Admin',
+                deviceId: currentSupportDeviceId,
+                text: text,
+                sender: 'admin',
+                timestamp: Date.now(),
+                isSupport: true
+            };
+            db.ref('support_chats/' + currentSupportDeviceId + '/messages').push(msgData);
+            db.ref('support_chats/' + currentSupportDeviceId).update({
+                lastMessage: text,
+                lastSender: 'admin',
+                lastTimestamp: Date.now(),
+                adminRead: true
             });
-    }
-    
-    function sendSupportAdminMessage() {
-        const input = document.getElementById('chatSupportAdminInput');
-        const text = input.value.trim();
-        if (!text || !currentSupportDeviceId) return;
-        const msgData = {
-            uid: 'Admin',
-            deviceId: currentSupportDeviceId,
-            text: text,
-            sender: 'admin',
-            timestamp: Date.now(),
-            isSupport: true
-        };
-        db.ref('support_chats/' + currentSupportDeviceId + '/messages').push(msgData);
-        db.ref('support_chats/' + currentSupportDeviceId).update({
-            lastMessage: text,
-            lastSender: 'admin',
-            lastTimestamp: Date.now(),
-            adminRead: true
-        });
-        input.value = '';
-    }
-    
-    function uploadSupportAdminFile() {
-        if (!currentSupportDeviceId) {
-            showToast('Pilih user terlebih dahulu!');
-            return;
+            input.value = '';
         }
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            showLoading();
-            try {
-                const fileUrl = await uploadToImgbb(file);
-                const fileSize = formatFileSize(file.size);
-                const msgData = {
-                    uid: 'Admin',
-                    deviceId: currentSupportDeviceId,
-                    text: `📎 Mengirim file: ${file.name}`,
-                    sender: 'admin',
-                    timestamp: Date.now(),
-                    isSupport: true,
-                    fileData: {
-                        name: file.name,
-                        url: fileUrl,
-                        size: file.size,
-                        sizeFormatted: fileSize,
-                        type: file.type,
-                        timestamp: Date.now()
-                    }
-                };
-                await db.ref('support_chats/' + currentSupportDeviceId + '/messages').push(msgData);
-                await db.ref('support_chats/' + currentSupportDeviceId).update({
-                    lastMessage: `📎 ${file.name}`,
-                    lastSender: 'admin',
-                    lastTimestamp: Date.now(),
-                    adminRead: true
-                });
-                hideLoading();
-                showToast('File terkirim!');
-            } catch (error) {
-                hideLoading();
-                showToast('Gagal upload: ' + error.message);
+        
+        function uploadSupportAdminFile() {
+            if (!currentSupportDeviceId) {
+                showToast('Pilih user terlebih dahulu!');
+                return;
             }
-        };
-        input.click();
-    }
-
-    // ============================================================
-    // NOTIFICATION TOAST ADMIN
-    // ============================================================
-    function showAdminNotifToast(title, message, type = 'info', duration = 5000) {
-        const container = document.getElementById('notificationContainer');
-        if (!container) {
-            console.log('❌ Container notifikasi tidak ditemukan!');
-            return;
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                showLoading();
+                try {
+                    const fileUrl = await uploadToImgbb(file);
+                    const fileSize = formatFileSize(file.size);
+                    const msgData = {
+                        uid: 'Admin',
+                        deviceId: currentSupportDeviceId,
+                        text: `📎 Mengirim file: ${file.name}`,
+                        sender: 'admin',
+                        timestamp: Date.now(),
+                        isSupport: true,
+                        fileData: {
+                            name: file.name,
+                            url: fileUrl,
+                            size: file.size,
+                            sizeFormatted: fileSize,
+                            type: file.type,
+                            timestamp: Date.now()
+                        }
+                    };
+                    await db.ref('support_chats/' + currentSupportDeviceId + '/messages').push(msgData);
+                    await db.ref('support_chats/' + currentSupportDeviceId).update({
+                        lastMessage: `📎 ${file.name}`,
+                        lastSender: 'admin',
+                        lastTimestamp: Date.now(),
+                        adminRead: true
+                    });
+                    hideLoading();
+                    showToast('File terkirim!');
+                } catch (error) {
+                    hideLoading();
+                    showToast('Gagal upload: ' + error.message);
+                }
+            };
+            input.click();
         }
-        const existing = container.querySelectorAll('.notification-toast');
-        if (existing.length >= 3) {
-            existing[0].classList.add('hide');
-            setTimeout(() => existing[0].remove(), 400);
-        }
-        const toast = document.createElement('div');
-        toast.className = 'notification-toast ' + type;
-        const icons = {
-            info: 'fa-info-circle',
-            success: 'fa-check-circle',
-            warning: 'fa-exclamation-triangle',
-            error: 'fa-times-circle'
+    
+        // ============================================================
+        // NOTIFICATION TOAST ADMIN
+        // ============================================================
+        function showAdminNotifToast(title, message, type = 'info', duration = 5000) {
+            const container = document.getElementById('notificationContainer');
+            if (!container) {
+                console.log('❌ Container notifikasi tidak ditemukan!');
+                return;
+            }
+            const existing = container.querySelectorAll('.notification-toast');
+            if (existing.length >= 3) {
+                existing[0].classList.add('hide');
+                setTimeout(() => existing[0].remove(), 400);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast ' + type;
+            const icons = {
+                info: 'fa-info-circle',
+                success: 'fa-check-circle',
+                warning: 'fa-exclamation-triangle',
+                error: 'fa-times-circle'
         };
         toast.innerHTML = `
             <div class="notif-header">
@@ -10502,6 +10848,250 @@
         }
         console.log('📢 Notifikasi Admin:', title, message);
     }
+    
+    // ============================================================
+// DASHBOARD GRAFIK 3D MODERN - CHART.JS
+// ============================================================
+let regChart, loginChart, depositChart, vipChart;
+let chartDataCache = {
+    reg: { labels: [], data: [] },
+    login: { labels: [], data: [] },
+    deposit: { labels: [], data: [] },
+    vip: { labels: [], data: [] }
+};
+
+function initDashboardCharts() {
+    const ctxReg = document.getElementById('regChart');
+    const ctxLogin = document.getElementById('loginChart');
+    const ctxDeposit = document.getElementById('depositChart');
+    const ctxVip = document.getElementById('vipChart');
+    
+    if (!ctxReg || !ctxLogin || !ctxDeposit || !ctxVip) return;
+    
+    const defaultData = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'];
+    
+    const baseConfig = (label, color, bgColor) => ({
+        type: 'line',
+        data: {
+            labels: defaultData,
+            datasets: [{
+                label: label,
+                data: [0, 0, 0, 0, 0, 0, 0],
+                borderColor: color,
+                backgroundColor: bgColor || color + '20',
+                borderWidth: 3,
+                pointBackgroundColor: color,
+                pointBorderColor: '#000',
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4,
+                shadowColor: color,
+                shadowBlur: 15,
+                shadowOffsetX: 0,
+                shadowOffsetY: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(10,10,10,0.9)',
+                    titleColor: '#00ffff',
+                    bodyColor: '#fff',
+                    borderColor: '#00ffff',
+                    borderWidth: 1,
+                    cornerRadius: 10,
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            return label + ': ' + context.parsed.y;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#888', font: { size: 9 } }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#888', font: { size: 9 }, stepSize: 1 }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeOutQuart'
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+    
+    regChart = new Chart(ctxReg, baseConfig('Registrasi', '#00ff88', 'rgba(0,255,136,0.15)'));
+    loginChart = new Chart(ctxLogin, baseConfig('Login', '#ffaa00', 'rgba(255,170,0,0.15)'));
+    depositChart = new Chart(ctxDeposit, baseConfig('Deposit', '#00ffff', 'rgba(0,255,255,0.15)'));
+    vipChart = new Chart(ctxVip, baseConfig('VIP', '#ffd700', 'rgba(255,215,0,0.15)'));
+    
+    loadDashboardChartData();
+}
+
+async function loadDashboardChartData() {
+    try {
+        // Ambil data dari Firebase
+        const usersSnap = await db.ref('users').once('value');
+        const users = usersSnap.val() || {};
+        const sessionsSnap = await db.ref('sessions').once('value');
+        const sessions = sessionsSnap.val() || {};
+        const depositsSnap = await db.ref('deposits').once('value');
+        const deposits = depositsSnap.val() || {};
+        const purchasesSnap = await db.ref('purchases').once('value');
+        const purchases = purchasesSnap.val() || {};
+        
+        // Data per jam (24 jam terakhir)
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        const hourLabels = [];
+        const regData = [];
+        const loginData = [];
+        const depositData = [];
+        const vipData = [];
+        
+        // Buat label per jam
+        for (let i = 23; i >= 0; i--) {
+            const hour = new Date(now - i * 3600000);
+            hourLabels.push(hour.getHours().toString().padStart(2, '0') + ':00');
+        }
+        
+        // Hitung registrasi per jam
+        Object.keys(users).forEach(uid => {
+            const user = users[uid];
+            if (user.registeredAt) {
+                const regTime = new Date(user.registeredAt).getTime();
+                if (regTime > now - oneDay) {
+                    const hourIndex = 23 - Math.floor((now - regTime) / 3600000);
+                    if (hourIndex >= 0 && hourIndex < 24) {
+                        regData[hourIndex] = (regData[hourIndex] || 0) + 1;
+                    }
+                }
+            }
+        });
+        
+        // Hitung login per jam
+        Object.keys(sessions).forEach(uid => {
+            const session = sessions[uid];
+            if (session && session.timestamp) {
+                const loginTime = session.timestamp;
+                if (loginTime > now - oneDay) {
+                    const hourIndex = 23 - Math.floor((now - loginTime) / 3600000);
+                    if (hourIndex >= 0 && hourIndex < 24) {
+                        loginData[hourIndex] = (loginData[hourIndex] || 0) + 1;
+                    }
+                }
+            }
+        });
+        
+        // Hitung deposit per jam
+        Object.keys(deposits).forEach(uid => {
+            Object.keys(deposits[uid]).forEach(id => {
+                const dep = deposits[uid][id];
+                if (dep.timestamp && dep.status === 'approved') {
+                    const depTime = dep.timestamp;
+                    if (depTime > now - oneDay) {
+                        const hourIndex = 23 - Math.floor((now - depTime) / 3600000);
+                        if (hourIndex >= 0 && hourIndex < 24) {
+                            depositData[hourIndex] = (depositData[hourIndex] || 0) + 1;
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Hitung pembelian VIP per jam
+        Object.keys(purchases).forEach(uid => {
+            Object.keys(purchases[uid]).forEach(id => {
+                const purchase = purchases[uid][id];
+                if (purchase.timestamp && purchase.status === 'approved') {
+                    const purTime = purchase.timestamp;
+                    if (purTime > now - oneDay) {
+                        const hourIndex = 23 - Math.floor((now - purTime) / 3600000);
+                        if (hourIndex >= 0 && hourIndex < 24) {
+                            vipData[hourIndex] = (vipData[hourIndex] || 0) + 1;
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Konversi ke array dengan nilai default 0
+        const fillData = (data) => {
+            const result = [];
+            for (let i = 0; i < 24; i++) {
+                result.push(data[i] || 0);
+            }
+            return result;
+        };
+        
+        const finalReg = fillData(regData);
+        const finalLogin = fillData(loginData);
+        const finalDeposit = fillData(depositData);
+        const finalVip = fillData(vipData);
+        
+        // Update charts
+        updateChart(regChart, hourLabels, finalReg, 'Registrasi', '#00ff88');
+        updateChart(loginChart, hourLabels, finalLogin, 'Login', '#ffaa00');
+        updateChart(depositChart, hourLabels, finalDeposit, 'Deposit', '#00ffff');
+        updateChart(vipChart, hourLabels, finalVip, 'VIP', '#ffd700');
+        
+        // Update counter
+        document.getElementById('regUserCount').textContent = finalReg.reduce((a,b) => a + b, 0);
+        document.getElementById('loginUserCount').textContent = finalLogin.reduce((a,b) => a + b, 0);
+        document.getElementById('depositUserCount').textContent = finalDeposit.reduce((a,b) => a + b, 0);
+        document.getElementById('vipUserCount').textContent = finalVip.reduce((a,b) => a + b, 0);
+        
+        // Simpan cache untuk real-time update
+        chartDataCache.reg = { labels: hourLabels, data: finalReg };
+        chartDataCache.login = { labels: hourLabels, data: finalLogin };
+        chartDataCache.deposit = { labels: hourLabels, data: finalDeposit };
+        chartDataCache.vip = { labels: hourLabels, data: finalVip };
+        
+    } catch (error) {
+        console.error('Error loading chart data:', error);
+    }
+}
+
+function updateChart(chart, labels, data, label, color) {
+    if (!chart) return;
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.data.datasets[0].label = label;
+    chart.data.datasets[0].borderColor = color;
+    chart.data.datasets[0].pointBackgroundColor = color;
+    chart.data.datasets[0].backgroundColor = color + '20';
+    chart.update();
+}
+
+function updateDashboardChartsRealtime() {
+    // Update setiap 30 detik
+    setInterval(() => {
+        loadDashboardChartData();
+    }, 30000);
+    
+    // Juga update saat ada perubahan data
+    db.ref('users').on('child_added', () => { loadDashboardChartData(); });
+    db.ref('sessions').on('child_added', () => { loadDashboardChartData(); });
+    db.ref('deposits').on('child_added', () => { loadDashboardChartData(); });
+    db.ref('purchases').on('child_added', () => { loadDashboardChartData(); });
+}
     
     // ============================================================
     // ADMIN CHAT BADGE
@@ -11094,9 +11684,12 @@
         console.log('👑 Fitur VIP Detail - Aktif');
         console.log('🏆 Fitur Show Leaderboard - Aktif');
         console.log('🔊 Fitur Notifikasi Suara - Aktif');
+        setTimeout(() => {
+        initDashboardCharts();
+        updateDashboardChartsRealtime();
+    }, 1000);
     }
     init();
 </script>
 
 </body>
-</html>
