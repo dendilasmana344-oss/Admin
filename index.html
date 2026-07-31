@@ -2231,6 +2231,57 @@
         .toast-error.show {
             display: block;
         }
+        
+        /* ============================================================
+       PACKAGES GRID - ADMIN
+       ============================================================ */
+        #packagesList {
+            display: block;
+            width: 100%;
+        }
+
+        #packagesList > div {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+            gap: 16px !important;
+            margin-top: 15px !important;
+            width: 100% !important;
+        }
+
+        @media (max-width: 768px) {
+            #packagesList > div {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+                gap: 12px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #packagesList > div {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+        }
+        
+        #vipMemberList > div {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
+            gap: 16px !important;
+            width: 100% !important;
+        }
+
+        @media (max-width: 768px) {
+            #vipMemberList > div {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+                gap: 12px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #vipMemberList > div {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+        }
 
         /* ============================================================
         PACKAGE DETAIL POPUP - ADMIN (EYE ICON)
@@ -7127,18 +7178,22 @@
         let filtered = window.allVIPMembers || []; 
         const search = document.getElementById('vipMemberSearch')?.value.toLowerCase() || ''; 
         if (search) filtered = filtered.filter(m => m.uid.toLowerCase().includes(search)); 
-        
+    
         if (filtered.length === 0) {
             document.getElementById('vipMemberList').innerHTML = '<div class="no-data">Tidak ada member VIP aktif</div>';
             return;
         }
-        
-        let html = ''; 
+    
+        // ===== WRAPPER GRID =====
+        let html = `
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:16px; margin-top:15px; width:100%;">
+        `;
+    
         filtered.forEach(m => { 
             const isPermanent = m.isPermanent; 
             let progress = 0, statusText = 'Active', statusColor = '#4caf50'; 
             let detailText = '';
-            
+        
             if (m.updateType === 'quota') { 
                 const used = m.updatesUsed || 0, total = m.updateQuota || 0; 
                 progress = total > 0 ? (used / total) * 100 : 0; 
@@ -7151,9 +7206,9 @@
             } else if (isPermanent) {
                 detailText = '♾️ LIFETIME';
             }
-            
+        
             html += `
-                <div class="vip-card ${isPermanent ? 'permanent' : ''}" style="display:flex; flex-direction:column; gap:12px;">
+                <div class="vip-card ${isPermanent ? 'permanent' : ''}" style="display:flex; flex-direction:column; gap:12px; background:rgba(0,0,0,0.5); border:2px solid ${isPermanent ? '#ffd700' : 'rgba(255,215,0,0.3)'}; border-radius:20px; padding:20px; transition:all 0.3s; position:relative;">
                     <div class="vip-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                         <span class="vip-card-uid" onclick="copyUID('${m.uid}')" style="font-family:monospace; font-size:16px; font-weight:bold; color:#ffd700; cursor:pointer;">
                             <i class="fas fa-user"></i> ${m.uid}
@@ -7171,20 +7226,20 @@
                             </div>
                         </div>
                     </div>
-                    
+                
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; background:rgba(0,0,0,0.3); padding:12px 16px; border-radius:15px;">
                         <div><span class="detail-label" style="color:#888; font-size:11px;">Paket</span><br><span style="color:#fff; font-size:13px; font-weight:bold;">${m.package || 'VIP'}</span></div>
                         <div><span class="detail-label" style="color:#888; font-size:11px;">Harga</span><br><span style="color:#ffd700; font-size:13px; font-weight:bold;">Rp ${formatRupiah(m.price)}</span></div>
                         <div><span class="detail-label" style="color:#888; font-size:11px;">Tipe</span><br><span style="color:${m.updateType === 'quota' ? '#00ff88' : '#2196f3'}; font-size:13px; font-weight:bold;">${m.updateType || 'quota'}</span></div>
                         <div><span class="detail-label" style="color:#888; font-size:11px;">Detail</span><br><span style="color:#ffaa00; font-size:13px; font-weight:bold;">${detailText}</span></div>
                     </div>
-                    
+                
                     ${m.updateType === 'quota' ? `
                     <div class="progress-bar" style="height:6px; background:#333; border-radius:4px; overflow:hidden;">
                         <div class="progress-fill" style="height:100%; background:linear-gradient(90deg, #ffd700, #ffaa00); width:${progress}%; transition:width 0.3s;"></div>
                     </div>
                     ` : ''}
-                    
+                
                     <div class="action-buttons" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:5px;">
                         <button class="btn btn-danger btn-sm" onclick="removeVIP('${m.uid}')" style="padding:6px 16px; font-size:11px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer;">
                             <i class="fas fa-times"></i> Remove VIP
@@ -7196,6 +7251,8 @@
                 </div>
             `; 
         }); 
+    
+        html += '</div>'; // Tutup grid wrapper
         document.getElementById('vipMemberList').innerHTML = html; 
     }
     
@@ -8946,7 +9003,7 @@
                 document.getElementById('packagesList').innerHTML = '<div class="no-data">Belum ada package</div>';
                 return;
             }
-            
+        
             let html = `
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:15px;">
             `;
