@@ -2282,6 +2282,110 @@
                 gap: 12px !important;
             }
         }
+        
+        /* ============================================================
+       VIP LIST GRID - PERBAIKAN
+       ============================================================ */
+        #vipMemberList {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        #vipMemberList > div {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+            gap: 16px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* PAKET LIST GRID */
+        #packagesList {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        #packagesList > div {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+            gap: 16px !important;
+            width: 100% !important;
+                    max-width: 100% !important;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 992px) {
+            #vipMemberList > div {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+                gap: 14px !important;
+            }
+            #packagesList > div {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+                gap: 14px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #vipMemberList > div {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+                gap: 12px !important;
+            }
+            #packagesList > div {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+                gap: 12px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #vipMemberList > div {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+            #packagesList > div {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+        }
+        
+        /* ============================================================
+       GRID RESPONSIVE - ADMIN
+       ============================================================ */
+        #vipMemberList,
+        #packagesList {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        #vipMemberList .vip-grid-container,
+        #packagesList .packages-grid-container {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+            gap: 16px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        @media (max-width: 768px) {
+            #vipMemberList .vip-grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+                gap: 12px !important;
+            }
+            #packagesList .packages-grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+                gap: 12px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #vipMemberList .vip-grid-container,
+            #packagesList .packages-grid-container {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+        }
 
         /* ============================================================
         PACKAGE DETAIL POPUP - ADMIN (EYE ICON)
@@ -7184,10 +7288,8 @@
             return;
         }
     
-        // ===== WRAPPER GRID =====
-        let html = `
-            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:16px; margin-top:15px; width:100%;">
-        `;
+        // ===== GRID WRAPPER =====
+        let html = `<div class="vip-grid-container" style="display:grid !important; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)) !important; gap:16px !important; width:100% !important;">`;
     
         filtered.forEach(m => { 
             const isPermanent = m.isPermanent; 
@@ -7208,7 +7310,7 @@
             }
         
             html += `
-                <div class="vip-card ${isPermanent ? 'permanent' : ''}" style="display:flex; flex-direction:column; gap:12px; background:rgba(0,0,0,0.5); border:2px solid ${isPermanent ? '#ffd700' : 'rgba(255,215,0,0.3)'}; border-radius:20px; padding:20px; transition:all 0.3s; position:relative;">
+                <div class="vip-card ${isPermanent ? 'permanent' : ''}" style="display:flex; flex-direction:column; gap:12px; background:rgba(0,0,0,0.5); border:2px solid ${isPermanent ? '#ffd700' : 'rgba(255,215,0,0.3)'}; border-radius:20px; padding:20px; transition:all 0.3s; position:relative; height:100%;">
                     <div class="vip-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                         <span class="vip-card-uid" onclick="copyUID('${m.uid}')" style="font-family:monospace; font-size:16px; font-weight:bold; color:#ffd700; cursor:pointer;">
                             <i class="fas fa-user"></i> ${m.uid}
@@ -7240,7 +7342,7 @@
                     </div>
                     ` : ''}
                 
-                    <div class="action-buttons" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:5px;">
+                    <div class="action-buttons" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; padding-top:5px;">
                         <button class="btn btn-danger btn-sm" onclick="removeVIP('${m.uid}')" style="padding:6px 16px; font-size:11px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer;">
                             <i class="fas fa-times"></i> Remove VIP
                         </button>
@@ -7252,7 +7354,7 @@
             `; 
         }); 
     
-        html += '</div>'; // Tutup grid wrapper
+        html += '</div>';
         document.getElementById('vipMemberList').innerHTML = html; 
     }
     
@@ -9005,33 +9107,33 @@
             }
         
             let html = `
-                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:15px;">
+                <div class="packages-grid-container" style="display:grid !important; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)) !important; gap:16px !important; margin-top:15px; width:100% !important;">
             `;
-            
+        
             packages.forEach((pkg, idx) => { 
                 const typeLabel = pkg.type === 'quota' ? '📦 Quota' : pkg.type === 'unlimited' ? '♾️ Unlimited' : '👑 Lifetime';
                 const quotaText = pkg.type === 'quota' ? `${pkg.quota || 0}x` : pkg.type === 'lifetime' ? '∞' : '∞';
-                
+            
                 html += `
-                    <div class="package-card-admin" style="background:rgba(0,0,0,0.6); border:2px solid rgba(0,255,255,0.3); border-radius:20px; padding:18px 16px; transition:all 0.3s; position:relative; cursor:default;">
+                    <div class="package-card-admin" style="background:rgba(0,0,0,0.6); border:2px solid rgba(0,255,255,0.3); border-radius:20px; padding:18px 16px; transition:all 0.3s; position:relative; cursor:default; height:100%; display:flex; flex-direction:column;">
                         <div class="package-eye-icon" onclick="openPackageDetailAdmin(${idx})" style="position:absolute; top:12px; right:12px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.85); border:2px solid var(--neon-cyan); color:var(--neon-cyan); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s; z-index:10;">
                             <i class="fas fa-eye"></i>
                         </div>
-                        
+                    
                         <div class="package-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
                             <span class="package-label" style="font-family:'Orbitron',monospace; font-size:16px; font-weight:bold; color:var(--neon-cyan);">${escapeHtml(pkg.label)}</span>
                             <span class="package-price" style="font-size:18px; font-weight:bold; color:#00ff88; font-family:'Orbitron',monospace;">Rp ${formatRupiah(pkg.price)}</span>
                         </div>
-                        
+                    
                         <div class="package-info" style="display:flex; gap:12px; flex-wrap:wrap; font-size:12px; color:#aaa; margin:8px 0;">
                             <span style="background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:15px; border:1px solid rgba(0,255,255,0.15); color:#ffaa00;">${typeLabel}</span>
                             <span style="background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:15px; border:1px solid rgba(0,255,255,0.15); color:#00ff88;">Update: ${quotaText}</span>
                             ${pkg.durationMonths ? `<span style="background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:15px; border:1px solid rgba(0,255,255,0.15); color:#2196f3;">${pkg.durationMonths} Bulan</span>` : ''}
                         </div>
-                        
+                    
                         ${pkg.description ? `<div style="font-size:12px; color:#ccc; margin:6px 0 12px 0; padding:8px 12px; background:rgba(0,0,0,0.3); border-radius:12px;">${escapeHtml(pkg.description)}</div>` : ''}
-                        
-                        <div class="package-actions" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+                    
+                        <div class="package-actions" style="display:flex; gap:8px; margin-top:auto; flex-wrap:wrap;">
                             <button class="btn-edit-package" onclick="openEditPackage(${idx})" style="background:linear-gradient(135deg,#ffaa00,#ff8800); color:#000; border:none; padding:6px 16px; border-radius:18px; font-weight:bold; cursor:pointer; transition:all 0.3s; font-size:11px; font-family:'Orbitron',monospace; display:flex; align-items:center; gap:5px;">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
@@ -9042,7 +9144,7 @@
                     </div>
                 `; 
             }); 
-            
+        
             html += '</div>';
             document.getElementById('packagesList').innerHTML = html; 
         }); 
