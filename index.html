@@ -3803,6 +3803,28 @@
             color: #ff8888;
             border: 1px solid #ff4444;
         }
+        
+        .chat-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            display: none;
+            animation: pulse 1s infinite;
+        }
+
+        .chat-badge.show {
+            display: flex;
+        }
 
         /* ============================================================
            FREE UPDATE STATS
@@ -5067,7 +5089,7 @@
         <div class="tab" onclick="openTab('video_popup')"><i class="fas fa-play-circle"></i> Video Popup</div>
         <div class="tab" onclick="openTab('leaderboard')"><i class="fas fa-trophy"></i> Leaderboard</div>
         <div class="tab" onclick="openTab('announcements')"><i class="fas fa-bullhorn"></i> Pengumuman</div>
-        <div class="tab" onclick="openTab('chat')"><i class="fas fa-comments"></i> Private Chat</div>
+<div class="tab" onclick="openTab('chat')"><i class="fas fa-comments"></i> Private Chat<span class="chat-badge" id="privateChatBadge">0</span></div>
         <div class="tab" onclick="openTab('support_chat')"><i class="fas fa-headset"></i> Support Chat<span class="chat-badge" id="supportChatBadge">0</span></div>
         <div class="tab" onclick="openTab('public_chat')"><i class="fas fa-globe"></i> Public Chat<span class="chat-badge" id="publicChatBadge">0</span></div>
         <div class="tab" onclick="openTab('user_files')"><i class="fas fa-images"></i> User Files</div>
@@ -7100,7 +7122,7 @@
         displayCustomers();
     }
     // ============================================================
-    // DISPLAY CUSTOMERS - ADMIN (TAMPILKAN DEVICE ID & IP)
+    // DISPLAY CUSTOMERS - ADMIN (DENGAN FOTO PROFIL LENGKAP)
     // ============================================================
     function displayCustomers() {
         let filtered = window.allCustomers || [];
@@ -7111,91 +7133,181 @@
                 (c.deviceId && c.deviceId.toLowerCase().includes(search))
             );
         }
+        
+        // Ambil semua foto profil sekaligus untuk efisiensi
+        let profilePhotos = {};
+        db.ref('profiles').once('value', snap => {
+            if (snap.exists()) {
+                profilePhotos = snap.val() || {};
+            }
+            renderCustomers(filtered, profilePhotos);
+        }).catch(() => {
+            renderCustomers(filtered, {});
+        });
+    }
+    
+    function renderCustomers(filtered, profilePhotos) {
         let html = '';
         filtered.forEach(c => { 
             const statusClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline'); 
             const statusText = c.banned ? 'BANNED' : (c.status === 'online' ? 'Online' : 'Offline');
             const customerClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline');
             const saldoId = 'saldoEdit_' + c.uid;
-        
+            
+            // Ambil foto profil user
+            let profilePhoto = '';
+            if (profilePhotos[c.uid] && profilePhotos[c.uid].image) {
+                profilePhoto = profilePhotos[c.uid].image;
+            }
+            
+            // Default avatar berdasarkan UID
+            const defaultAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.uid) + '&background=00ffff&color=000&size=60&font-size=0.5&bold=true';
+            
             html += `
                 <div class="customer-item ${customerClass}">
                     <div class="customer-header">
-                        <span class="customer-uid" onclick="copyUID('${c.uid}')">${c.uid}</span>
-                        <div>
+                        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                            <img src="${profilePhoto || defaultAvatar}" 
+                                 class="profile-photo-${c.uid}" 
+                                 style="width:50px; height:50px; border-radius:50%; border:3px solid ${c.isVip ? '#ffd700' : 'var(--neon-cyan)'}; object-fit:cover; box-shadow: 0 0 20px ${c.isVip ? 'rgba(255,215,0,0.5)' : 'rgba(0,255,255,0.3)'}; cursor:pointer;" 
+                                 onclick="viewUserProfile('${c.uid}')"
+                                 onerror="this.src='${defaultAvatar}'"
+                                 title="Klik untuk lihat profil">
+                            <span class="customer-uid" onclick="copyUID('${c.uid}')" style="font-size:20px;">${c.uid}</span>
+                            ${c.isVip ? '<span style="font-size:14px; color:#ffd700; animation: textGlowGold 2s infinite;"><i class="fas fa-crown"></i> VIP</span>' : ''}
+                        </div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                             <span class="badge ${statusClass}">${statusText}</span>
-                            ${c.isVip ? '<span class="badge vip">VIP</span>' : ''}
+                            ${c.isVip ? '<span class="badge vip" style="background:linear-gradient(135deg,#ffd700,#ffaa00); color:#000; border-color:#ffd700;">👑 VIP</span>' : ''}
+                            ${c.hasSession ? '<span class="badge online" style="background:rgba(0,255,136,0.2); color:#00ff88; border:1px solid #00ff88; animation:pulse 1s infinite;">🟢 Online</span>' : ''}
                         </div>
                     </div>
                     <div class="customer-details-grid">
                         <div class="detail-item">
-                            <span class="detail-label">Saldo</span>
-                            <span class="detail-value" style="color:#00ff88;">Rp ${formatRupiah(c.saldo)}</span>
+                            <span class="detail-label"><i class="fas fa-wallet"></i> Saldo</span>
+                            <span class="detail-value" style="color:#00ff88; font-size:16px;">Rp ${formatRupiah(c.saldo)}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">PIN</span>
-                            <span class="detail-value">${c.pin}</span>
+                            <span class="detail-label"><i class="fas fa-lock"></i> PIN</span>
+                            <span class="detail-value" style="font-family:monospace; font-size:16px;">${c.pin}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Registered</span>
-                            <span class="detail-value">${c.registered !== '-' ? new Date(c.registered).toLocaleDateString() : '-'}</span>
+                            <span class="detail-label"><i class="fas fa-calendar-plus"></i> Registered</span>
+                            <span class="detail-value">${c.registered !== '-' ? new Date(c.registered).toLocaleDateString('id-ID') : '-'}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Last Login</span>
-                            <span class="detail-value">${c.lastLogin !== '-' ? new Date(c.lastLogin).toLocaleString() : '-'}</span>
+                            <span class="detail-label"><i class="fas fa-clock"></i> Last Login</span>
+                            <span class="detail-value">${c.lastLogin !== '-' ? new Date(c.lastLogin).toLocaleString('id-ID') : '-'}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label"><i class="fas fa-network-wired"></i> IP Address</span>
-                            <span class="detail-value ip-address">${c.lastIP || c.registrasiIP || '-'}</span>
+                            <span class="detail-value ip-address" style="font-size:13px;">${c.lastIP || c.registrasiIP || '-'}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label"><i class="fas fa-flag"></i> Registrasi IP</span>
-                            <span class="detail-value ip-address">${c.registrasiIP || '-'}</span>
+                            <span class="detail-value ip-address" style="font-size:13px;">${c.registrasiIP || '-'}</span>
                         </div>
-                        <div class="detail-item">
+                        <div class="detail-item" style="grid-column: span 2;">
                             <span class="detail-label"><i class="fas fa-mobile-alt"></i> Device</span>
-                            <span class="detail-value device">${c.device ? c.device.substring(0, 50) + (c.device.length > 50 ? '...' : '') : '-'}</span>
+                            <span class="detail-value device" style="font-size:11px;">${c.device ? c.device.substring(0, 60) + (c.device.length > 60 ? '...' : '') : '-'}</span>
                         </div>
                         <div class="detail-item" style="grid-column: span 2;">
                             <span class="detail-label"><i class="fas fa-fingerprint"></i> Device ID</span>
-                            <span class="detail-value device-id" style="font-size:12px; word-break:break-all;">${c.deviceId || '-'}</span>
+                            <span class="detail-value device-id" style="font-size:12px; word-break:break-all; color:#ff6b9d;">${c.deviceId || '-'}</span>
                         </div>
                         <div class="detail-item" style="grid-column: span 2;">
                             <span class="detail-label"><i class="fas fa-fingerprint"></i> Registrasi Device ID</span>
-                            <span class="detail-value device-id" style="font-size:12px; word-break:break-all;">${c.registrasiDevice || '-'}</span>
+                            <span class="detail-value device-id" style="font-size:12px; word-break:break-all; color:#ff6b9d;">${c.registrasiDevice || '-'}</span>
                         </div>
+                        ${c.securityAnswer ? `
+                        <div class="detail-item" style="grid-column: span 2;">
+                            <span class="detail-label"><i class="fas fa-question-circle"></i> Jawaban Keamanan</span>
+                            <span class="detail-value" style="color:#ffaa00; font-size:13px;">${c.securityAnswer}</span>
+                        </div>
+                        ` : ''}
                     </div>
                 
                     <!-- SALDO EDIT -->
-                    <div class="saldo-edit-row">
+                    <div class="saldo-edit-row" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; padding:12px 15px; background:rgba(0,0,0,0.3); border-radius:15px; border:1px solid rgba(0,255,255,0.1);">
                         <span style="color: #aaa; font-size: 12px; min-width: 80px;">
                             <i class="fas fa-wallet"></i> Edit Saldo:
                         </span>
-                        <input type="number" class="saldo-edit-input" id="${saldoId}" placeholder="Jumlah" min="0" style="flex: 0 1 150px;">
-                        <div class="saldo-edit-buttons">
-                            <button class="btn btn-success btn-sm" onclick="editSaldo('${c.uid}', 'add')">
+                        <input type="number" class="saldo-edit-input" id="${saldoId}" placeholder="Jumlah" min="0" style="flex:1; min-width:120px; padding:10px 16px; background:rgba(0,0,0,0.8); border:2px solid var(--neon-cyan); border-radius:15px; color:white; font-size:14px; outline:none;">
+                        <div class="saldo-edit-buttons" style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn btn-success btn-sm" onclick="editSaldo('${c.uid}', 'add')" style="padding:8px 16px; font-size:11px; background:linear-gradient(135deg,#00ff88,#00cc66); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
                                 <i class="fas fa-plus"></i> Tambah
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="editSaldo('${c.uid}', 'reduce')">
+                            <button class="btn btn-danger btn-sm" onclick="editSaldo('${c.uid}', 'reduce')" style="padding:8px 16px; font-size:11px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
                                 <i class="fas fa-minus"></i> Kurangi
                             </button>
-                            <button class="btn btn-info btn-sm" onclick="editSaldo('${c.uid}', 'set')">
+                            <button class="btn btn-info btn-sm" onclick="editSaldo('${c.uid}', 'set')" style="padding:8px 16px; font-size:11px; background:linear-gradient(135deg,#2196f3,#1976d2); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
                                 <i class="fas fa-edit"></i> Set
                             </button>
                         </div>
                     </div>
                 
-                    <div class="action-buttons">
-                        <button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')">Reset PIN</button>
-                        ${c.banned ? `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')">Unban</button>` : `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')">Ban</button>`}
-                        <button class="btn btn-info btn-sm" onclick="forceLogout('${c.uid}')">Logout</button>
-                        <button class="btn btn-primary btn-sm" onclick="openSaldoModal('${c.uid}')">Add Saldo</button>
-                        <button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.uid}')">Delete</button>
+                    <div class="action-buttons" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:15px;">
+                        <button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#ffaa00,#ff8800); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
+                            <i class="fas fa-key"></i> Reset PIN
+                        </button>
+                        ${c.banned ? 
+                            `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#00ff88,#00cc66); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
+                                <i class="fas fa-check"></i> Unban
+                            </button>` : 
+                            `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
+                                <i class="fas fa-ban"></i> Ban
+                            </button>`
+                        }
+                        <button class="btn btn-info btn-sm" onclick="forceLogout('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#2196f3,#1976d2); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="openSaldoModal('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
+                            <i class="fas fa-plus-circle"></i> Add Saldo
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.uid}')" style="padding:6px 14px; font-size:11px; background:#333; color:white; border:2px solid #666; border-radius:15px; cursor:pointer; font-weight:bold;">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
                     </div>
                 </div>
             `;
         });
         document.getElementById('customerList').innerHTML = html || '<div class="no-data">No customers found</div>';
+    }
+    
+    // ============================================================
+    // VIEW USER PROFILE - ADMIN
+    // ============================================================
+    function viewUserProfile(uid) {
+        // Buka popup detail user
+        db.ref('users/' + uid).once('value', snap => {
+            const user = snap.val();
+            if (!user) {
+                showToast('User tidak ditemukan!');
+                return;
+            }
+            
+            db.ref('profiles/' + uid).once('value', profileSnap => {
+                const profile = profileSnap.val() || {};
+                const photo = profile.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(uid) + '&background=00ffff&color=000&size=200&font-size=0.5&bold=true';
+                
+                // Tampilkan modal profil
+                showNeonModal(
+                    '👤 Profil User',
+                    `<div style="text-align:center;padding:10px 0;">
+                        <img src="${photo}" style="width:120px;height:120px;border-radius:50%;border:3px solid var(--neon-cyan);object-fit:cover;margin-bottom:15px;box-shadow:0 0 30px rgba(0,255,255,0.3);">
+                        <div style="font-size:24px;font-weight:bold;color:var(--neon-cyan);font-family:'Orbitron',monospace;">${uid}</div>
+                        <div style="margin-top:15px;display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;font-size:13px;">
+                            <div><span style="color:#888;">Status:</span> <span style="color:${user.status === 'online' ? '#00ff88' : '#ffaa00'};">${user.status || 'offline'}</span></div>
+                            <div><span style="color:#888;">PIN:</span> <span style="color:#00ff88;">${user.pin || '******'}</span></div>
+                            <div style="grid-column:span 2;"><span style="color:#888;">Registered:</span> <span style="color:#fff;">${user.registeredAt ? new Date(user.registeredAt).toLocaleString('id-ID') : '-'}</span></div>
+                            <div style="grid-column:span 2;"><span style="color:#888;">Last Login:</span> <span style="color:#fff;">${user.lastLogin ? new Date(user.lastLogin).toLocaleString('id-ID') : '-'}</span></div>
+                            <div style="grid-column:span 2;"><span style="color:#888;">Device ID:</span> <span style="color:#ff6b9d;font-family:monospace;font-size:11px;">${user.deviceId || '-'}</span></div>
+                        </div>
+                    </div>`,
+                    'info'
+                );
+            });
+        });
     }
     function filterCustomers() { displayCustomers(); }
     function openResetPin(uid) { document.getElementById('resetUID').value = uid; document.getElementById('newPin').value = ''; document.getElementById('resetPinModal').classList.add('active'); }
@@ -7709,25 +7821,29 @@
         const percent = parseInt(document.getElementById('discountPercent').value);
         const min = parseInt(document.getElementById('discountMin').value) || 0;
         const expiryDays = parseInt(document.getElementById('discountExpiry').value) || 7;
-        
+    
         if (!code || !percent || percent < 1 || percent > 100) {
             showToast('Invalid input!');
             return;
         }
-        
+    
         const expiry = new Date();
         expiry.setDate(expiry.getDate() + expiryDays);
-        
+    
         showLoading();
         try {
+            // PASTIKAN TIDAK MENGUBAH QUOTA
             await db.ref(`discounts/${code}`).set({
-                code,
+                code: code,
                 percentage: percent,
                 minPurchase: min,
                 expiryDate: expiry.toISOString(),
+                expiryDays: expiryDays,
                 active: true,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                description: document.getElementById('discountDesc')?.value || ''
             });
+        
             await db.ref('discount_history').push({
                 action: 'created',
                 code: code,
@@ -7737,10 +7853,12 @@
                 timestamp: Date.now(),
                 note: 'Diskon baru dibuat oleh admin'
             });
+        
             addActivityLog('Add Discount', `Added discount: ${code} (${percent}%)`);
             hideLoading();
             showToast('Discount added!');
             closeDiscountModal();
+            loadDiscounts();
             loadAllData();
         } catch (error) {
             hideLoading();
@@ -7903,16 +8021,17 @@
         const expiryDays = parseInt(document.getElementById('editDiscountExpiry').value) || 7;
         const description = document.getElementById('editDiscountDesc').value.trim();
         const status = document.getElementById('editDiscountStatus').value;
-        
+    
         if (!code) { showToast('Kode diskon tidak valid!'); return; }
         if (isNaN(percent) || percent < 1 || percent > 100) { showToast('Persentase harus antara 1-100!'); return; }
         if (expiryDays < 1) { showToast('Masa berlaku minimal 1 hari!'); return; }
-        
+    
         showLoading();
         try {
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + expiryDays);
-            
+        
+            // PASTIKAN TIDAK MENGUBAH QUOTA - HANYA UPDATE DISKON
             await db.ref('discounts/' + code).update({
                 percentage: percent,
                 minPurchase: min,
@@ -7922,7 +8041,7 @@
                 active: status === 'active',
                 updatedAt: Date.now()
             });
-            
+        
             await db.ref('discount_history').push({
                 action: 'edited',
                 code: code,
@@ -7932,7 +8051,7 @@
                 timestamp: Date.now(),
                 note: 'Diskon diedit oleh admin'
             });
-            
+        
             addActivityLog('Edit Discount', `Diskon ${code} diedit - ${percent}%`);
             showToast('✅ Diskon berhasil diupdate!');
             closeEditDiscountModal();
@@ -9484,6 +9603,76 @@
         }
     }
     
+    // ============================================================
+    // PRIVATE CHAT - ADMIN (LENGKAP)
+    // ============================================================
+    
+    let privateDeleteMode = false;
+    let privateSelectedMessages = new Set();
+    let privateChatListener = null;;
+    
+    // ============================================================
+    // UPDATE PRIVATE CHAT BADGE
+    // ============================================================
+    function updatePrivateChatBadge() {
+        const total = Object.values(adminUnreadCount).reduce((a, b) => a + b, 0);
+        const badge = document.getElementById('privateChatBadge');
+        if (badge) {
+            if (total > 0) {
+                badge.textContent = total > 9 ? '9+' : total;
+                badge.classList.add('show');
+                badge.style.display = 'flex';
+            } else {
+                badge.classList.remove('show');
+                badge.style.display = 'none';
+            }
+        }
+    }
+    
+    // ============================================================
+    // LOAD CHAT USERS
+    // ============================================================
+    async function loadChatUsers() { 
+        try {
+            const usersSnap = await db.ref('users').once('value'); 
+            const users = usersSnap.val() || {}; 
+            const select = document.getElementById('chatUserSelect'); 
+            select.style.opacity = '0.5';
+            select.disabled = true;
+            select.innerHTML = '<option value="">-- Pilih Customer --</option>'; 
+            
+            const sortedUids = Object.keys(users).sort();
+            sortedUids.forEach(uid => { 
+                const option = document.createElement('option'); 
+                option.value = uid; 
+                option.textContent = uid;
+                
+                // Tampilkan status online
+                if (users[uid] && users[uid].status === 'online') {
+                    option.textContent = '🟢 ' + uid;
+                    option.style.color = '#00ff88';
+                }
+                
+                // Tampilkan badge jika ada unread
+                if (adminUnreadCount[uid] && adminUnreadCount[uid] > 0) {
+                    option.textContent += ' 🔴 ' + adminUnreadCount[uid];
+                    option.style.fontWeight = 'bold';
+                    option.style.color = '#ff6b6b';
+                }
+                
+                select.appendChild(option); 
+            });
+            select.disabled = false;
+            select.style.opacity = '1';
+        } catch (error) {
+            console.error('Error loading chat users:', error);
+            showToast('Error loading users: ' + error.message);
+        }
+    }
+    
+    // ============================================================
+    // LOAD USER CHAT - DENGAN DELETE MODE
+    // ============================================================
     function loadUserChat() { 
         const select = document.getElementById('chatUserSelect'); 
         currentChatUser = select.value; 
@@ -9494,61 +9683,66 @@
             input.disabled = true; 
             sendBtn.disabled = true; 
             document.getElementById('chatMessages').innerHTML = '<div class="no-data">Pilih customer untuk mulai chat</div>'; 
-            if (chatListener) db.ref('chats/' + currentChatUser).off('value', chatListener); 
+            if (privateChatListener) {
+                db.ref('chats/' + currentChatUser).off('value', privateChatListener);
+                privateChatListener = null;
+            }
+            // Reset delete mode
+            privateDeleteMode = false;
+            privateSelectedMessages.clear();
+            updatePrivateToolbar();
             return; 
         } 
     
-        resetPrivateChatUnread(currentChatUser);
+        // Reset unread count untuk user ini
+        if (adminUnreadCount[currentChatUser]) {
+            delete adminUnreadCount[currentChatUser];
+            updatePrivateChatBadge();
+            // Update dropdown
+            loadChatUsers();
+        }
+    
         input.disabled = false; 
         sendBtn.disabled = false; 
     
-        // Tambahkan toolbar untuk delete
-        const chatContainer = document.querySelector('#chat .chat-container');
-        let toolbar = document.getElementById('privateChatDeleteToolbar');
-        if (!toolbar) {
-            toolbar = document.createElement('div');
-            toolbar.id = 'privateChatDeleteToolbar';
-            toolbar.style.cssText = 'display:flex; gap:10px; margin-bottom:10px; align-items:center; flex-wrap:wrap;';
-            toolbar.innerHTML = `
-                <button class="btn btn-danger btn-sm" onclick="togglePrivateDeleteMode()" style="padding:6px 16px; font-size:11px;">
-                    <i class="fas fa-trash-alt"></i> Hapus Pesan
-                </button>
-                <span id="privateSelectedCount" style="color:#ffaa00; font-size:12px; display:none;">0 pesan dipilih</span>
-                <button id="privateSelectAllBtn" class="btn btn-info btn-sm" onclick="selectAllPrivateMessages()" style="display:none; padding:6px 16px; font-size:11px;">
-                    <i class="fas fa-check-double"></i> Pilih Semua
-                </button>
-                <button id="privateDeleteSelectedBtn" class="btn btn-danger btn-sm" onclick="deleteSelectedPrivateMessages()" style="display:none; padding:6px 16px; font-size:11px;">
-                    <i class="fas fa-trash"></i> Hapus Terpilih
-                </button>
-            `;
-            chatContainer.insertBefore(toolbar, chatContainer.firstChild);
+        // Reset delete mode saat ganti user
+        privateDeleteMode = false;
+        privateSelectedMessages.clear();
+        updatePrivateToolbar();
+    
+        if (privateChatListener) {
+            db.ref('chats/' + currentChatUser).off('value', privateChatListener);
+            privateChatListener = null;
         }
     
-        if (chatListener) db.ref('chats/' + currentChatUser).off('value', chatListener); 
-    
-        let privateDeleteMode = false;
-        let privateSelectedMessages = new Set();
-    
-        chatListener = db.ref('chats/' + currentChatUser).limitToLast(50).on('value', snap => { 
+        privateChatListener = db.ref('chats/' + currentChatUser).limitToLast(50).on('value', snap => { 
             const messages = snap.val(); 
             const chatBox = document.getElementById('chatMessages'); 
             chatBox.innerHTML = ''; 
+            
             if (messages) { 
-                Object.keys(messages).sort((a,b) => (messages[a].timestamp||0) - (messages[b].timestamp||0)).forEach(key => { 
+                const sortedKeys = Object.keys(messages).sort((a, b) => (messages[a].timestamp || 0) - (messages[b].timestamp || 0));
+                
+                sortedKeys.forEach(key => { 
                     const msg = messages[key];
                     const isSelected = privateSelectedMessages.has(key);
+                    const isCustomer = msg.sender === 'customer';
+                    const isAdmin = msg.sender === 'admin';
+                    const isSystem = !isCustomer && !isAdmin;
                     
-                    // ===== BUAT WRAPPER =====
+                    // ===== WRAPPER =====
                     const wrapper = document.createElement('div');
-                    wrapper.style.cssText = `display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; padding:8px; border-radius:12px; border:${isSelected ? '3px solid #00ff88' : '3px solid transparent'}; background:${isSelected ? 'rgba(0,255,136,0.1)' : 'transparent'};`;
+                    wrapper.className = 'chat-message-wrapper';
+                    if (isSelected) wrapper.classList.add('selected');
                     wrapper.setAttribute('data-msg-id', key);
                     
                     // ===== CHECKBOX =====
                     const checkboxDiv = document.createElement('div');
-                    checkboxDiv.style.cssText = `display:${privateDeleteMode ? 'flex' : 'none'}; align-items:center; justify-content:center; margin-right:8px; flex-shrink:0;`;
+                    checkboxDiv.className = 'msg-checkbox';
+                    if (privateDeleteMode) checkboxDiv.classList.add('show');
+                    
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    checkbox.style.cssText = 'width:18px; height:18px; accent-color:#00ff88; cursor:pointer;';
                     checkbox.checked = isSelected;
                     checkbox.onclick = function(e) {
                         e.stopPropagation();
@@ -9560,109 +9754,484 @@
                     // ===== AVATAR =====
                     const avatar = document.createElement('img');
                     avatar.style.cssText = 'width:32px; height:32px; border-radius:50%; border:2px solid var(--neon-cyan); object-fit:cover; flex-shrink:0;';
-                    if (msg.sender === 'admin') {
+                    
+                    if (isAdmin) {
                         avatar.src = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
+                    } else if (isCustomer) {
+                        // Coba ambil foto profil user
+                        db.ref('profiles/' + currentChatUser).once('value', snap => {
+                            if (snap.exists() && snap.val().image) {
+                                avatar.src = snap.val().image;
+                            }
+                        });
+                        avatar.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentChatUser) + '&background=00ffff&color=000&size=32&font-size=0.5&bold=true';
                     } else {
-                        avatar.src = 'https://via.placeholder.com/32/00ffff/000000?text=U';
+                        avatar.src = 'https://via.placeholder.com/32/ffaa00/000000?text=S';
                     }
-                    wrapper.appendChild(avatar);
+                    avatar.alt = 'Avatar';
+                    avatar.onerror = function() { 
+                        this.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentChatUser || 'U') + '&background=00ffff&color=000&size=32&font-size=0.5&bold=true';
+                    };
                     
-                    // ===== PESAN =====
-                    const msgDiv = document.createElement('div');
-                    msgDiv.className = `message ${msg.sender === 'customer' ? 'customer' : msg.sender === 'admin' ? 'admin' : 'system'}`;
-                    msgDiv.style.cssText = `max-width:80%; word-wrap:break-word; border-radius:18px; padding:10px 16px; ${msg.sender === 'customer' ? 'background:linear-gradient(135deg, var(--neon-cyan), #0088ff); color:#000; border-top-right-radius:4px;' : msg.sender === 'admin' ? 'background:linear-gradient(135deg, #ff4444, #cc0000); color:white; border-top-left-radius:4px;' : 'background:rgba(255,170,0,0.2); border:1px solid #ffaa00; color:#ffaa00; font-size:12px; text-align:center; max-width:90%;'}`;
+                    // ===== CONTENT =====
+                    const contentDiv = document.createElement('div');
+                    contentDiv.style.cssText = 'flex:1; display:flex; flex-direction:column; min-width:0;';
                     
-                    let content = msg.sender ? `<div style="font-size:11px; font-weight:bold; margin-bottom:4px; ${msg.sender === 'customer' ? 'color:#000;' : msg.sender === 'admin' ? 'color:white;' : 'color:#ffaa00;'}">${msg.sender === 'customer' ? '👤 Customer' : msg.sender === 'admin' ? '👑 Admin' : '📢 System'}</div>` : '';
-                    content += `<div style="font-size:13px; line-height:1.5;">${escapeHtml(msg.text || '')}</div>`;
+                    // ===== BUBBLE =====
+                    const bubble = document.createElement('div');
+                    bubble.className = 'chat-bubble';
+                    
+                    if (isCustomer) {
+                        bubble.classList.add('customer');
+                        bubble.style.alignSelf = 'flex-end';
+                        bubble.style.marginLeft = 'auto';
+                    } else if (isAdmin) {
+                        bubble.classList.add('admin');
+                        bubble.style.alignSelf = 'flex-start';
+                    } else {
+                        bubble.classList.add('system');
+                        bubble.style.alignSelf = 'center';
+                    }
+                    
+                    // ===== SENDER =====
+                    const sender = document.createElement('div');
+                    sender.className = 'msg-sender';
+                    if (isCustomer) {
+                        sender.classList.add('customer');
+                        sender.textContent = '👤 ' + currentChatUser;
+                    } else if (isAdmin) {
+                        sender.classList.add('admin');
+                        sender.textContent = '👑 Admin';
+                    } else {
+                        sender.classList.add('system');
+                        sender.textContent = '📢 System';
+                    }
+                    bubble.appendChild(sender);
+                    
+                    // ===== TEXT =====
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'msg-text';
+                    let msgText = escapeHtml(msg.text || '');
+                    if (msg.edited) {
+                        msgText += ' <span style="color:#888; font-size:10px;">(diedit oleh ' + (msg.editedBy || 'Admin') + ')</span>';
+                    }
+                    textDiv.innerHTML = msgText;
+                    bubble.appendChild(textDiv);
+                    
+                    // ===== FILE =====
                     if (msg.fileData && msg.fileData.url) {
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = 'chat-file-preview';
+                        
                         const isImage = msg.fileData.type && msg.fileData.type.startsWith('image/');
                         if (isImage) {
-                            content += `<div style="margin-top:8px;"><img src="${msg.fileData.url}" onclick="window.open('${msg.fileData.url}')" style="cursor:pointer; width:50px; height:50px; object-fit:cover; border-radius:10px;"><div style="font-size:10px; color:#888;">${escapeHtml(msg.fileData.name || 'Image')}</div></div>`;
+                            fileDiv.innerHTML = `
+                                <img src="${msg.fileData.url}" onclick="window.open('${msg.fileData.url}')">
+                                <div class="file-info">
+                                    <div class="file-name">${escapeHtml(msg.fileData.name || 'Image')}</div>
+                                    <div class="file-size">${msg.fileData.sizeFormatted || formatFileSize(msg.fileData.size || 0)}</div>
+                                </div>
+                                <button class="file-download" onclick="downloadFile('${msg.fileData.url}', '${escapeHtml(msg.fileData.name || 'file')}')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            `;
+                        } else {
+                            fileDiv.innerHTML = `
+                                <i class="fas fa-file" style="font-size:30px; color:#ffaa00;"></i>
+                                <div class="file-info">
+                                    <div class="file-name">${escapeHtml(msg.fileData.name || 'File')}</div>
+                                    <div class="file-size">${msg.fileData.sizeFormatted || formatFileSize(msg.fileData.size || 0)}</div>
+                                </div>
+                                <button class="file-download" onclick="downloadFile('${msg.fileData.url}', '${escapeHtml(msg.fileData.name || 'file')}')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            `;
                         }
+                        bubble.appendChild(fileDiv);
                     }
-                    content += `<div style="font-size:9px; opacity:0.6; margin-top:6px; text-align:right;">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-'}</div>`;
-                    msgDiv.innerHTML = content;
-                    wrapper.appendChild(msgDiv);
+                    
+                    // ===== ACTIONS (Edit & Delete) =====
+                    if (!privateDeleteMode && (isCustomer || isAdmin)) {
+                        const actions = document.createElement('div');
+                        actions.className = 'msg-actions';
+                        
+                        // Edit icon (Admin bisa edit semua, User hanya bisa edit pesan sendiri)
+                        if (isAdmin || isCustomer) {
+                            const editIcon = document.createElement('span');
+                            editIcon.className = 'action-icon edit';
+                            editIcon.innerHTML = '<i class="fas fa-pen"></i>';
+                            editIcon.title = 'Edit pesan';
+                            editIcon.onclick = function(e) {
+                                e.stopPropagation();
+                                const msgId = key;
+                                let source = 'private_chat';
+                                openEditMessagePopupAdmin(msgId, msg.text || '', source, currentChatUser);
+                            };
+                            actions.appendChild(editIcon);
+                        }
+                        
+                        // Delete icon (Admin bisa delete semua, User hanya bisa delete pesan sendiri)
+                        if (isAdmin || isCustomer) {
+                            const deleteIcon = document.createElement('span');
+                            deleteIcon.className = 'action-icon delete';
+                            deleteIcon.innerHTML = '<i class="fas fa-trash"></i>';
+                            deleteIcon.title = 'Hapus pesan';
+                            deleteIcon.onclick = function(e) {
+                                e.stopPropagation();
+                                const msgId = key;
+                                let source = 'private_chat';
+                                confirmDeleteMessageAdmin(msgId, source, currentChatUser);
+                            };
+                            actions.appendChild(deleteIcon);
+                        }
+                        
+                        bubble.appendChild(actions);
+                    }
+                    
+                    // ===== TIME =====
+                    const time = document.createElement('div');
+                    time.className = 'msg-time';
+                    time.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-';
+                    bubble.appendChild(time);
+                    
+                    contentDiv.appendChild(bubble);
+                    
+                    // ===== SUSUN LAYOUT =====
+                    // Untuk pesan customer: avatar di kanan
+                    if (isCustomer) {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display:flex; align-items:flex-start; gap:10px; justify-content:flex-end; width:100%;';
+                        row.appendChild(contentDiv);
+                        
+                        const avatarRight = avatar.cloneNode(true);
+                        avatarRight.style.marginLeft = '0';
+                        row.appendChild(avatarRight);
+                        
+                        wrapper.appendChild(row);
+                    } else if (isAdmin) {
+                        // Admin: avatar di kiri
+                        wrapper.appendChild(avatar);
+                        wrapper.appendChild(contentDiv);
+                    } else {
+                        // System: tanpa avatar
+                        wrapper.appendChild(contentDiv);
+                    }
                     
                     chatBox.appendChild(wrapper);
                 }); 
+                
                 chatBox.scrollTop = chatBox.scrollHeight; 
             } else { 
                 chatBox.innerHTML = '<div class="no-data">Belum ada pesan</div>'; 
-            } 
+            }
+            
+            updatePrivateToolbar();
         }); 
         
-        // Fungsi untuk toggle delete mode
-        window.togglePrivateDeleteMode = function() {
-            privateDeleteMode = !privateDeleteMode;
-            if (!privateDeleteMode) {
-                privateSelectedMessages.clear();
-            }
-            document.getElementById('privateSelectedCount').style.display = privateDeleteMode ? 'inline' : 'none';
-            document.getElementById('privateSelectAllBtn').style.display = privateDeleteMode ? 'inline-flex' : 'none';
-            document.getElementById('privateDeleteSelectedBtn').style.display = privateDeleteMode ? 'inline-flex' : 'none';
-            updatePrivateSelectedCount();
-            loadUserChat();
-        };
-        
-        function togglePrivateMessageSelection(key) {
-            if (!privateDeleteMode) return;
-            if (privateSelectedMessages.has(key)) {
-                privateSelectedMessages.delete(key);
-            } else {
-                privateSelectedMessages.add(key);
-            }
-            updatePrivateSelectedCount();
-            loadUserChat();
-        }
-        
-        function updatePrivateSelectedCount() {
-            document.getElementById('privateSelectedCount').textContent = privateSelectedMessages.size + ' pesan dipilih';
-            document.getElementById('privateSelectedCount').style.display = privateDeleteMode ? 'inline' : 'none';
-        }
-        
-        window.selectAllPrivateMessages = function() {
-            if (!privateDeleteMode) return;
-            const chatBox = document.getElementById('chatMessages');
-            const wrappers = chatBox.querySelectorAll('[data-msg-id]');
-            wrappers.forEach(el => {
-                const key = el.getAttribute('data-msg-id');
-                if (key) privateSelectedMessages.add(key);
-            });
-            updatePrivateSelectedCount();
-            loadUserChat();
-        };
-        
-        window.deleteSelectedPrivateMessages = function() {
-            if (privateSelectedMessages.size === 0) {
-                showToast('Pilih pesan yang akan dihapus!');
-                return;
-            }
-            showConfirm('Hapus Pesan', `Hapus ${privateSelectedMessages.size} pesan?`, async () => {
-                showLoading();
-                let deleted = 0;
-                for (const key of privateSelectedMessages) {
-                    try {
-                        await db.ref('chats/' + currentChatUser + '/' + key).remove();
-                        deleted++;
-                    } catch(e) { console.error(e); }
-                }
-                privateSelectedMessages.clear();
-                updatePrivateSelectedCount();
-                hideLoading();
-                showToast(`✅ ${deleted} pesan dihapus!`);
-                loadUserChat();
-            });
-        };
+        // Buat toolbar jika belum ada
+        createPrivateChatToolbar();
     }
     
+    // ============================================================
+    // CREATE PRIVATE CHAT TOOLBAR
+    // ============================================================
+    function createPrivateChatToolbar() {
+        const chatContainer = document.querySelector('#chat .chat-container');
+        if (!chatContainer) return;
+        
+        let toolbar = document.getElementById('privateChatToolbar');
+        if (toolbar) return;
+        
+        toolbar = document.createElement('div');
+        toolbar.id = 'privateChatToolbar';
+        toolbar.className = 'private-chat-toolbar';
+        toolbar.innerHTML = `
+            <button class="toolbar-btn btn-danger" onclick="togglePrivateDeleteMode()">
+                <i class="fas fa-trash-alt"></i> Hapus Pesan
+            </button>
+            <span class="selected-count" id="privateSelectedCount">0 pesan dipilih</span>
+            <button class="toolbar-btn btn-info" id="privateSelectAllBtn" onclick="selectAllPrivateMessages()" style="display:none;">
+                <i class="fas fa-check-double"></i> Pilih Semua
+            </button>
+            <button class="toolbar-btn btn-success" id="privateDeleteSelectedBtn" onclick="deleteSelectedPrivateMessages()" style="display:none;">
+                <i class="fas fa-trash"></i> Hapus Terpilih
+            </button>
+        `;
+        chatContainer.insertBefore(toolbar, chatContainer.firstChild);
+    }
+    
+    // ============================================================
+    // UPDATE PRIVATE TOOLBAR
+    // ============================================================
+    function updatePrivateToolbar() {
+        const countEl = document.getElementById('privateSelectedCount');
+        const selectAllBtn = document.getElementById('privateSelectAllBtn');
+        const deleteSelectedBtn = document.getElementById('privateDeleteSelectedBtn');
+        
+        if (countEl) {
+            const count = privateSelectedMessages.size;
+            countEl.textContent = count + ' pesan dipilih';
+            countEl.className = 'selected-count' + (count > 0 ? ' highlight' : '');
+            countEl.style.display = privateDeleteMode ? 'inline' : 'none';
+        }
+        
+        if (selectAllBtn) {
+            selectAllBtn.style.display = privateDeleteMode ? 'inline-flex' : 'none';
+        }
+        
+        if (deleteSelectedBtn) {
+            deleteSelectedBtn.style.display = (privateDeleteMode && privateSelectedMessages.size > 0) ? 'inline-flex' : 'none';
+        }
+    }
+    
+    // ============================================================
+    // TOGGLE PRIVATE DELETE MODE
+    // ============================================================
+    function togglePrivateDeleteMode() {
+        privateDeleteMode = !privateDeleteMode;
+        
+        if (!privateDeleteMode) {
+            privateSelectedMessages.clear();
+        }
+        
+        updatePrivateToolbar();
+        loadUserChat(); // Refresh chat untuk tampilkan checkbox
+    }
+    
+    // ============================================================
+    // TOGGLE PRIVATE MESSAGE SELECTION
+    // ============================================================
+    function togglePrivateMessageSelection(key) {
+        if (!privateDeleteMode) return;
+        
+        if (privateSelectedMessages.has(key)) {
+            privateSelectedMessages.delete(key);
+        } else {
+            privateSelectedMessages.add(key);
+        }
+        
+        updatePrivateToolbar();
+        loadUserChat(); // Refresh untuk update border
+    }
+    
+    // ============================================================
+    // SELECT ALL PRIVATE MESSAGES
+    // ============================================================
+    function selectAllPrivateMessages() {
+        if (!privateDeleteMode) return;
+        
+        const chatBox = document.getElementById('chatMessages');
+        const wrappers = chatBox.querySelectorAll('.chat-message-wrapper');
+        
+        wrappers.forEach(el => {
+            const key = el.getAttribute('data-msg-id');
+            if (key) privateSelectedMessages.add(key);
+        });
+        
+        updatePrivateToolbar();
+        loadUserChat();
+    }
+    
+    // ============================================================
+    // DELETE SELECTED PRIVATE MESSAGES
+    // ============================================================
+    function deleteSelectedPrivateMessages() {
+        if (privateSelectedMessages.size === 0) {
+            showToast('Pilih pesan yang akan dihapus!');
+            return;
+        }
+        
+        showConfirm('Hapus Pesan', `Hapus ${privateSelectedMessages.size} pesan?`, async () => {
+            showLoading();
+            let deleted = 0;
+            let errors = 0;
+            
+            for (const key of privateSelectedMessages) {
+                try {
+                    await db.ref('chats/' + currentChatUser + '/' + key).remove();
+                    deleted++;
+                } catch(e) { 
+                    errors++;
+                    console.error('Error deleting:', key, e); 
+                }
+            }
+            
+            privateSelectedMessages.clear();
+            updatePrivateToolbar();
+            hideLoading();
+            
+            if (errors > 0) {
+                showToast(`✅ ${deleted} pesan dihapus, ${errors} gagal!`);
+            } else {
+                showToast(`✅ ${deleted} pesan berhasil dihapus!`);
+            }
+            
+            loadUserChat();
+        });
+    }
+    
+    // ============================================================
+    // SEND ADMIN MESSAGE
+    // ============================================================
     async function sendAdminMessage() { 
         const input = document.getElementById('chatInput'); 
         const text = input.value.trim(); 
         if (!text || !currentChatUser) return; 
-        await db.ref('chats/' + currentChatUser).push({ sender: 'admin', text, timestamp: Date.now() }); 
+        
+        await db.ref('chats/' + currentChatUser).push({ 
+            sender: 'admin', 
+            text: text, 
+            timestamp: Date.now() 
+        }); 
+        
         addActivityLog('Send Message', `Sent message to ${currentChatUser}`); 
         input.value = ''; 
+    }
+    
+    // ============================================================
+    // FORMAT FILE SIZE
+    // ============================================================
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // ============================================================
+    // DOWNLOAD FILE
+    // ============================================================
+    function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    // ============================================================
+    // OPEN EDIT MESSAGE - ADMIN
+    // ============================================================
+    function openEditMessagePopupAdmin(messageId, currentText, source, uid) {
+        editingMessageDataAdmin = {
+            id: messageId,
+            text: currentText,
+            source: source,
+            uid: uid
+        };
+        
+        document.getElementById('editMsgTextareaAdmin').value = currentText;
+        document.getElementById('editMsgPopupAdmin').classList.add('active');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            document.getElementById('editMsgTextareaAdmin').focus();
+            document.getElementById('editMsgTextareaAdmin').select();
+        }, 300);
+    }
+    
+    // ============================================================
+    // SAVE EDIT MESSAGE - ADMIN
+    // ============================================================
+    async function saveEditMessageAdmin() {
+        if (!editingMessageDataAdmin) return;
+        
+        const newText = document.getElementById('editMsgTextareaAdmin').value.trim();
+        if (!newText) {
+            showToast('Pesan tidak boleh kosong!');
+            return;
+        }
+        
+        if (newText === editingMessageDataAdmin.text) {
+            closeEditMsgPopupAdmin();
+            return;
+        }
+        
+        showLoading();
+        try {
+            const { id, source, uid } = editingMessageDataAdmin;
+            let path = '';
+            
+            if (source === 'private_chat') {
+                path = 'chats/' + uid + '/' + id;
+            } else if (source === 'public_chat') {
+                path = 'all_comments/' + id;
+            } else if (source === 'support_chat') {
+                path = 'support_chats/' + uid + '/messages/' + id;
+            } else {
+                throw new Error('Sumber chat tidak dikenal!');
+            }
+            
+            await db.ref(path).update({
+                text: newText,
+                edited: true,
+                editedAt: Date.now(),
+                editedBy: 'Admin'
+            });
+            
+            showToast('✅ Pesan berhasil diedit!');
+            addActivityLog('Edit Message', `Edited message in ${source}: ${newText.substring(0, 50)}...`);
+            closeEditMsgPopupAdmin();
+            
+            if (source === 'private_chat') {
+                loadUserChat();
+            } else if (source === 'public_chat') {
+                loadPublicChat();
+            } else if (source === 'support_chat') {
+                loadSupportChat();
+            }
+            
+        } catch (error) {
+            hideLoading();
+            showToast('Gagal edit pesan: ' + error.message);
+        }
+    }
+    
+    // ============================================================
+    // CLOSE EDIT MESSAGE POPUP - ADMIN
+    // ============================================================
+    function closeEditMsgPopupAdmin() {
+        document.getElementById('editMsgPopupAdmin').classList.remove('active');
+        document.body.style.overflow = '';
+        editingMessageDataAdmin = null;
+    }
+    
+    // ============================================================
+    // CONFIRM DELETE MESSAGE - ADMIN
+    // ============================================================
+    function confirmDeleteMessageAdmin(messageId, source, uid) {
+        showConfirm('Hapus Pesan', 'Yakin ingin menghapus pesan ini?', async () => {
+            showLoading();
+            try {
+                let path = '';
+                if (source === 'private_chat') {
+                    path = 'chats/' + uid + '/' + messageId;
+                } else if (source === 'public_chat') {
+                    path = 'all_comments/' + messageId;
+                } else if (source === 'support_chat') {
+                    path = 'support_chats/' + uid + '/messages/' + messageId;
+                } else {
+                    throw new Error('Sumber chat tidak dikenal!');
+                }
+                
+                await db.ref(path).remove();
+                addActivityLog('Delete Message', `Menghapus pesan dari ${source} (ID: ${messageId})`);
+                hideLoading();
+                showToast('✅ Pesan dihapus!');
+                
+                if (source === 'private_chat') {
+                    loadUserChat();
+                } else if (source === 'public_chat') {
+                    loadPublicChat();
+                } else if (source === 'support_chat') {
+                    loadSupportChat();
+                }
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
     }
 
     // ============================================================
