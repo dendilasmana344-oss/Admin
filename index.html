@@ -2868,6 +2868,434 @@
                 font-size: 22px;
             }
         }
+        
+        /* ============================================================
+       PRIVATE CHAT ADMIN - DESAIN MODERN
+       ============================================================ */
+
+        /* Container chat */
+        .private-chat-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 500px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 25px;
+            padding: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        
+        /* Toolbar */
+        .private-chat-toolbar {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 18px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .private-chat-toolbar .toolbar-btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Orbitron', monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .private-chat-toolbar .toolbar-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .private-chat-toolbar .toolbar-btn-danger {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+        }
+        
+        .private-chat-toolbar .toolbar-btn-danger:hover {
+            box-shadow: 0 5px 20px rgba(255, 68, 68, 0.4);
+        }
+        
+        .private-chat-toolbar .toolbar-btn-info {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+        }
+        
+        .private-chat-toolbar .toolbar-btn-info:hover {
+            box-shadow: 0 5px 20px rgba(33, 150, 243, 0.4);
+        }
+        
+        .private-chat-toolbar .toolbar-btn-success {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #000;
+        }
+        
+        .private-chat-toolbar .toolbar-btn-success:hover {
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+        }
+        
+        .private-chat-toolbar .selected-count {
+            color: #ffaa00;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 4px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 170, 0, 0.3);
+        }
+        
+        .private-chat-toolbar .selected-count.highlight {
+            color: #00ff88;
+            border-color: #00ff88;
+        }
+        
+        /* Message wrapper */
+        .chat-message-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 16px;
+            border: 2px solid transparent;
+            background: transparent;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .chat-message-wrapper:hover {
+            background: rgba(0, 255, 255, 0.03);
+        }
+        
+        .chat-message-wrapper.selected {
+            border-color: #00ff88 !important;
+            background: rgba(0, 255, 136, 0.08) !important;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+        
+        /* Checkbox */
+        .chat-message-wrapper .msg-checkbox {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            margin-top: 8px;
+        }
+        
+        .chat-message-wrapper .msg-checkbox.show {
+            display: flex;
+        }
+        
+        .chat-message-wrapper .msg-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #00ff88;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        
+        /* Avatar */
+        .chat-avatar-admin {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-cyan);
+            object-fit: cover;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+        
+        .chat-avatar-admin.customer {
+            border-color: #00ff88;
+        }
+        
+        .chat-avatar-admin.admin {
+            border-color: #ff4444;
+        }
+        
+        /* Bubble */
+        .chat-bubble {
+            max-width: 75%;
+            word-wrap: break-word;
+            border-radius: 20px;
+            padding: 12px 18px;
+            margin-bottom: 4px;
+            display: inline-block;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+        }
+        
+        .chat-bubble.customer {
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            color: #000;
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .chat-bubble.admin {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+        }
+        
+        .chat-bubble.system {
+            background: rgba(255, 170, 0, 0.15);
+            border: 1px solid #ffaa00;
+            color: #ffaa00;
+            font-size: 12px;
+            text-align: center;
+            max-width: 90%;
+            align-self: center;
+            box-shadow: 0 4px 15px rgba(255, 170, 0, 0.15);
+        }
+        
+        .chat-bubble .msg-sender {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .chat-bubble .msg-sender.customer {
+            color: #000;
+        }
+        
+        .chat-bubble .msg-sender.admin {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .chat-bubble .msg-sender.system {
+            color: #ffaa00;
+        }
+        
+        .chat-bubble .msg-text {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .chat-bubble .msg-time {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 6px;
+            text-align: right;
+            font-family: monospace;
+        }
+        
+        .chat-bubble .msg-actions {
+            display: inline-flex;
+            gap: 6px;
+            margin-left: 10px;
+        }
+        
+        .chat-bubble .msg-actions .action-icon {
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            padding: 3px 6px;
+            border-radius: 6px;
+        }
+        
+        .chat-bubble .msg-actions .action-icon:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .chat-bubble .msg-actions .action-icon.edit:hover {
+            color: var(--neon-cyan);
+        }
+        
+        .chat-bubble .msg-actions .action-icon.delete:hover {
+            color: #ff4444;
+        }
+        
+        /* File preview */
+        .chat-file-preview {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(0, 255, 255, 0.15);
+        }
+        
+        .chat-file-preview img {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        
+        .chat-file-preview .file-info {
+            flex: 1;
+            font-size: 12px;
+        }
+        
+        .chat-file-preview .file-info .file-name {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+        
+        .chat-file-preview .file-info .file-size {
+            color: #888;
+            font-size: 10px;
+        }
+        
+        .chat-file-preview .file-download {
+            color: #00ff88;
+            cursor: pointer;
+            padding: 6px 12px;
+            transition: all 0.3s;
+            border: none;
+            background: rgba(0, 255, 136, 0.15);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        .chat-file-preview .file-download:hover {
+            transform: scale(1.1);
+            background: rgba(0, 255, 136, 0.3);
+        }
+        
+        /* Chat input area */
+        .private-chat-input-area {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 25px;
+            padding: 6px 12px;
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        
+        .private-chat-input-area:focus-within {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+        }
+        
+        .private-chat-input-area .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 14px 16px;
+            font-size: 14px;
+            outline: none;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .private-chat-input-area .chat-input::placeholder {
+            color: #666;
+        }
+        
+        .private-chat-input-area .chat-send-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 18px;
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #000;
+            flex-shrink: 0;
+        }
+        
+        .private-chat-input-area .chat-send-btn:hover {
+            transform: scale(1.1) rotate(-5deg);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+        }
+        
+        .private-chat-input-area .chat-upload-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 18px;
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            color: #000;
+            flex-shrink: 0;
+        }
+        
+        .private-chat-input-area .chat-upload-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+        }
+        
+        /* No data */
+        .chat-no-data {
+            text-align: center;
+            color: #888;
+            padding: 40px 20px;
+            font-style: italic;
+            font-size: 14px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-bubble {
+                max-width: 85%;
+                font-size: 13px;
+                padding: 10px 14px;
+            }
+            .chat-avatar-admin {
+                width: 32px;
+                height: 32px;
+            }
+            .private-chat-toolbar {
+                padding: 10px 12px;
+                gap: 6px;
+            }
+            .private-chat-toolbar .toolbar-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+            }
+            .private-chat-input-area {
+                padding: 4px 10px;
+            }
+            .private-chat-input-area .chat-input {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            .private-chat-input-area .chat-send-btn,
+            .private-chat-input-area .chat-upload-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 15px;
+            }
+        }
+        
         /* ============================================================
            VIP CARD
            ============================================================ */
@@ -6187,7 +6615,6 @@
     let notificationAudio = null;
     let supportUsersList = {};
     let adminNotifPermission = false;
-    let adminUnreadCount = {};
     let publicUnreadAdmin = 0;
     let supportUnreadAdmin = 0;
     let popupTimer = null;
@@ -9604,12 +10031,13 @@
     }
     
     // ============================================================
-    // PRIVATE CHAT - ADMIN (LENGKAP)
+    // PRIVATE CHAT - ADMIN (LENGKAP + DELETE FIX)
     // ============================================================
     
     let privateDeleteMode = false;
     let privateSelectedMessages = new Set();
-    let privateChatListener = null;;
+    let privateChatListener = null;
+    let adminUnreadCount = {};
     
     // ============================================================
     // UPDATE PRIVATE CHAT BADGE
@@ -9647,13 +10075,11 @@
                 option.value = uid; 
                 option.textContent = uid;
                 
-                // Tampilkan status online
                 if (users[uid] && users[uid].status === 'online') {
                     option.textContent = '🟢 ' + uid;
                     option.style.color = '#00ff88';
                 }
                 
-                // Tampilkan badge jika ada unread
                 if (adminUnreadCount[uid] && adminUnreadCount[uid] > 0) {
                     option.textContent += ' 🔴 ' + adminUnreadCount[uid];
                     option.style.fontWeight = 'bold';
@@ -9682,30 +10108,30 @@
         if (!currentChatUser) { 
             input.disabled = true; 
             sendBtn.disabled = true; 
-            document.getElementById('chatMessages').innerHTML = '<div class="no-data">Pilih customer untuk mulai chat</div>'; 
+            const chatBox = document.getElementById('chatMessages');
+            if (chatBox) {
+                chatBox.innerHTML = '<div class="chat-no-data">👤 Pilih customer untuk mulai chat</div>'; 
+            }
             if (privateChatListener) {
                 db.ref('chats/' + currentChatUser).off('value', privateChatListener);
                 privateChatListener = null;
             }
-            // Reset delete mode
             privateDeleteMode = false;
             privateSelectedMessages.clear();
             updatePrivateToolbar();
             return; 
         } 
     
-        // Reset unread count untuk user ini
+        // Reset unread count
         if (adminUnreadCount[currentChatUser]) {
             delete adminUnreadCount[currentChatUser];
             updatePrivateChatBadge();
-            // Update dropdown
             loadChatUsers();
         }
     
         input.disabled = false; 
         sendBtn.disabled = false; 
     
-        // Reset delete mode saat ganti user
         privateDeleteMode = false;
         privateSelectedMessages.clear();
         updatePrivateToolbar();
@@ -9718,10 +10144,16 @@
         privateChatListener = db.ref('chats/' + currentChatUser).limitToLast(50).on('value', snap => { 
             const messages = snap.val(); 
             const chatBox = document.getElementById('chatMessages'); 
+            if (!chatBox) return;
             chatBox.innerHTML = ''; 
             
             if (messages) { 
                 const sortedKeys = Object.keys(messages).sort((a, b) => (messages[a].timestamp || 0) - (messages[b].timestamp || 0));
+                
+                if (sortedKeys.length === 0) {
+                    chatBox.innerHTML = '<div class="chat-no-data">Belum ada pesan dengan customer ini</div>';
+                    return;
+                }
                 
                 sortedKeys.forEach(key => { 
                     const msg = messages[key];
@@ -9753,24 +10185,27 @@
                     
                     // ===== AVATAR =====
                     const avatar = document.createElement('img');
-                    avatar.style.cssText = 'width:32px; height:32px; border-radius:50%; border:2px solid var(--neon-cyan); object-fit:cover; flex-shrink:0;';
+                    avatar.className = 'chat-avatar-admin';
                     
                     if (isAdmin) {
                         avatar.src = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
+                        avatar.classList.add('admin');
                     } else if (isCustomer) {
-                        // Coba ambil foto profil user
+                        avatar.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentChatUser) + '&background=00ffff&color=000&size=40&font-size=0.5&bold=true';
+                        avatar.classList.add('customer');
+                        
+                        // Coba ambil foto profil
                         db.ref('profiles/' + currentChatUser).once('value', snap => {
                             if (snap.exists() && snap.val().image) {
                                 avatar.src = snap.val().image;
                             }
                         });
-                        avatar.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentChatUser) + '&background=00ffff&color=000&size=32&font-size=0.5&bold=true';
                     } else {
-                        avatar.src = 'https://via.placeholder.com/32/ffaa00/000000?text=S';
+                        avatar.src = 'https://via.placeholder.com/38/ffaa00/000000?text=S';
                     }
                     avatar.alt = 'Avatar';
                     avatar.onerror = function() { 
-                        this.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentChatUser || 'U') + '&background=00ffff&color=000&size=32&font-size=0.5&bold=true';
+                        this.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentChatUser || 'U') + '&background=00ffff&color=000&size=40&font-size=0.5&bold=true';
                     };
                     
                     // ===== CONTENT =====
@@ -9780,18 +10215,6 @@
                     // ===== BUBBLE =====
                     const bubble = document.createElement('div');
                     bubble.className = 'chat-bubble';
-                    
-                    if (isCustomer) {
-                        bubble.classList.add('customer');
-                        bubble.style.alignSelf = 'flex-end';
-                        bubble.style.marginLeft = 'auto';
-                    } else if (isAdmin) {
-                        bubble.classList.add('admin');
-                        bubble.style.alignSelf = 'flex-start';
-                    } else {
-                        bubble.classList.add('system');
-                        bubble.style.alignSelf = 'center';
-                    }
                     
                     // ===== SENDER =====
                     const sender = document.createElement('div');
@@ -9850,12 +10273,12 @@
                         bubble.appendChild(fileDiv);
                     }
                     
-                    // ===== ACTIONS (Edit & Delete) =====
+                    // ===== ACTIONS =====
                     if (!privateDeleteMode && (isCustomer || isAdmin)) {
                         const actions = document.createElement('div');
                         actions.className = 'msg-actions';
                         
-                        // Edit icon (Admin bisa edit semua, User hanya bisa edit pesan sendiri)
+                        // Edit
                         if (isAdmin || isCustomer) {
                             const editIcon = document.createElement('span');
                             editIcon.className = 'action-icon edit';
@@ -9863,14 +10286,12 @@
                             editIcon.title = 'Edit pesan';
                             editIcon.onclick = function(e) {
                                 e.stopPropagation();
-                                const msgId = key;
-                                let source = 'private_chat';
-                                openEditMessagePopupAdmin(msgId, msg.text || '', source, currentChatUser);
+                                openEditMessagePopupAdmin(key, msg.text || '', 'private_chat', currentChatUser);
                             };
                             actions.appendChild(editIcon);
                         }
                         
-                        // Delete icon (Admin bisa delete semua, User hanya bisa delete pesan sendiri)
+                        // Delete
                         if (isAdmin || isCustomer) {
                             const deleteIcon = document.createElement('span');
                             deleteIcon.className = 'action-icon delete';
@@ -9879,8 +10300,7 @@
                             deleteIcon.onclick = function(e) {
                                 e.stopPropagation();
                                 const msgId = key;
-                                let source = 'private_chat';
-                                confirmDeleteMessageAdmin(msgId, source, currentChatUser);
+                                confirmDeleteMessageAdmin(msgId, 'private_chat', currentChatUser);
                             };
                             actions.appendChild(deleteIcon);
                         }
@@ -9894,13 +10314,29 @@
                     time.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '-';
                     bubble.appendChild(time);
                     
+                    // Set bubble style berdasarkan sender
+                    if (isCustomer) {
+                        bubble.classList.add('customer');
+                        bubble.style.alignSelf = 'flex-end';
+                        bubble.style.marginLeft = 'auto';
+                        contentDiv.style.alignItems = 'flex-end';
+                    } else if (isAdmin) {
+                        bubble.classList.add('admin');
+                        bubble.style.alignSelf = 'flex-start';
+                        contentDiv.style.alignItems = 'flex-start';
+                    } else {
+                        bubble.classList.add('system');
+                        bubble.style.alignSelf = 'center';
+                        contentDiv.style.alignItems = 'center';
+                    }
+                    
                     contentDiv.appendChild(bubble);
                     
                     // ===== SUSUN LAYOUT =====
-                    // Untuk pesan customer: avatar di kanan
                     if (isCustomer) {
+                        // Customer: avatar di kanan
                         const row = document.createElement('div');
-                        row.style.cssText = 'display:flex; align-items:flex-start; gap:10px; justify-content:flex-end; width:100%;';
+                        row.style.cssText = 'display:flex; align-items:flex-start; gap:12px; justify-content:flex-end; width:100%;';
                         row.appendChild(contentDiv);
                         
                         const avatarRight = avatar.cloneNode(true);
@@ -9922,13 +10358,12 @@
                 
                 chatBox.scrollTop = chatBox.scrollHeight; 
             } else { 
-                chatBox.innerHTML = '<div class="no-data">Belum ada pesan</div>'; 
+                chatBox.innerHTML = '<div class="chat-no-data">Belum ada pesan dengan customer ini</div>'; 
             }
             
             updatePrivateToolbar();
         }); 
         
-        // Buat toolbar jika belum ada
         createPrivateChatToolbar();
     }
     
@@ -9946,14 +10381,14 @@
         toolbar.id = 'privateChatToolbar';
         toolbar.className = 'private-chat-toolbar';
         toolbar.innerHTML = `
-            <button class="toolbar-btn btn-danger" onclick="togglePrivateDeleteMode()">
+            <button class="toolbar-btn toolbar-btn-danger" onclick="togglePrivateDeleteMode()">
                 <i class="fas fa-trash-alt"></i> Hapus Pesan
             </button>
             <span class="selected-count" id="privateSelectedCount">0 pesan dipilih</span>
-            <button class="toolbar-btn btn-info" id="privateSelectAllBtn" onclick="selectAllPrivateMessages()" style="display:none;">
+            <button class="toolbar-btn toolbar-btn-info" id="privateSelectAllBtn" onclick="selectAllPrivateMessages()" style="display:none;">
                 <i class="fas fa-check-double"></i> Pilih Semua
             </button>
-            <button class="toolbar-btn btn-success" id="privateDeleteSelectedBtn" onclick="deleteSelectedPrivateMessages()" style="display:none;">
+            <button class="toolbar-btn toolbar-btn-success" id="privateDeleteSelectedBtn" onclick="deleteSelectedPrivateMessages()" style="display:none;">
                 <i class="fas fa-trash"></i> Hapus Terpilih
             </button>
         `;
@@ -9995,7 +10430,7 @@
         }
         
         updatePrivateToolbar();
-        loadUserChat(); // Refresh chat untuk tampilkan checkbox
+        loadUserChat();
     }
     
     // ============================================================
@@ -10011,7 +10446,7 @@
         }
         
         updatePrivateToolbar();
-        loadUserChat(); // Refresh untuk update border
+        loadUserChat();
     }
     
     // ============================================================
@@ -10021,8 +10456,9 @@
         if (!privateDeleteMode) return;
         
         const chatBox = document.getElementById('chatMessages');
-        const wrappers = chatBox.querySelectorAll('.chat-message-wrapper');
+        if (!chatBox) return;
         
+        const wrappers = chatBox.querySelectorAll('.chat-message-wrapper');
         wrappers.forEach(el => {
             const key = el.getAttribute('data-msg-id');
             if (key) privateSelectedMessages.add(key);
@@ -10033,7 +10469,7 @@
     }
     
     // ============================================================
-    // DELETE SELECTED PRIVATE MESSAGES
+    // DELETE SELECTED PRIVATE MESSAGES - FIX
     // ============================================================
     function deleteSelectedPrivateMessages() {
         if (privateSelectedMessages.size === 0) {
@@ -10046,13 +10482,16 @@
             let deleted = 0;
             let errors = 0;
             
-            for (const key of privateSelectedMessages) {
+            const messagesToDelete = Array.from(privateSelectedMessages);
+            
+            for (const key of messagesToDelete) {
                 try {
                     await db.ref('chats/' + currentChatUser + '/' + key).remove();
                     deleted++;
+                    console.log('✅ Pesan dihapus:', key);
                 } catch(e) { 
                     errors++;
-                    console.error('Error deleting:', key, e); 
+                    console.error('❌ Error deleting:', key, e); 
                 }
             }
             
@@ -10089,6 +10528,46 @@
     }
     
     // ============================================================
+    // CONFIRM DELETE MESSAGE - ADMIN (PERBAIKAN)
+    // ============================================================
+    function confirmDeleteMessageAdmin(messageId, source, uid) {
+        showConfirm('Hapus Pesan', 'Yakin ingin menghapus pesan ini?', async () => {
+            showLoading();
+            try {
+                let path = '';
+                if (source === 'private_chat') {
+                    path = 'chats/' + uid + '/' + messageId;
+                } else if (source === 'public_chat') {
+                    path = 'all_comments/' + messageId;
+                } else if (source === 'support_chat') {
+                    path = 'support_chats/' + uid + '/messages/' + messageId;
+                } else {
+                    throw new Error('Sumber chat tidak dikenal!');
+                }
+                
+                console.log('🗑️ Menghapus pesan di:', path);
+                await db.ref(path).remove();
+                
+                addActivityLog('Delete Message', `Menghapus pesan dari ${source} (ID: ${messageId})`);
+                hideLoading();
+                showToast('✅ Pesan dihapus!');
+                
+                if (source === 'private_chat') {
+                    loadUserChat();
+                } else if (source === 'public_chat') {
+                    loadPublicChat();
+                } else if (source === 'support_chat') {
+                    loadSupportChat();
+                }
+            } catch (error) {
+                hideLoading();
+                showToast('❌ Gagal hapus pesan: ' + error.message);
+                console.error('Error delete:', error);
+            }
+        });
+    }
+    
+    // ============================================================
     // FORMAT FILE SIZE
     // ============================================================
     function formatFileSize(bytes) {
@@ -10110,7 +10589,7 @@
         link.click();
         document.body.removeChild(link);
     }
-    
+        
     // ============================================================
     // OPEN EDIT MESSAGE - ADMIN
     // ============================================================
@@ -12084,6 +12563,152 @@ function updateDashboardChartsRealtime() {
             showToast('All logs cleared!'); 
         }); 
     }
+    
+    // ============================================================
+    // AUTO BAN & DELETE USER - 1 BULAN TIDAK LOGIN = BAN
+    // 2 BULAN TIDAK LOGIN = DELETE
+    // ============================================================
+    
+    async function autoBanAndDeleteUsers() {
+        try {
+            const usersSnap = await db.ref('users').once('value');
+            const users = usersSnap.val() || {};
+            const now = Date.now();
+            const oneMonth = 30 * 24 * 60 * 60 * 1000;
+            const twoMonths = 60 * 24 * 60 * 60 * 1000;
+            
+            let bannedCount = 0;
+            let deletedCount = 0;
+            
+            for (const [uid, userData] of Object.entries(users)) {
+                // Skip admin
+                if (uid === 'admin' || uid === 'ADMIN') continue;
+                
+                const lastLogin = userData.lastLogin ? new Date(userData.lastLogin).getTime() : 
+                                 userData.registeredAt ? new Date(userData.registeredAt).getTime() : 
+                                 now;
+                
+                const inactiveDuration = now - lastLogin;
+                
+                // Cek apakah sudah di-ban
+                const bannedSnap = await db.ref('banned_users/' + uid).once('value');
+                const isBanned = bannedSnap.exists() && bannedSnap.val().status === 'banned';
+                
+                // Jika 2 bulan tidak login -> DELETE (sebelumnya cek ban)
+                if (inactiveDuration >= twoMonths) {
+                    // Hapus semua data user
+                    await deleteUserData(uid);
+                    deletedCount++;
+                    console.log(`🗑️ User ${uid} dihapus karena ${Math.round(inactiveDuration / oneMonth)} bulan tidak login`);
+                    continue;
+                }
+                
+                // Jika 1 bulan tidak login -> BAN
+                if (inactiveDuration >= oneMonth && !isBanned) {
+                    await db.ref('banned_users/' + uid).set({
+                        status: 'banned',
+                        bannedAt: Date.now(),
+                        reason: `Tidak login selama 1 bulan (${Math.round(inactiveDuration / oneMonth)} bulan)`,
+                        lastLogin: userData.lastLogin || '-',
+                        autoBanned: true
+                    });
+                    
+                    await db.ref('users/' + uid + '/status').set('banned');
+                    
+                    bannedCount++;
+                    console.log(`🔴 User ${uid} di-ban karena ${Math.round(inactiveDuration / oneMonth)} bulan tidak login`);
+                    
+                    // Kirim notifikasi ke chat user
+                    await db.ref('chats/' + uid).push({
+                        sender: 'system',
+                        text: `⚠️ *AKUN ANDA DIBAN OTOMATIS*\n\nAkun Anda di-ban karena tidak login selama 1 bulan.\nJika Anda tidak login selama 2 bulan, akun akan dihapus permanen.\n\nHubungi admin untuk informasi lebih lanjut.`,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                // Jika user sudah di-ban dan 2 bulan tidak login -> DELETE
+                if (isBanned && inactiveDuration >= twoMonths) {
+                    await deleteUserData(uid);
+                    deletedCount++;
+                    console.log(`🗑️ User ${uid} dihapus (sudah di-ban, ${Math.round(inactiveDuration / oneMonth)} bulan tidak login)`);
+                }
+            }
+            
+            if (bannedCount > 0 || deletedCount > 0) {
+                console.log(`✅ Auto clean: ${bannedCount} user di-ban, ${deletedCount} user dihapus`);
+                
+                // Kirim notifikasi ke admin
+                if (bannedCount > 0 || deletedCount > 0) {
+                    await db.ref('chats/admin').push({
+                        sender: 'system',
+                        text: `🧹 *AUTO CLEAN USER*\n\n${bannedCount} user di-ban otomatis (1 bulan tidak login)\n${deletedCount} user dihapus otomatis (2 bulan tidak login)`,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error auto ban/delete:', error);
+        }
+    }
+    
+    // ============================================================
+    // DELETE USER DATA
+    // ============================================================
+    async function deleteUserData(uid) {
+        try {
+            // Hapus dari semua node
+            await Promise.all([
+                db.ref('users/' + uid).remove(),
+                db.ref('saldo/' + uid).remove(),
+                db.ref('deposits/' + uid).remove(),
+                db.ref('purchases/' + uid).remove(),
+                db.ref('vip_members/' + uid).remove(),
+                db.ref('banned_users/' + uid).remove(),
+                db.ref('sessions/' + uid).remove(),
+                db.ref('chats/' + uid).remove(),
+                db.ref('profiles/' + uid).remove(),
+                db.ref('security_answers/' + uid).remove(),
+                db.ref('user_notifications/' + uid).remove(),
+                db.ref('user_config/' + uid).remove(),
+                db.ref('user_updates/' + uid).remove(),
+                db.ref('free_updates/views/' + uid).remove()
+            ]);
+            
+            console.log(`✅ User ${uid} berhasil dihapus semua datanya`);
+        } catch (error) {
+            console.error(`❌ Gagal hapus user ${uid}:`, error);
+        }
+    }
+    
+    // ============================================================
+    // JALANKAN AUTO BAN & DELETE (SETIAP 12 JAM)
+    // ============================================================
+    function initAutoBanAndDelete() {
+        // Jalankan pertama kali setelah 5 menit
+        setTimeout(() => {
+            autoBanAndDeleteUsers();
+        }, 5 * 60 * 1000);
+        
+        // Jalankan setiap 12 jam
+        setInterval(() => {
+            autoBanAndDeleteUsers();
+        }, 12 * 60 * 60 * 1000);
+        
+        console.log('🔄 Auto Ban & Delete initialized (1 bulan = Ban, 2 bulan = Delete)');
+    }
+    
+    // ============================================================
+    // TAMBAHKAN CEK MANUAL VIA ADMIN
+    // ============================================================
+    function manualCleanUsers() {
+        showConfirm('Clean Users', 'Jalankan pembersihan otomatis user yang tidak login?', async () => {
+            showLoading();
+            await autoBanAndDeleteUsers();
+            hideLoading();
+            showToast('✅ Pembersihan selesai!');
+        });
+    }
 
     // ============================================================
     // CREATE NEW USER - ADMIN (DENGAN DEVICE ID & IP DUMMY)
@@ -12394,6 +13019,7 @@ function updateDashboardChartsRealtime() {
         resetPublicBadgeAdmin();
         loadFreeUpdateStatsRealtime();
         loadFreeUpdateHistoryRealtime();
+        initAutoBanAndDelete();
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
