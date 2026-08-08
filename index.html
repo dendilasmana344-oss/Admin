@@ -4542,6 +4542,171 @@
             color: #000;
             transform: translateY(-3px);
         }
+        
+        /* ============================================================
+        USER MANAGEMENT - ADMIN
+        ============================================================ */
+
+        /* User Item */
+        .um-user-item {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .um-user-item:hover {
+            transform: translateX(5px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.1);
+        }
+
+        .um-user-item.banned {
+            border-left: 5px solid #ff4444;
+            background: rgba(255, 68, 68, 0.05);
+        }
+
+        .um-user-item.inactive {
+            border-left: 5px solid #ffaa00;
+            background: rgba(255, 170, 0, 0.05);
+        }
+
+        .um-user-item.deleted {
+            border-left: 5px solid #ff6b6b;
+            background: rgba(255, 107, 107, 0.05);
+            opacity: 0.7;
+        }
+
+        .um-user-item.active {
+            border-left: 5px solid #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .um-user-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .um-user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-cyan);
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .um-user-uid {
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .um-user-uid:hover {
+            text-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        .um-user-details {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .um-user-details span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .um-user-details .status-badge {
+            padding: 3px 12px;
+            border-radius: 15px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .um-user-details .status-badge.banned {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .um-user-details .status-badge.active {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .um-user-details .status-badge.inactive {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+        }
+
+        .um-user-details .status-badge.deleted {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+        }
+
+        .um-user-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .um-user-actions .btn {
+            padding: 6px 14px;
+            font-size: 11px;
+            border-radius: 15px;
+        }
+
+        /* Empty state */
+        .um-empty {
+            text-align: center;
+            color: #888;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        .um-empty i {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .um-user-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .um-user-info {
+                flex-wrap: wrap;
+            }
+            .um-user-details {
+                gap: 10px;
+            }
+            .um-user-actions {
+                justify-content: center;
+            }
+        }
 
         /* ============================================================
            LEADERBOARD
@@ -5508,6 +5673,7 @@
         <div class="tab" onclick="openTab('deposit_orders')"><i class="fas fa-coins"></i> Deposit Orders</div>
         <div class="tab" onclick="openTab('vip_orders')"><i class="fas fa-crown"></i> VIP Orders</div>
         <div class="tab" onclick="openTab('customers')"><i class="fas fa-users"></i> Customers</div>
+        <div class="tab" onclick="openTab('user_management')"><i class="fas fa-user-cog"></i> User Management</div>
         <div class="tab" onclick="openTab('vip_list')"><i class="fas fa-star"></i> VIP List</div>
         <div class="tab" onclick="openTab('updates')"><i class="fas fa-file-upload"></i> File Updates</div>
         <div class="tab" onclick="openTab('free_update')"><i class="fas fa-download"></i> Free Update</div>
@@ -5642,6 +5808,68 @@
             <div class="card-title glow-cyan"><i class="fas fa-users"></i> Customer Management <button class="btn btn-primary btn-sm" onclick="loadCustomers()" style="margin-left:auto;"><i class="fas fa-sync-alt"></i> Refresh</button></div>
             <input type="text" class="search-input" id="customerSearch" placeholder="🔍 Search by UID or Device ID..." onkeyup="filterCustomers()">
             <div id="customerList"></div>
+        </div>
+    </div>
+    
+    <!-- ============================================================
+     USER MANAGEMENT TAB
+     ============================================================ -->
+    <div id="user_management" class="tab-content">
+        <div class="card">
+            <div class="card-title glow-cyan">
+                <i class="fas fa-user-cog"></i> User Management
+                <button class="btn btn-primary btn-sm" onclick="loadUserManagement()" style="margin-left:auto;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-warning btn-sm" onclick="manualCleanUsers()" style="margin-left:10px;">
+                    <i class="fas fa-broom"></i> Clean Inactive
+                </button>
+            </div>
+        
+            <!-- STATS -->
+            <div class="dashboard-grid" style="margin-bottom:20px;">
+                <div class="dashboard-card" style="border-color:#ff4444;">
+                    <div class="dashboard-icon" style="color:#ff4444;"><i class="fas fa-ban"></i></div>
+                    <div class="card-value" style="color:#ff4444; font-size:32px;" id="umBannedCount">0</div>
+                    <div class="card-label">User Terban</div>
+                    <div class="card-sub" id="umBannedSub">0 otomatis, 0 manual</div>
+                </div>
+                <div class="dashboard-card" style="border-color:#ff6b6b;">
+                    <div class="dashboard-icon" style="color:#ff6b6b;"><i class="fas fa-trash-alt"></i></div>
+                    <div class="card-value" style="color:#ff6b6b; font-size:32px;" id="umDeletedCount">0</div>
+                    <div class="card-label">User Terhapus</div>
+                    <div class="card-sub" id="umDeletedSub">Total terhapus</div>
+                </div>
+                <div class="dashboard-card" style="border-color:#ffaa00;">
+                    <div class="dashboard-icon" style="color:#ffaa00;"><i class="fas fa-clock"></i></div>
+                    <div class="card-value" style="color:#ffaa00; font-size:32px;" id="umInactiveCount">0</div>
+                    <div class="card-label">User Tidak Aktif</div>
+                    <div class="card-sub" id="umInactiveSub">1 bulan tidak login</div>
+                </div>
+                <div class="dashboard-card" style="border-color:#00ff88;">
+                    <div class="dashboard-icon" style="color:#00ff88;"><i class="fas fa-users"></i></div>
+                    <div class="card-value" style="color:#00ff88; font-size:32px;" id="umTotalUsers">0</div>
+                    <div class="card-label">Total User</div>
+                    <div class="card-sub" id="umTotalSub">Aktif + Terban</div>
+                </div>
+            </div>
+        
+            <!-- FILTER TABS -->
+            <div class="filter-tabs" id="umFilterTabs">
+                <div class="filter-tab active" onclick="filterUserManagement('all')">📋 Semua User</div>
+                <div class="filter-tab" onclick="filterUserManagement('active')">🟢 Aktif</div>
+                <div class="filter-tab" onclick="filterUserManagement('banned')">🔴 Terban</div>
+                <div class="filter-tab" onclick="filterUserManagement('inactive')">🟡 Tidak Aktif</div>
+                <div class="filter-tab" onclick="filterUserManagement('deleted')">⚫ Terhapus</div>
+            </div>
+        
+            <!-- SEARCH -->
+            <div class="search-box">
+                <input type="text" class="search-input" id="umSearch" placeholder="🔍 Cari UID..." onkeyup="filterUserManagement()">
+            </div>
+        
+            <!-- LIST USER -->
+            <div id="umUserList" style="max-height:600px; overflow-y:auto; margin-top:15px;"></div>
         </div>
     </div>
 
@@ -9999,6 +10227,479 @@
             }
         });
     }
+    
+    // ============================================================
+    // USER MANAGEMENT - ADMIN
+    // ============================================================
+    
+    let allUserData = [];
+    let umFilter = 'all';
+    
+    // ============================================================
+    // LOAD USER MANAGEMENT
+    // ============================================================
+    async function loadUserManagement() {
+        showLoading();
+        try {
+            // Ambil semua data
+            const [usersSnap, bannedSnap, saldoSnap, vipSnap, sessionsSnap] = await Promise.all([
+                db.ref('users').once('value'),
+                db.ref('banned_users').once('value'),
+                db.ref('saldo').once('value'),
+                db.ref('vip_members').once('value'),
+                db.ref('sessions').once('value')
+            ]);
+            
+            const users = usersSnap.val() || {};
+            const banned = bannedSnap.val() || {};
+            const saldo = saldoSnap.val() || {};
+            const vip = vipSnap.val() || {};
+            const sessions = sessionsSnap.val() || {};
+            
+            const now = Date.now();
+            const oneMonth = 30 * 24 * 60 * 60 * 1000;
+            const twoMonths = 60 * 24 * 60 * 60 * 1000;
+            
+            allUserData = [];
+            let bannedCount = 0;
+            let autoBannedCount = 0;
+            let manualBannedCount = 0;
+            let inactiveCount = 0;
+            let deletedCount = 0;
+            let totalUsers = 0;
+            
+            // Proses user aktif
+            for (const [uid, userData] of Object.entries(users)) {
+                if (uid === 'admin' || uid === 'ADMIN') continue;
+                
+                totalUsers++;
+                
+                const isBanned = !!banned[uid];
+                const isVip = !!(vip[uid] && vip[uid].status === 'active');
+                const isOnline = !!(sessions[uid] && sessions[uid].sessionId);
+                
+                const lastLogin = userData.lastLogin ? new Date(userData.lastLogin).getTime() : 
+                                 userData.registeredAt ? new Date(userData.registeredAt).getTime() : 
+                                 now;
+                
+                const inactiveDuration = now - lastLogin;
+                const isInactive = inactiveDuration >= oneMonth && !isBanned;
+                
+                let status = 'active';
+                let statusLabel = '🟢 Aktif';
+                let statusClass = 'active';
+                
+                if (isBanned) {
+                    status = 'banned';
+                    statusLabel = '🔴 Terban';
+                    statusClass = 'banned';
+                    bannedCount++;
+                    
+                    if (banned[uid].autoBanned) {
+                        autoBannedCount++;
+                    } else {
+                        manualBannedCount++;
+                    }
+                } else if (isInactive) {
+                    status = 'inactive';
+                    statusLabel = '🟡 Tidak Aktif';
+                    statusClass = 'inactive';
+                    inactiveCount++;
+                }
+                
+                // Cek apakah sudah 2 bulan (akan dihapus)
+                const willBeDeleted = inactiveDuration >= twoMonths;
+                
+                allUserData.push({
+                    uid: uid,
+                    status: status,
+                    statusLabel: statusLabel,
+                    statusClass: statusClass,
+                    isBanned: isBanned,
+                    isVip: isVip,
+                    isOnline: isOnline,
+                    isInactive: isInactive,
+                    willBeDeleted: willBeDeleted,
+                    autoBanned: isBanned && banned[uid]?.autoBanned,
+                    bannedAt: isBanned ? banned[uid]?.bannedAt : null,
+                    bannedReason: isBanned ? banned[uid]?.reason : null,
+                    saldo: saldo[uid]?.amount || 0,
+                    pin: userData.pin || '******',
+                    registeredAt: userData.registeredAt || '-',
+                    lastLogin: userData.lastLogin || '-',
+                    lastIP: userData.lastIP || '-',
+                    device: userData.device || '-',
+                    deviceId: userData.deviceId || '-',
+                    inactiveDuration: inactiveDuration,
+                    inactiveMonths: Math.round(inactiveDuration / oneMonth)
+                });
+            }
+            
+            // Tambahkan data user yang sudah dihapus (dari log)
+            const deletedLog = await db.ref('deleted_users_log').once('value');
+            const deletedUsers = deletedLog.val() || {};
+            
+            for (const [uid, data] of Object.entries(deletedUsers)) {
+                deletedCount++;
+                allUserData.push({
+                    uid: uid,
+                    status: 'deleted',
+                    statusLabel: '⚫ Terhapus',
+                    statusClass: 'deleted',
+                    isBanned: false,
+                    isVip: false,
+                    isOnline: false,
+                    isInactive: false,
+                    willBeDeleted: false,
+                    autoBanned: false,
+                    bannedAt: null,
+                    bannedReason: null,
+                    saldo: 0,
+                    pin: '******',
+                    registeredAt: data.registeredAt || '-',
+                    lastLogin: data.lastLogin || '-',
+                    lastIP: data.lastIP || '-',
+                    device: data.device || '-',
+                    deviceId: data.deviceId || '-',
+                    deletedAt: data.deletedAt || '-',
+                    deletedReason: data.deletedReason || 'Auto delete (2 bulan tidak login)',
+                    inactiveDuration: 0,
+                    inactiveMonths: 0
+                });
+            }
+            
+            // Update stats
+            document.getElementById('umBannedCount').textContent = bannedCount;
+            document.getElementById('umBannedSub').textContent = `${autoBannedCount} otomatis, ${manualBannedCount} manual`;
+            document.getElementById('umDeletedCount').textContent = deletedCount;
+            document.getElementById('umDeletedSub').textContent = `${deletedCount} total terhapus`;
+            document.getElementById('umInactiveCount').textContent = inactiveCount;
+            document.getElementById('umInactiveSub').textContent = `${inactiveCount} user 1 bulan tidak login`;
+            document.getElementById('umTotalUsers').textContent = totalUsers;
+            document.getElementById('umTotalSub').textContent = `${totalUsers} user aktif + terban`;
+            
+            // Urutkan: user terban di atas
+            allUserData.sort((a, b) => {
+                const order = { banned: 0, inactive: 1, active: 2, deleted: 3 };
+                return (order[a.status] || 99) - (order[b.status] || 99);
+            });
+            
+            renderUserManagement();
+            hideLoading();
+            
+        } catch (error) {
+            hideLoading();
+            showToast('Error loading user management: ' + error.message);
+            console.error(error);
+        }
+    }
+    
+    // ============================================================
+    // RENDER USER MANAGEMENT
+    // ============================================================
+    function renderUserManagement() {
+        const container = document.getElementById('umUserList');
+        if (!container) return;
+        
+        let filtered = [...allUserData];
+        
+        // Filter
+        if (umFilter !== 'all') {
+            filtered = filtered.filter(u => u.status === umFilter);
+        }
+        
+        // Search
+        const search = document.getElementById('umSearch')?.value.toLowerCase() || '';
+        if (search) {
+            filtered = filtered.filter(u => u.uid.toLowerCase().includes(search));
+        }
+        
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="um-empty">
+                    <i class="fas fa-users-slash"></i>
+                    Tidak ada user yang ditemukan
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        filtered.forEach(user => {
+            // Avatar
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.uid)}&background=${user.isVip ? 'ffd700' : '00ffff'}&color=000&size=50&font-size=0.5&bold=true`;
+            
+            // Status badge
+            const statusBadge = `
+                <span class="status-badge ${user.statusClass}">
+                    ${user.statusLabel}
+                </span>
+            `;
+            
+            // Actions
+            let actions = '';
+            if (user.status === 'banned') {
+                actions += `
+                    <button class="btn btn-success btn-sm" onclick="unbanUserFromManagement('${user.uid}')">
+                        <i class="fas fa-check"></i> Unban
+                    </button>
+                `;
+            } else if (user.status === 'active' || user.status === 'inactive') {
+                actions += `
+                    <button class="btn btn-danger btn-sm" onclick="banUserFromManagement('${user.uid}')">
+                        <i class="fas fa-ban"></i> Ban
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="viewUserDetail('${user.uid}')">
+                        <i class="fas fa-eye"></i> Detail
+                    </button>
+                `;
+            } else if (user.status === 'deleted') {
+                actions += `
+                    <button class="btn btn-secondary btn-sm" onclick="restoreUserFromManagement('${user.uid}')">
+                        <i class="fas fa-undo"></i> Restore
+                    </button>
+                `;
+            }
+            
+            // Info tambahan
+            let extraInfo = '';
+            if (user.isVip) extraInfo += '👑 VIP ';
+            if (user.isOnline) extraInfo += '🟢 Online ';
+            if (user.isBanned && user.autoBanned) extraInfo += '🤖 Auto-Ban ';
+            if (user.willBeDeleted) extraInfo += '⚠️ Akan dihapus ';
+            
+            html += `
+                <div class="um-user-item ${user.statusClass}">
+                    <div class="um-user-info">
+                        <img src="${avatarUrl}" class="um-user-avatar" onerror="this.style.display='none'">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                <span class="um-user-uid" onclick="copyUID('${user.uid}')">${user.uid}</span>
+                                ${statusBadge}
+                                ${extraInfo ? `<span style="font-size:11px; color:#888;">${extraInfo}</span>` : ''}
+                            </div>
+                            <div class="um-user-details">
+                                <span><i class="fas fa-wallet"></i> Rp ${formatRupiah(user.saldo)}</span>
+                                <span><i class="fas fa-lock"></i> PIN: ${user.pin}</span>
+                                <span><i class="fas fa-calendar-plus"></i> Reg: ${user.registeredAt !== '-' ? new Date(user.registeredAt).toLocaleDateString('id-ID') : '-'}</span>
+                                <span><i class="fas fa-clock"></i> Login: ${user.lastLogin !== '-' ? new Date(user.lastLogin).toLocaleDateString('id-ID') : '-'}</span>
+                                ${user.inactiveMonths > 0 ? `<span style="color:#ffaa00;"><i class="fas fa-hourglass-end"></i> ${user.inactiveMonths} bulan</span>` : ''}
+                                ${user.deletedAt ? `<span style="color:#ff6b6b;"><i class="fas fa-trash"></i> ${new Date(user.deletedAt).toLocaleDateString('id-ID')}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="um-user-actions">
+                        ${actions}
+                        ${user.status !== 'deleted' ? `
+                            <button class="btn btn-secondary btn-sm" onclick="forceLogout('${user.uid}')">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteUserFromManagement('${user.uid}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    // ============================================================
+    // FILTER USER MANAGEMENT
+    // ============================================================
+    function filterUserManagement(filter) {
+        if (filter) {
+            umFilter = filter;
+            document.querySelectorAll('#umFilterTabs .filter-tab').forEach(t => t.classList.remove('active'));
+            if (event?.currentTarget) event.currentTarget.classList.add('active');
+        }
+        renderUserManagement();
+    }
+    
+    // ============================================================
+    // BAN USER FROM MANAGEMENT
+    // ============================================================
+    async function banUserFromManagement(uid) {
+        showConfirm('Ban User', `Yakin ingin mem-ban user ${uid}?`, async () => {
+            showLoading();
+            try {
+                await db.ref('banned_users/' + uid).set({
+                    status: 'banned',
+                    bannedAt: Date.now(),
+                    reason: 'Diban oleh admin dari User Management',
+                    manualBanned: true
+                });
+                await db.ref('users/' + uid + '/status').set('banned');
+                
+                await db.ref('chats/' + uid).push({
+                    sender: 'system',
+                    text: `⚠️ *AKUN ANDA DIBAN OLEH ADMIN*\n\nAkun Anda telah di-ban oleh admin.\nHubungi admin untuk informasi lebih lanjut.`,
+                    timestamp: Date.now()
+                });
+                
+                addActivityLog('Ban User', `User ${uid} di-ban dari User Management`);
+                hideLoading();
+                showToast(`✅ User ${uid} berhasil di-ban!`);
+                loadUserManagement();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+    
+    // ============================================================
+    // UNBAN USER FROM MANAGEMENT
+    // ============================================================
+    async function unbanUserFromManagement(uid) {
+        showConfirm('Unban User', `Yakin ingin unban user ${uid}?`, async () => {
+            showLoading();
+            try {
+                await db.ref('banned_users/' + uid).remove();
+                await db.ref('users/' + uid + '/status').set('active');
+                
+                await db.ref('chats/' + uid).push({
+                    sender: 'system',
+                    text: `✅ *AKUN ANDA DIUNBAN*\n\nAkun Anda telah diunban oleh admin.\nSilakan login kembali.`,
+                    timestamp: Date.now()
+                });
+                
+                addActivityLog('Unban User', `User ${uid} di-unban dari User Management`);
+                hideLoading();
+                showToast(`✅ User ${uid} berhasil di-unban!`);
+                loadUserManagement();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+    
+    // ============================================================
+    // DELETE USER FROM MANAGEMENT
+    // ============================================================
+    async function deleteUserFromManagement(uid) {
+        showConfirm('Hapus User', `Yakin ingin menghapus user ${uid}? Semua data akan hilang!`, async () => {
+            showLoading();
+            try {
+                // Simpan log sebelum dihapus
+                const userSnap = await db.ref('users/' + uid).once('value');
+                const userData = userSnap.val() || {};
+                
+                await db.ref('deleted_users_log/' + uid).set({
+                    uid: uid,
+                    registeredAt: userData.registeredAt || '-',
+                    lastLogin: userData.lastLogin || '-',
+                    lastIP: userData.lastIP || '-',
+                    device: userData.device || '-',
+                    deviceId: userData.deviceId || '-',
+                    deletedAt: Date.now(),
+                    deletedReason: 'Dihapus oleh admin dari User Management'
+                });
+                
+                // Hapus semua data
+                await deleteUserData(uid);
+                
+                addActivityLog('Delete User', `User ${uid} dihapus dari User Management`);
+                hideLoading();
+                showToast(`✅ User ${uid} berhasil dihapus!`);
+                loadUserManagement();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+    
+    // ============================================================
+    // RESTORE USER FROM MANAGEMENT
+    // ============================================================
+    async function restoreUserFromManagement(uid) {
+        showConfirm('Restore User', `Yakin ingin merestore user ${uid}?`, async () => {
+            showLoading();
+            try {
+                const logSnap = await db.ref('deleted_users_log/' + uid).once('value');
+                const logData = logSnap.val();
+                
+                if (!logData) {
+                    showToast('Data user tidak ditemukan di log!');
+                    hideLoading();
+                    return;
+                }
+                
+                // Restore user
+                await db.ref('users/' + uid).set({
+                    uid: uid,
+                    pin: '123456', // PIN default
+                    status: 'active',
+                    registeredAt: logData.registeredAt || new Date().toISOString(),
+                    lastLogin: logData.lastLogin || '-',
+                    lastIP: logData.lastIP || '-',
+                    device: logData.device || '-',
+                    deviceId: logData.deviceId || '-',
+                    restoredAt: Date.now(),
+                    restoredBy: 'Admin'
+                });
+                
+                await db.ref('saldo/' + uid).set({ amount: 0, created: Date.now() });
+                
+                // Hapus dari log
+                await db.ref('deleted_users_log/' + uid).remove();
+                
+                await db.ref('chats/' + uid).push({
+                    sender: 'system',
+                    text: `🔄 *AKUN ANDA DIRESTORE*\n\nAkun Anda telah direstore oleh admin.\nPIN default: 123456\nSilakan login dan segera ganti PIN Anda.`,
+                    timestamp: Date.now()
+                });
+                
+                addActivityLog('Restore User', `User ${uid} direstore dari User Management`);
+                hideLoading();
+                showToast(`✅ User ${uid} berhasil direstore!`);
+                loadUserManagement();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+    
+    // ============================================================
+    // VIEW USER DETAIL
+    // ============================================================
+    function viewUserDetail(uid) {
+        const user = allUserData.find(u => u.uid === uid);
+        if (!user) {
+            showToast('User tidak ditemukan!');
+            return;
+        }
+        
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(uid)}&background=00ffff&color=000&size=150&font-size=0.5&bold=true`;
+        
+        showNeonModal(
+            '👤 Detail User',
+            `
+            <div style="text-align:center;padding:10px 0;">
+                <img src="${avatarUrl}" style="width:100px;height:100px;border-radius:50%;border:3px solid var(--neon-cyan);object-fit:cover;margin-bottom:15px;">
+                <div style="font-size:22px;font-weight:bold;color:var(--neon-cyan);font-family:'Orbitron',monospace;">${uid}</div>
+                <div style="margin-top:15px;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;font-size:13px;">
+                    <div><span style="color:#888;">Status:</span> <span style="color:${user.isBanned ? '#ff4444' : '#00ff88'};">${user.isBanned ? '🔴 Banned' : '🟢 Active'}</span></div>
+                    <div><span style="color:#888;">VIP:</span> <span style="color:#ffd700;">${user.isVip ? '👑 Yes' : '❌ No'}</span></div>
+                    <div><span style="color:#888;">Saldo:</span> <span style="color:#00ff88;">Rp ${formatRupiah(user.saldo)}</span></div>
+                    <div><span style="color:#888;">PIN:</span> <span style="color:#ffaa00;">${user.pin}</span></div>
+                    <div style="grid-column:span 2;"><span style="color:#888;">Registrasi:</span> <span style="color:#fff;">${user.registeredAt !== '-' ? new Date(user.registeredAt).toLocaleString('id-ID') : '-'}</span></div>
+                    <div style="grid-column:span 2;"><span style="color:#888;">Last Login:</span> <span style="color:#fff;">${user.lastLogin !== '-' ? new Date(user.lastLogin).toLocaleString('id-ID') : '-'}</span></div>
+                    <div style="grid-column:span 2;"><span style="color:#888;">IP:</span> <span style="color:#00ff88;font-family:monospace;">${user.lastIP || '-'}</span></div>
+                    <div style="grid-column:span 2;"><span style="color:#888;">Device ID:</span> <span style="color:#ff6b9d;font-family:monospace;font-size:11px;">${user.deviceId || '-'}</span></div>
+                    ${user.bannedReason ? `<div style="grid-column:span 2;color:#ff4444;font-size:12px;">⚠️ Alasan Ban: ${user.bannedReason}</div>` : ''}
+                    ${user.inactiveMonths > 0 ? `<div style="grid-column:span 2;color:#ffaa00;font-size:12px;">⏳ Tidak login selama ${user.inactiveMonths} bulan</div>` : ''}
+                </div>
+            </div>
+            `,
+            'info'
+        );
+    }
 
     // ============================================================
     // PRIVATE CHAT - LENGKAP
@@ -12056,249 +12757,257 @@
         console.log('📢 Notifikasi Admin:', title, message);
     }
     
-    // ============================================================
-// DASHBOARD GRAFIK 3D MODERN - CHART.JS
-// ============================================================
-let regChart, loginChart, depositChart, vipChart;
-let chartDataCache = {
-    reg: { labels: [], data: [] },
-    login: { labels: [], data: [] },
-    deposit: { labels: [], data: [] },
-    vip: { labels: [], data: [] }
-};
-
-function initDashboardCharts() {
-    const ctxReg = document.getElementById('regChart');
-    const ctxLogin = document.getElementById('loginChart');
-    const ctxDeposit = document.getElementById('depositChart');
-    const ctxVip = document.getElementById('vipChart');
-    
-    if (!ctxReg || !ctxLogin || !ctxDeposit || !ctxVip) return;
-    
-    const defaultData = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'];
-    
-    const baseConfig = (label, color, bgColor) => ({
-        type: 'line',
-        data: {
-            labels: defaultData,
-            datasets: [{
-                label: label,
-                data: [0, 0, 0, 0, 0, 0, 0],
-                borderColor: color,
-                backgroundColor: bgColor || color + '20',
-                borderWidth: 3,
-                pointBackgroundColor: color,
-                pointBorderColor: '#000',
-                pointRadius: 4,
-                pointHoverRadius: 7,
-                fill: true,
-                tension: 0.4,
-                shadowColor: color,
-                shadowBlur: 15,
-                shadowOffsetX: 0,
-                shadowOffsetY: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(10,10,10,0.9)',
-                    titleColor: '#00ffff',
-                    bodyColor: '#fff',
-                    borderColor: '#00ffff',
-                    borderWidth: 1,
-                    cornerRadius: 10,
-                    padding: 12,
-                    callbacks: {
-                        label: function(context) {
-                            return label + ': ' + context.parsed.y;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#888', font: { size: 9 } }
-                },
-                y: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#888', font: { size: 9 }, stepSize: 1 }
-                }
-            },
-            animation: {
-                duration: 1000,
-                easing: 'easeOutQuart'
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            }
+    // Buat node deleted_users_log jika belum ada
+    async function initDeletedUsersLog() {
+        const snap = await db.ref('deleted_users_log').once('value');
+        if (!snap.exists()) {
+            await db.ref('deleted_users_log').set({ _init: true });
         }
-    });
-    
-    regChart = new Chart(ctxReg, baseConfig('Registrasi', '#00ff88', 'rgba(0,255,136,0.15)'));
-    loginChart = new Chart(ctxLogin, baseConfig('Login', '#ffaa00', 'rgba(255,170,0,0.15)'));
-    depositChart = new Chart(ctxDeposit, baseConfig('Deposit', '#00ffff', 'rgba(0,255,255,0.15)'));
-    vipChart = new Chart(ctxVip, baseConfig('VIP', '#ffd700', 'rgba(255,215,0,0.15)'));
-    
-    loadDashboardChartData();
-}
-
-async function loadDashboardChartData() {
-    try {
-        // Ambil data dari Firebase
-        const usersSnap = await db.ref('users').once('value');
-        const users = usersSnap.val() || {};
-        const sessionsSnap = await db.ref('sessions').once('value');
-        const sessions = sessionsSnap.val() || {};
-        const depositsSnap = await db.ref('deposits').once('value');
-        const deposits = depositsSnap.val() || {};
-        const purchasesSnap = await db.ref('purchases').once('value');
-        const purchases = purchasesSnap.val() || {};
-        
-        // Data per jam (24 jam terakhir)
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
-        const hourLabels = [];
-        const regData = [];
-        const loginData = [];
-        const depositData = [];
-        const vipData = [];
-        
-        // Buat label per jam
-        for (let i = 23; i >= 0; i--) {
-            const hour = new Date(now - i * 3600000);
-            hourLabels.push(hour.getHours().toString().padStart(2, '0') + ':00');
-        }
-        
-        // Hitung registrasi per jam
-        Object.keys(users).forEach(uid => {
-            const user = users[uid];
-            if (user.registeredAt) {
-                const regTime = new Date(user.registeredAt).getTime();
-                if (regTime > now - oneDay) {
-                    const hourIndex = 23 - Math.floor((now - regTime) / 3600000);
-                    if (hourIndex >= 0 && hourIndex < 24) {
-                        regData[hourIndex] = (regData[hourIndex] || 0) + 1;
-                    }
-                }
-            }
-        });
-        
-        // Hitung login per jam
-        Object.keys(sessions).forEach(uid => {
-            const session = sessions[uid];
-            if (session && session.timestamp) {
-                const loginTime = session.timestamp;
-                if (loginTime > now - oneDay) {
-                    const hourIndex = 23 - Math.floor((now - loginTime) / 3600000);
-                    if (hourIndex >= 0 && hourIndex < 24) {
-                        loginData[hourIndex] = (loginData[hourIndex] || 0) + 1;
-                    }
-                }
-            }
-        });
-        
-        // Hitung deposit per jam
-        Object.keys(deposits).forEach(uid => {
-            Object.keys(deposits[uid]).forEach(id => {
-                const dep = deposits[uid][id];
-                if (dep.timestamp && dep.status === 'approved') {
-                    const depTime = dep.timestamp;
-                    if (depTime > now - oneDay) {
-                        const hourIndex = 23 - Math.floor((now - depTime) / 3600000);
-                        if (hourIndex >= 0 && hourIndex < 24) {
-                            depositData[hourIndex] = (depositData[hourIndex] || 0) + 1;
-                        }
-                    }
-                }
-            });
-        });
-        
-        // Hitung pembelian VIP per jam
-        Object.keys(purchases).forEach(uid => {
-            Object.keys(purchases[uid]).forEach(id => {
-                const purchase = purchases[uid][id];
-                if (purchase.timestamp && purchase.status === 'approved') {
-                    const purTime = purchase.timestamp;
-                    if (purTime > now - oneDay) {
-                        const hourIndex = 23 - Math.floor((now - purTime) / 3600000);
-                        if (hourIndex >= 0 && hourIndex < 24) {
-                            vipData[hourIndex] = (vipData[hourIndex] || 0) + 1;
-                        }
-                    }
-                }
-            });
-        });
-        
-        // Konversi ke array dengan nilai default 0
-        const fillData = (data) => {
-            const result = [];
-            for (let i = 0; i < 24; i++) {
-                result.push(data[i] || 0);
-            }
-            return result;
-        };
-        
-        const finalReg = fillData(regData);
-        const finalLogin = fillData(loginData);
-        const finalDeposit = fillData(depositData);
-        const finalVip = fillData(vipData);
-        
-        // Update charts
-        updateChart(regChart, hourLabels, finalReg, 'Registrasi', '#00ff88');
-        updateChart(loginChart, hourLabels, finalLogin, 'Login', '#ffaa00');
-        updateChart(depositChart, hourLabels, finalDeposit, 'Deposit', '#00ffff');
-        updateChart(vipChart, hourLabels, finalVip, 'VIP', '#ffd700');
-        
-        // Update counter
-        document.getElementById('regUserCount').textContent = finalReg.reduce((a,b) => a + b, 0);
-        document.getElementById('loginUserCount').textContent = finalLogin.reduce((a,b) => a + b, 0);
-        document.getElementById('depositUserCount').textContent = finalDeposit.reduce((a,b) => a + b, 0);
-        document.getElementById('vipUserCount').textContent = finalVip.reduce((a,b) => a + b, 0);
-        
-        // Simpan cache untuk real-time update
-        chartDataCache.reg = { labels: hourLabels, data: finalReg };
-        chartDataCache.login = { labels: hourLabels, data: finalLogin };
-        chartDataCache.deposit = { labels: hourLabels, data: finalDeposit };
-        chartDataCache.vip = { labels: hourLabels, data: finalVip };
-        
-    } catch (error) {
-        console.error('Error loading chart data:', error);
     }
-}
-
-function updateChart(chart, labels, data, label, color) {
-    if (!chart) return;
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = data;
-    chart.data.datasets[0].label = label;
-    chart.data.datasets[0].borderColor = color;
-    chart.data.datasets[0].pointBackgroundColor = color;
-    chart.data.datasets[0].backgroundColor = color + '20';
-    chart.update();
-}
-
-function updateDashboardChartsRealtime() {
-    // Update setiap 30 detik
-    setInterval(() => {
-        loadDashboardChartData();
-    }, 30000);
     
-    // Juga update saat ada perubahan data
-    db.ref('users').on('child_added', () => { loadDashboardChartData(); });
-    db.ref('sessions').on('child_added', () => { loadDashboardChartData(); });
-    db.ref('deposits').on('child_added', () => { loadDashboardChartData(); });
-    db.ref('purchases').on('child_added', () => { loadDashboardChartData(); });
-}
+    // ============================================================
+    // DASHBOARD GRAFIK 3D MODERN - CHART.JS
+    // ============================================================
+    let regChart, loginChart, depositChart, vipChart;
+    let chartDataCache = {
+        reg: { labels: [], data: [] },
+        login: { labels: [], data: [] },
+        deposit: { labels: [], data: [] },
+        vip: { labels: [], data: [] }
+    };
+
+    function initDashboardCharts() {
+        const ctxReg = document.getElementById('regChart');
+        const ctxLogin = document.getElementById('loginChart');
+        const ctxDeposit = document.getElementById('depositChart');
+        const ctxVip = document.getElementById('vipChart');
+    
+        if (!ctxReg || !ctxLogin || !ctxDeposit || !ctxVip) return;
+    
+        const defaultData = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'];
+    
+        const baseConfig = (label, color, bgColor) => ({
+            type: 'line',
+            data: {
+                labels: defaultData,
+                datasets: [{
+                    label: label,
+                    data: [0, 0, 0, 0, 0, 0, 0],
+                    borderColor: color,
+                    backgroundColor: bgColor || color + '20',
+                    borderWidth: 3,
+                    pointBackgroundColor: color,
+                    pointBorderColor: '#000',
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    fill: true,
+                    tension: 0.4,
+                    shadowColor: color,
+                    shadowBlur: 15,
+                    shadowOffsetX: 0,
+                    shadowOffsetY: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(10,10,10,0.9)',
+                        titleColor: '#00ffff',
+                        bodyColor: '#fff',
+                        borderColor: '#00ffff',
+                        borderWidth: 1,
+                        cornerRadius: 10,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return label + ': ' + context.parsed.y;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#888', font: { size: 9 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#888', font: { size: 9 }, stepSize: 1 }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    
+        regChart = new Chart(ctxReg, baseConfig('Registrasi', '#00ff88', 'rgba(0,255,136,0.15)'));
+        loginChart = new Chart(ctxLogin, baseConfig('Login', '#ffaa00', 'rgba(255,170,0,0.15)'));
+        depositChart = new Chart(ctxDeposit, baseConfig('Deposit', '#00ffff', 'rgba(0,255,255,0.15)'));
+        vipChart = new Chart(ctxVip, baseConfig('VIP', '#ffd700', 'rgba(255,215,0,0.15)'));
+    
+        loadDashboardChartData();
+    }
+
+    async function loadDashboardChartData() {
+        try {
+            // Ambil data dari Firebase
+            const usersSnap = await db.ref('users').once('value');
+            const users = usersSnap.val() || {};
+            const sessionsSnap = await db.ref('sessions').once('value');
+            const sessions = sessionsSnap.val() || {};
+            const depositsSnap = await db.ref('deposits').once('value');
+            const deposits = depositsSnap.val() || {};
+            const purchasesSnap = await db.ref('purchases').once('value');
+            const purchases = purchasesSnap.val() || {};
+        
+            // Data per jam (24 jam terakhir)
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            const hourLabels = [];
+            const regData = [];
+            const loginData = [];
+            const depositData = [];
+            const vipData = [];
+        
+            // Buat label per jam
+            for (let i = 23; i >= 0; i--) {
+                const hour = new Date(now - i * 3600000);
+                hourLabels.push(hour.getHours().toString().padStart(2, '0') + ':00');
+            }
+        
+            // Hitung registrasi per jam
+            Object.keys(users).forEach(uid => {
+                const user = users[uid];
+                if (user.registeredAt) {
+                    const regTime = new Date(user.registeredAt).getTime();
+                    if (regTime > now - oneDay) {
+                        const hourIndex = 23 - Math.floor((now - regTime) / 3600000);
+                        if (hourIndex >= 0 && hourIndex < 24) {
+                            regData[hourIndex] = (regData[hourIndex] || 0) + 1;
+                        }
+                    }
+                }
+            });
+        
+            // Hitung login per jam
+            Object.keys(sessions).forEach(uid => {
+                const session = sessions[uid];
+                if (session && session.timestamp) {
+                    const loginTime = session.timestamp;
+                    if (loginTime > now - oneDay) {
+                        const hourIndex = 23 - Math.floor((now - loginTime) / 3600000);
+                        if (hourIndex >= 0 && hourIndex < 24) {
+                            loginData[hourIndex] = (loginData[hourIndex] || 0) + 1;
+                        }
+                    }
+                }
+            });
+        
+            // Hitung deposit per jam
+            Object.keys(deposits).forEach(uid => {
+                Object.keys(deposits[uid]).forEach(id => {
+                    const dep = deposits[uid][id];
+                    if (dep.timestamp && dep.status === 'approved') {
+                        const depTime = dep.timestamp;
+                        if (depTime > now - oneDay) {
+                            const hourIndex = 23 - Math.floor((now - depTime) / 3600000);
+                            if (hourIndex >= 0 && hourIndex < 24) {
+                                depositData[hourIndex] = (depositData[hourIndex] || 0) + 1;
+                            }
+                        }
+                    }
+                });
+            });
+        
+            // Hitung pembelian VIP per jam
+            Object.keys(purchases).forEach(uid => {
+                Object.keys(purchases[uid]).forEach(id => {
+                    const purchase = purchases[uid][id];
+                    if (purchase.timestamp && purchase.status === 'approved') {
+                        const purTime = purchase.timestamp;
+                        if (purTime > now - oneDay) {
+                            const hourIndex = 23 - Math.floor((now - purTime) / 3600000);
+                            if (hourIndex >= 0 && hourIndex < 24) {
+                                vipData[hourIndex] = (vipData[hourIndex] || 0) + 1;
+                            }
+                        }
+                    }
+                });
+            });
+        
+            // Konversi ke array dengan nilai default 0
+            const fillData = (data) => {
+                const result = [];
+                for (let i = 0; i < 24; i++) {
+                    result.push(data[i] || 0);
+                }
+                return result;
+            };
+        
+            const finalReg = fillData(regData);
+            const finalLogin = fillData(loginData);
+            const finalDeposit = fillData(depositData);
+            const finalVip = fillData(vipData);
+        
+            // Update charts
+            updateChart(regChart, hourLabels, finalReg, 'Registrasi', '#00ff88');
+            updateChart(loginChart, hourLabels, finalLogin, 'Login', '#ffaa00');
+            updateChart(depositChart, hourLabels, finalDeposit, 'Deposit', '#00ffff');
+            updateChart(vipChart, hourLabels, finalVip, 'VIP', '#ffd700');
+        
+            // Update counter
+            document.getElementById('regUserCount').textContent = finalReg.reduce((a,b) => a + b, 0);
+            document.getElementById('loginUserCount').textContent = finalLogin.reduce((a,b) => a + b, 0);
+            document.getElementById('depositUserCount').textContent = finalDeposit.reduce((a,b) => a + b, 0);
+            document.getElementById('vipUserCount').textContent = finalVip.reduce((a,b) => a + b, 0);
+        
+            // Simpan cache untuk real-time update
+            chartDataCache.reg = { labels: hourLabels, data: finalReg };
+            chartDataCache.login = { labels: hourLabels, data: finalLogin };
+            chartDataCache.deposit = { labels: hourLabels, data: finalDeposit };
+            chartDataCache.vip = { labels: hourLabels, data: finalVip };
+        
+        } catch (error) {
+            console.error('Error loading chart data:', error);
+        }
+    }
+
+    function updateChart(chart, labels, data, label, color) {
+        if (!chart) return;
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = data;
+        chart.data.datasets[0].label = label;
+        chart.data.datasets[0].borderColor = color;
+        chart.data.datasets[0].pointBackgroundColor = color;
+        chart.data.datasets[0].backgroundColor = color + '20';
+        chart.update();
+    }
+
+    function updateDashboardChartsRealtime() {
+        // Update setiap 30 detik
+        setInterval(() => {
+            loadDashboardChartData();
+        }, 30000);
+    
+        // Juga update saat ada perubahan data
+        db.ref('users').on('child_added', () => { loadDashboardChartData(); });
+        db.ref('sessions').on('child_added', () => { loadDashboardChartData(); });
+        db.ref('deposits').on('child_added', () => { loadDashboardChartData(); });
+        db.ref('purchases').on('child_added', () => { loadDashboardChartData(); });
+    }
     
     // ============================================================
     // ADMIN CHAT BADGE
@@ -12983,6 +13692,7 @@ function updateDashboardChartsRealtime() {
         else if (tabId === 'deposit_orders') loadDepositOrders(); 
         else if (tabId === 'vip_orders') loadVIPOrders(); 
         else if (tabId === 'customers') loadCustomers(); 
+        else if (tabId === 'user_management') { loadUserManagement(); }
         else if (tabId === 'vip_list') loadVIPMembers(); 
         else if (tabId === 'updates') loadFileUpdates(); 
         else if (tabId === 'free_update') { loadFreeUpdateStats(); loadFreeUpdateHistory(); } 
@@ -13014,6 +13724,7 @@ function updateDashboardChartsRealtime() {
         listenPublicChatRealtime();
         setupChatFileUpload();
         initSupportChatAdmin();
+        initDeletedUsersLog();
         initAdminNotifications();
         resetSupportBadgeAdmin();
         resetPublicBadgeAdmin();
