@@ -13632,10 +13632,10 @@ async function deleteReviewAdmin(key) {
     }
     
     // ============================================================
-// GAMIFICATION SYSTEM
+// GAMIFICATION SYSTEM - ADMIN (FIXED)
 // ============================================================
 
-// BADGES
+// DEFAULT BADGES
 const defaultBadges = [
     { id: 'first_login', name: 'First Login', icon: '🚀', description: 'Login pertama kali', points: 10 },
     { id: 'daily_streak_7', name: '7 Days Streak', icon: '🔥', description: 'Login 7 hari berturut-turut', points: 50 },
@@ -13647,7 +13647,7 @@ const defaultBadges = [
     { id: 'review_master', name: 'Review Master', icon: '📝', description: 'Memberi 10 review', points: 50 }
 ];
 
-// LEVELS
+// DEFAULT LEVELS
 const defaultLevels = [
     { level: 1, name: 'Newbie', minPoints: 0, icon: '🌱' },
     { level: 2, name: 'Explorer', minPoints: 50, icon: '🗺️' },
@@ -13657,9 +13657,20 @@ const defaultLevels = [
     { level: 6, name: 'Mythic', minPoints: 1000, icon: '👑' }
 ];
 
+// GLOBAL FLAG untuk mencegah infinite loop
+let gamificationLoading = false;
+
 // LOAD GAMIFICATION
 async function loadGamification() {
+    // CEK APAKAH SUDAH LOADING
+    if (gamificationLoading) {
+        console.log('⏳ Gamification already loading, skipping...');
+        return;
+    }
+    
+    gamificationLoading = true;
     showLoading();
+    
     try {
         // Load badges
         const badgesSnap = await db.ref('gamification/badges').once('value');
@@ -13675,30 +13686,51 @@ async function loadGamification() {
         await loadGamificationLeaderboard();
         
         // Update stats
-        document.getElementById('gamTotalBadges').textContent = badges.length;
-        document.getElementById('gamTotalLevels').textContent = levels.length;
+        document.getElementById('gamTotalBadges').textContent = Object.keys(badges).length;
+        document.getElementById('gamTotalLevels').textContent = Object.keys(levels).length;
         
         hideLoading();
+        console.log('✅ Gamification loaded successfully');
+        
     } catch (error) {
         hideLoading();
+        console.error('❌ Error loading gamification:', error);
         showToast('Error loading gamification: ' + error.message);
+        // Tampilkan data default jika error
+        renderBadges(defaultBadges);
+        renderLevels(defaultLevels);
+        document.getElementById('gamTotalBadges').textContent = defaultBadges.length;
+        document.getElementById('gamTotalLevels').textContent = defaultLevels.length;
+    } finally {
+        gamificationLoading = false;
     }
 }
 
 // RENDER BADGES
 function renderBadges(badges) {
     const container = document.getElementById('badgesList');
-    if (!container) return;
+    if (!container) {
+        console.warn('⚠️ badgesList container not found');
+        return;
+    }
+    
+    if (!badges || Object.keys(badges).length === 0) {
+        container.innerHTML = '<div class="no-data">Belum ada badge</div>';
+        return;
+    }
     
     let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">';
-    Object.values(badges).forEach(badge => {
+    const badgesArray = Array.isArray(badges) ? badges : Object.values(badges);
+    
+    badgesArray.forEach(badge => {
+        if (!badge) return;
         html += `
             <div style="background:rgba(0,0,0,0.5); border:2px solid #ffd700; border-radius:20px; padding:15px; text-align:center;">
-                <div style="font-size:40px;">${badge.icon}</div>
-                <div style="font-weight:bold; color:#ffd700; margin-top:5px;">${badge.name}</div>
-                <div style="font-size:12px; color:#888;">${badge.description}</div>
-                <div style="font-size:12px; color:#ffaa00; margin-top:5px;">+${badge.points} pts</div>
-                <button class="btn btn-danger btn-sm" onclick="deleteBadge('${badge.id}')" style="margin-top:10px;">
+                <div style="font-size:40px;">${badge.icon || '🏆'}</div>
+                <div style="font-weight:bold; color:#ffd700; margin-top:5px;">${badge.name || 'Unknown'}</div>
+                <div style="font-size:12px; color:#888;">${badge.description || ''}</div>
+                <div style="font-size:12px; color:#ffaa00; margin-top:5px;">+${badge.points || 0} pts</div>
+                <button class="btn btn-danger btn-sm" onclick="deleteBadge('${badge.id || ''}')" style="margin-top:10px;">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
@@ -13711,16 +13743,27 @@ function renderBadges(badges) {
 // RENDER LEVELS
 function renderLevels(levels) {
     const container = document.getElementById('levelsList');
-    if (!container) return;
+    if (!container) {
+        console.warn('⚠️ levelsList container not found');
+        return;
+    }
+    
+    if (!levels || Object.keys(levels).length === 0) {
+        container.innerHTML = '<div class="no-data">Belum ada level</div>';
+        return;
+    }
     
     let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">';
-    Object.values(levels).sort((a, b) => a.minPoints - b.minPoints).forEach(level => {
+    const levelsArray = Array.isArray(levels) ? levels : Object.values(levels);
+    
+    levelsArray.sort((a, b) => (a.minPoints || 0) - (b.minPoints || 0)).forEach(level => {
+        if (!level) return;
         html += `
             <div style="background:rgba(0,0,0,0.5); border:2px solid #bf00ff; border-radius:20px; padding:15px; text-align:center;">
-                <div style="font-size:40px;">${level.icon}</div>
-                <div style="font-weight:bold; color:#bf00ff; margin-top:5px;">Lv.${level.level} ${level.name}</div>
-                <div style="font-size:12px; color:#888;">Min ${level.minPoints} points</div>
-                <button class="btn btn-danger btn-sm" onclick="deleteLevel('${level.level}')" style="margin-top:10px;">
+                <div style="font-size:40px;">${level.icon || '⭐'}</div>
+                <div style="font-weight:bold; color:#bf00ff; margin-top:5px;">Lv.${level.level || '?'} ${level.name || 'Unknown'}</div>
+                <div style="font-size:12px; color:#888;">Min ${level.minPoints || 0} points</div>
+                <button class="btn btn-danger btn-sm" onclick="deleteLevel('${level.level || ''}')" style="margin-top:10px;">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
@@ -13758,6 +13801,8 @@ function openAddBadgeModal() {
 
 // DELETE BADGE
 function deleteBadge(id) {
+    if (!id) { showToast('❌ Badge ID tidak valid!'); return; }
+    
     showConfirm('Delete Badge', `Delete badge ${id}?`, () => {
         showLoading();
         db.ref('gamification/badges/' + id).remove()
@@ -13799,6 +13844,8 @@ function openAddLevelModal() {
 
 // DELETE LEVEL
 function deleteLevel(level) {
+    if (!level) { showToast('❌ Level tidak valid!'); return; }
+    
     showConfirm('Delete Level', `Delete level ${level}?`, () => {
         showLoading();
         db.ref('gamification/levels/' + level).remove()
@@ -13831,7 +13878,7 @@ async function loadGamificationLeaderboard() {
             const depSnap = await db.ref('deposits/' + uid).once('value');
             const deposits = depSnap.val() || {};
             Object.values(deposits).forEach(dep => {
-                if (dep.status === 'approved') {
+                if (dep && dep.status === 'approved') {
                     totalPoints += Math.floor((dep.jumlah || 0) / 10000);
                 }
             });
@@ -13858,7 +13905,8 @@ async function loadGamificationLeaderboard() {
             .sort((a, b) => b[1] - a[1])
             .slice(0, 10);
         
-        document.getElementById('gamTopUsers').textContent = sorted.length;
+        const topUsersEl = document.getElementById('gamTopUsers');
+        if (topUsersEl) topUsersEl.textContent = sorted.length;
         
         // Tampilkan leaderboard
         const container = document.getElementById('gamLeaderboard');
@@ -13873,8 +13921,9 @@ async function loadGamificationLeaderboard() {
         sorted.forEach(([uid, pts], index) => {
             const medals = ['🥇', '🥈', '🥉'];
             const rank = index < 3 ? medals[index] : `#${index + 1}`;
+            const colors = ['#ffd700', '#c0c0c0', '#cd7f32'];
             html += `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:8px; border-left:3px solid ${index < 3 ? ['#ffd700', '#c0c0c0', '#cd7f32'][index] : '#555'};">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:8px; border-left:3px solid ${index < 3 ? colors[index] : '#555'};">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <span style="font-size:20px;">${rank}</span>
                         <span style="font-family:monospace; color:var(--neon-cyan);">${escapeHtml(uid)}</span>
@@ -13890,79 +13939,10 @@ async function loadGamificationLeaderboard() {
         
     } catch (error) {
         console.error('Error loading gamification leaderboard:', error);
-    }
-}
-
-// CHECK AND AWARD BADGES - USER
-async function checkAndAwardBadges(uid) {
-    try {
-        const userBadgesSnap = await db.ref('gamification/user_badges/' + uid).once('value');
-        const userBadges = userBadgesSnap.val() || {};
-        
-        const badgesSnap = await db.ref('gamification/badges').once('value');
-        const badges = badgesSnap.val() || defaultBadges;
-        
-        // Cek kondisi untuk setiap badge
-        for (const [id, badge] of Object.entries(badges)) {
-            if (userBadges[id]) continue; // Sudah punya
-            
-            let earned = false;
-            
-            // Logika per badge
-            if (id === 'first_login') {
-                earned = true; // Sudah login berarti bisa
-            } else if (id === 'daily_streak_7') {
-                const rewardSnap = await db.ref('daily_rewards/' + uid).once('value');
-                const reward = rewardSnap.val();
-                if (reward && reward.streak >= 7) earned = true;
-            } else if (id === 'daily_streak_30') {
-                const rewardSnap = await db.ref('daily_rewards/' + uid).once('value');
-                const reward = rewardSnap.val();
-                if (reward && reward.streak >= 30) earned = true;
-            } else if (id === 'first_deposit') {
-                const depSnap = await db.ref('deposits/' + uid).once('value');
-                const deposits = depSnap.val() || {};
-                let hasDeposit = false;
-                Object.values(deposits).forEach(dep => {
-                    if (dep.status === 'approved') hasDeposit = true;
-                });
-                if (hasDeposit) earned = true;
-            } else if (id === 'vip_member') {
-                const vipSnap = await db.ref('vip_members/' + uid).once('value');
-                const vip = vipSnap.val();
-                if (vip && vip.status === 'active') earned = true;
-            } else if (id === 'vip_lifetime') {
-                const vipSnap = await db.ref('vip_members/' + uid).once('value');
-                const vip = vipSnap.val();
-                if (vip && vip.isPermanent) earned = true;
-            } else if (id === 'review_master') {
-                const reviewSnap = await db.ref('reviews').orderByChild('uid').equalTo(uid).once('value');
-                const reviews = reviewSnap.val() || {};
-                let count = 0;
-                Object.values(reviews).forEach(r => {
-                    if (r.status === 'approved') count++;
-                });
-                if (count >= 10) earned = true;
-            }
-            
-            if (earned) {
-                await db.ref('gamification/user_badges/' + uid + '/' + id).set({
-                    ...badge,
-                    earnedAt: Date.now()
-                });
-                
-                // Notifikasi user
-                await db.ref('chats/' + uid).push({
-                    sender: 'system',
-                    text: `🏅 *BADGE UNLOCKED!*\n\n${badge.icon} ${badge.name}\n${badge.description}\n+${badge.points} points`,
-                    timestamp: Date.now()
-                });
-                
-                console.log(`🏅 Badge unlocked for ${uid}: ${badge.name}`);
-            }
+        const container = document.getElementById('gamLeaderboard');
+        if (container) {
+            container.innerHTML = '<div class="no-data" style="color:#ff4444;">Gagal memuat leaderboard</div>';
         }
-    } catch (error) {
-        console.error('Error checking badges:', error);
     }
 }
     
@@ -15127,6 +15107,7 @@ function startChartRealtime() {
         loadVideoPopupStatus();
         listenPublicChatRealtime();
         setupChatFileUpload();
+        initDashboardCharts();
         initSupportChatAdmin();
         initDeletedUsersLog();
         initAdminNotifications();
@@ -15154,10 +15135,6 @@ function startChartRealtime() {
         console.log('👑 Fitur VIP Detail - Aktif');
         console.log('🏆 Fitur Show Leaderboard - Aktif');
         console.log('🔊 Fitur Notifikasi Suara - Aktif');
-        setTimeout(() => {
-        initDashboardCharts();
-        updateDashboardChartsRealtime();
-    }, 1000);
     }
     init();
 </script>
