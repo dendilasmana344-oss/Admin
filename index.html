@@ -7650,22 +7650,108 @@
     // ============================================================
     // VIP ORDERS
     // ============================================================
-    function loadVIPOrders() { let vips = []; Object.keys(allPurchases).forEach(uid => { Object.keys(allPurchases[uid]).forEach(id => { vips.push({ id: id, uid: uid, ...allPurchases[uid][id] }); }); }); vips.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); window.allVIPList = vips; displayVIPOrders(); }
+    function loadVIPOrders() { 
+        let vips = []; 
+        Object.keys(allPurchases).forEach(uid => { 
+            Object.keys(allPurchases[uid]).forEach(id => { 
+                vips.push({ 
+                    id: id, 
+                    uid: uid, 
+                    ...allPurchases[uid][id] 
+                }); 
+            }); 
+        }); 
+        vips.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); 
+        window.allVIPList = vips; 
+        displayVIPOrders(); 
+    }
     function displayVIPOrders() {
         let filtered = window.allVIPList || [];
         if (currentVIPFilter !== 'all') filtered = filtered.filter(v => v.status === currentVIPFilter);
         const search = document.getElementById('vipSearch')?.value.toLowerCase() || '';
         if (search) filtered = filtered.filter(v => v.uid.toLowerCase().includes(search));
+    
         let html = '';
-        filtered.forEach(v => { const price = v.finalPrice || v.price || 0; html += `<div class="vip-item ${v.status}"><div class="vip-header"><span class="vip-uid" onclick="copyUID('${v.uid}')">${v.uid}</span><span class="vip-price">Rp ${formatRupiah(price)}</span><span class="deposit-status status-${v.status}">${v.status}</span></div><div class="vip-details"><div class="detail-item"><span class="detail-label">Package</span><span class="detail-value">${v.package || '-'}</span></div><div class="detail-item"><span class="detail-label">Tanggal</span><span class="detail-value">${v.timestamp ? new Date(v.timestamp).toLocaleString() : '-'}</span></div></div><div class="action-buttons">${v.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveVIP('${v.uid}', '${v.id}', ${price}, '${v.package}')">Approve</button><button class="btn btn-danger btn-sm" onclick="rejectVIP('${v.uid}', '${v.id}', ${price})">Reject</button>` : ''}<button class="btn btn-secondary btn-sm" onclick="deleteVIP('${v.uid}', '${v.id}')">Delete</button></div></div>`; });
+        filtered.forEach(v => { 
+            const price = v.finalPrice || v.price || 0;
+            const packageType = v.packageType || 'unknown';
+            const typeLabel = packageType === 'quota' ? '📦 Quota' : 
+                             packageType === 'unlimited' ? '♾️ Unlimited' : 
+                             packageType === 'lifetime' ? '👑 Lifetime' : '❓ Unknown';
+        
+            html += `
+                <div class="vip-item ${v.status}">
+                    <div class="vip-header">
+                        <span class="vip-uid" onclick="copyUID('${v.uid}')">${v.uid}</span>
+                        <span class="vip-price">Rp ${formatRupiah(price)}</span>
+                        <span class="deposit-status status-${v.status}">${v.status}</span>
+                    </div>
+                    <div class="vip-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Package</span>
+                            <span class="detail-value">${v.package || '-'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Type</span>
+                            <span class="detail-value" style="color:${packageType === 'quota' ? '#00ff88' : packageType === 'unlimited' ? '#2196f3' : '#ffd700'};">${typeLabel}</span>
+                        </div>
+                        ${v.packageQuota ? `<div class="detail-item"><span class="detail-label">Quota</span><span class="detail-value">${v.packageQuota}x</span></div>` : ''}
+                        ${v.packageMonths ? `<div class="detail-item"><span class="detail-label">Durasi</span><span class="detail-value">${v.packageMonths} Bulan</span></div>` : ''}
+                        <div class="detail-item">
+                            <span class="detail-label">Tanggal</span>
+                            <span class="detail-value">${v.timestamp ? new Date(v.timestamp).toLocaleString() : '-'}</span>
+                        </div>
+                        ${v.discount ? `<div class="detail-item"><span class="detail-label">Diskon</span><span class="detail-value" style="color:#ffaa00;">${v.discount}%</span></div>` : ''}
+                    </div>
+                    <div class="action-buttons">
+                        ${v.status === 'pending' ? 
+                            `<button class="btn btn-success btn-sm" onclick="approveVIP('${v.uid}', '${v.id}', ${price}, '${v.package}')">Approve</button>
+                             <button class="btn btn-danger btn-sm" onclick="rejectVIP('${v.uid}', '${v.id}', ${price})">Reject</button>` : ''}
+                        <button class="btn btn-secondary btn-sm" onclick="deleteVIP('${v.uid}', '${v.id}')">Delete</button>
+                    </div>
+                </div>
+            `; 
+        });
         document.getElementById('vipList').innerHTML = html || '<div class="no-data">No VIP orders found</div>';
     }
     function filterVIP(filter) { if (filter) { currentVIPFilter = filter; document.querySelectorAll('#vip_orders .filter-tab').forEach(t => t.classList.remove('active')); if (event?.currentTarget) event.currentTarget.classList.add('active'); } displayVIPOrders(); }
+    // ============================================================
+    // APPROVE VIP - PERBAIKAN (BERDASARKAN PACKAGE TYPE & LABEL)
+    // ============================================================
     async function approveVIP(uid, id, price, packageName) {
         showConfirm('Approve VIP', `Approve VIP for ${uid}?`, async () => {
             showLoading();
             try {
-                await db.ref(`purchases/${uid}/${id}`).update({ status: 'approved', approved_at: Date.now() });
+                await db.ref(`purchases/${uid}/${id}`).update({ 
+                    status: 'approved', 
+                    approved_at: Date.now() 
+                });
+            
+                // Ambil data package asli dari admin_config
+                const packagesSnap = await db.ref('admin_config/premium_packages').once('value');
+                const packages = packagesSnap.val() || [];
+            
+                // Cari package yang cocok dengan label
+                let matchedPackage = null;
+                let matchedPackageIndex = -1;
+            
+                packages.forEach((pkg, idx) => {
+                    if (pkg.label === packageName) {
+                        matchedPackage = pkg;
+                        matchedPackageIndex = idx;
+                    }
+                });
+            
+                // Jika tidak ditemukan berdasarkan label, coba berdasarkan harga asli
+                if (!matchedPackage) {
+                    // Cari berdasarkan harga asli (bukan harga diskon)
+                    for (const pkg of packages) {
+                        if (pkg.price === price || pkg.price === price) {
+                            matchedPackage = pkg;
+                            break;
+                        }
+                    }
+                }
             
                 let vipData = {
                     uid: uid,
@@ -7676,64 +7762,106 @@
                     lastUpdate: new Date().toISOString()
                 };
             
-                if (price === 35000 || packageName.includes('4X') || packageName.includes('QUOTA')) {
-                    vipData.updateType = 'quota';
-                    vipData.updateQuota = 4;
-                    vipData.updatesUsed = 0;
-                }
-                else if (price === 50000 || packageName.includes('7X')) {
-                    vipData.updateType = 'quota';
-                    vipData.updateQuota = 7;
-                    vipData.updatesUsed = 0;
-                }
-                else if (price === 80000 || packageName.includes('15X')) {
-                    vipData.updateType = 'quota';
-                    vipData.updateQuota = 15;
-                    vipData.updatesUsed = 0;
-                }
-                else if (price === 150000 || packageName.includes('2 BULAN') || packageName.toLowerCase().includes('season') || packageName.toLowerCase().includes('bulan')) {
-                    vipData.updateType = 'unlimited';
-                    let months = 2;
-                    const match = packageName.match(/\d+/);
-                    if (match) months = parseInt(match[0]);
-                    vipData.packageMonths = months;
-                    const expiryDate = new Date();
-                    expiryDate.setMonth(expiryDate.getMonth() + months);
-                    vipData.expiryDate = expiryDate.toISOString();
-                }
-                else if (price === 250000 || packageName.includes('4 BULAN')) {
-                    vipData.updateType = 'unlimited';
-                    vipData.packageMonths = 4;
-                    const expiryDate = new Date();
-                    expiryDate.setMonth(expiryDate.getMonth() + 4);
-                    vipData.expiryDate = expiryDate.toISOString();
-                }
-                else if (price === 350000 || packageName.includes('PERMANENT') || packageName.includes('SEUMUR')) {
-                    vipData.updateType = 'unlimited';
-                    vipData.isPermanent = true;
-                    vipData.expiryDate = new Date(2099, 11, 31).toISOString();
-                }
-                else {
-                    vipData.updateType = 'quota';
-                    vipData.updateQuota = 1;
-                    vipData.updatesUsed = 0;
+                // Jika package ditemukan, gunakan data aslinya
+                if (matchedPackage) {
+                    console.log('✅ Package matched:', matchedPackage.label, matchedPackage.type);
+                
+                    if (matchedPackage.type === 'quota') {
+                        vipData.updateType = 'quota';
+                        vipData.updateQuota = matchedPackage.quota || 1;
+                        vipData.updatesUsed = 0;
+                        vipData.packageMonths = 0;
+                        vipData.expiryDate = null;
+                    
+                    } else if (matchedPackage.type === 'unlimited') {
+                        const months = matchedPackage.durationMonths || 1;
+                        vipData.updateType = 'unlimited';
+                        vipData.packageMonths = months;
+                        vipData.updateQuota = 0;
+                        vipData.updatesUsed = 0;
+                    
+                        const expiryDate = new Date();
+                        expiryDate.setMonth(expiryDate.getMonth() + months);
+                        vipData.expiryDate = expiryDate.toISOString();
+                        vipData.isPermanent = false;
+                    
+                    } else if (matchedPackage.type === 'lifetime') {
+                        vipData.updateType = 'unlimited';
+                        vipData.isPermanent = true;
+                        vipData.packageMonths = 0;
+                        vipData.updateQuota = 0;
+                        vipData.updatesUsed = 0;
+                        vipData.expiryDate = new Date(2099, 11, 31).toISOString();
+                    }
+                
+                } else {
+                    // FALLBACK: Jika package tidak ditemukan, gunakan logika berdasarkan label
+                    console.log('⚠️ Package tidak ditemukan, menggunakan fallback berdasarkan label');
+                
+                    const labelLower = packageName.toLowerCase();
+                
+                    // Deteksi berdasarkan label
+                    if (labelLower.includes('lifetime') || labelLower.includes('permanent') || labelLower.includes('seumur')) {
+                        vipData.updateType = 'unlimited';
+                        vipData.isPermanent = true;
+                        vipData.expiryDate = new Date(2099, 11, 31).toISOString();
+                    
+                    } else if (labelLower.includes('bulan') || labelLower.includes('season') || labelLower.includes('unlimited')) {
+                        let months = 1;
+                        const match = labelLower.match(/\d+/);
+                        if (match) months = parseInt(match[0]) || 1;
+                    
+                        vipData.updateType = 'unlimited';
+                        vipData.packageMonths = months;
+                        const expiryDate = new Date();
+                        expiryDate.setMonth(expiryDate.getMonth() + months);
+                        vipData.expiryDate = expiryDate.toISOString();
+                    
+                    } else if (labelLower.includes('quota') || labelLower.includes('x') || labelLower.includes('update')) {
+                        let quota = 1;
+                        const match = labelLower.match(/\d+/);
+                        if (match) quota = parseInt(match[0]) || 1;
+                    
+                        vipData.updateType = 'quota';
+                        vipData.updateQuota = quota;
+                        vipData.updatesUsed = 0;
+                    
+                    } else {
+                        // Default: quota 1
+                        vipData.updateType = 'quota';
+                        vipData.updateQuota = 1;
+                        vipData.updatesUsed = 0;
+                    }
                 }
             
+                // Simpan VIP data
                 await db.ref(`vip_members/${uid}`).set(vipData);
+            
+                // Kirim notifikasi ke user
+                let message = `✅ VIP APPROVED!\nPackage: ${packageName}\nAmount: Rp ${formatRupiah(price)}\n`;
+                if (vipData.updateType === 'quota') {
+                    message += `Type: Quota (${vipData.updateQuota}x updates)`;
+                } else if (vipData.isPermanent) {
+                    message += `Type: LIFETIME (Seumur hidup!)`;
+                } else if (vipData.updateType === 'unlimited') {
+                    message += `Type: Unlimited (${vipData.packageMonths} bulan)`;
+                }
             
                 await db.ref(`chats/${uid}`).push({
                     sender: 'system',
-                    text: `✅ VIP APPROVED!\nPackage: ${packageName}\nAmount: Rp ${formatRupiah(price)}`,
+                    text: message,
                     timestamp: Date.now()
                 });
             
-                addActivityLog('Approve VIP', `Approved VIP for ${uid} - ${packageName}`);
+                addActivityLog('Approve VIP', `Approved VIP for ${uid} - ${packageName} (Type: ${vipData.updateType || 'unknown'})`);
                 hideLoading();
-                showToast('VIP approved!');
+                showToast('✅ VIP approved!');
                 loadAllData();
+            
             } catch (error) {
                 hideLoading();
                 showToast('Error: ' + error.message);
+                console.error('Approve VIP error:', error);
             }
         });
     }
