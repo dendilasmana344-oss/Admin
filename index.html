@@ -6555,6 +6555,47 @@ body {
             <div id="fileUpdatesList" style="margin-top:20px;"></div>
         </div>
     </div>
+    
+    <!-- Content Daily Reward Admin -->
+    <div id="daily_reward_admin" class="tab-content">
+        <div class="card">
+            <div class="card-title glow-gold">
+                <i class="fas fa-gift"></i> Daily Reward Settings
+                <button class="btn btn-primary btn-sm" onclick="loadDailyRewardAdmin()" style="margin-left:auto;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-money-bill"></i> Jumlah Reward (Rp)</label>
+                <input type="number" class="modal-input" id="dailyRewardAmount" value="1000" min="100">
+                <small style="color:#888;">Jumlah saldo yang diberikan setiap hari</small>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-percent"></i> Bonus Streak per Hari (Rp)</label>
+                <input type="number" class="modal-input" id="dailyStreakBonus" value="100" min="0">
+                <small style="color:#888;">Bonus tambahan per streak (contoh: streak 5 = +500)</small>
+            </div>
+        
+            <div class="modal-form-group">
+                <label class="modal-label"><i class="fas fa-toggle-on"></i> Status</label>
+                <select class="modal-select" id="dailyRewardStatus">
+                    <option value="active">✅ Aktif</option>
+                    <option value="inactive">⛔ Nonaktif</option>
+                </select>
+            </div>
+        
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="saveDailyRewardSettings()"><i class="fas fa-save"></i> Simpan Pengaturan</button>
+            </div>
+        
+            <div style="margin-top:30px; border-top:2px solid rgba(255,215,0,0.3); padding-top:25px;">
+                <h3 style="color:#ffd700;" class="glow-gold"><i class="fas fa-history"></i> Riwayat Claim Reward</h3>
+                <div id="dailyRewardHistoryList" style="max-height:400px; overflow-y:auto; margin-top:15px;"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================================
          FREE UPDATE TAB
@@ -11084,6 +11125,97 @@ async function deleteReviewAdmin(key) {
             showToast('Error: ' + error.message);
         }
     });
+}
+
+// ============================================================
+// DAILY REWARD ADMIN
+// ============================================================
+
+async function loadDailyRewardAdmin() {
+    showLoading();
+    try {
+        // Load settings
+        const settingsSnap = await database.ref('admin_config/daily_reward').once('value');
+        const settings = settingsSnap.val() || {};
+        
+        document.getElementById('dailyRewardAmount').value = settings.amount || 1000;
+        document.getElementById('dailyStreakBonus').value = settings.streakBonus || 100;
+        document.getElementById('dailyRewardStatus').value = settings.status || 'active';
+        
+        // Load history
+        const historySnap = await database.ref('daily_rewards_history').once('value');
+        const history = historySnap.val() || {};
+        
+        let html = '';
+        const items = [];
+        
+        Object.keys(history).forEach(uid => {
+            if (history[uid]) {
+                Object.keys(history[uid]).forEach(key => {
+                    const data = history[uid][key];
+                    items.push({
+                        uid: uid,
+                        ...data,
+                        key: key
+                    });
+                });
+            }
+        });
+        
+        items.sort((a, b) => (b.claimedAt || 0) - (a.claimedAt || 0));
+        items.slice(0, 50).forEach(item => {
+            const date = item.claimedAt ? new Date(item.claimedAt).toLocaleString('id-ID') : '-';
+            html += `
+                <div style="background:rgba(0,0,0,0.4); border-radius:15px; padding:12px 16px; margin-bottom:8px; border-left:3px solid #ffd700; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <span style="font-family:monospace; color:var(--neon-cyan);">${escapeHtml(item.uid)}</span>
+                    <span style="color:#ffd700;">+Rp ${formatRupiah(item.amount)}</span>
+                    <span style="color:#ff6b6b;">Streak ${item.streak || 0}🔥</span>
+                    <span style="color:#888; font-size:12px;">${date}</span>
+                </div>
+            `;
+        });
+        
+        document.getElementById('dailyRewardHistoryList').innerHTML = html || '<div class="no-data">Belum ada riwayat claim</div>';
+        
+        hideLoading();
+    } catch (error) {
+        hideLoading();
+        showToast('Error: ' + error.message);
+    }
+}
+
+async function saveDailyRewardSettings() {
+    const amount = parseInt(document.getElementById('dailyRewardAmount').value);
+    const streakBonus = parseInt(document.getElementById('dailyStreakBonus').value);
+    const status = document.getElementById('dailyRewardStatus').value;
+    
+    if (!amount || amount < 100) {
+        showToast('❌ Jumlah reward minimal Rp 100!');
+        return;
+    }
+    
+    if (streakBonus < 0) {
+        showToast('❌ Bonus streak tidak valid!');
+        return;
+    }
+    
+    showLoading();
+    try {
+        await database.ref('admin_config/daily_reward').set({
+            amount: amount,
+            streakBonus: streakBonus,
+            status: status,
+            updatedAt: Date.now()
+        });
+        
+        addActivityLog('Daily Reward', `Settings updated: Rp ${formatRupiah(amount)} | Bonus: Rp ${formatRupiah(streakBonus)}`);
+        hideLoading();
+        showToast('✅ Pengaturan daily reward disimpan!');
+        
+    } catch (error) {
+        hideLoading();
+        showToast('Error: ' + error.message);
+    }
 }
     
     // ============================================================
