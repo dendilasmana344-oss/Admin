@@ -5349,18 +5349,27 @@ body {
         }
 
         .log-table th, .log-table td {
-            padding: 12px;
+            padding: 8px 12px;
             text-align: left;
             border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+            font-size: 13px;
         }
 
         .log-table th {
             color: var(--neon-cyan);
             font-family: 'Orbitron', monospace;
             font-weight: bold;
+            font-size: 12px;
+            letter-spacing: 0.5px;
         }
 
-        .log-table tr:hover {
+        .log-table td {
+            font-size: 12px;
+            color: #ccc;
+            word-break: break-word;
+        }
+
+        .log-table tr:hover td {
             background: rgba(0, 255, 255, 0.05);
         }
 
@@ -5703,6 +5712,15 @@ body {
             background: #444;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2);
+        }
+        
+        .log-table tr:hover td {
+            background: rgba(0, 255, 255, 0.05);
+        }
+        .log-table .no-data {
+            color: #888;
+            text-align: center;
+            padding: 20px;
         }
 
         /* ============================================================
@@ -6137,6 +6155,7 @@ body {
         <div class="tab" onclick="openTab('vip_orders')"><i class="fas fa-crown"></i> VIP Orders</div>
         <div class="tab" onclick="openTab('customers')"><i class="fas fa-users"></i> Customers</div>
         <div class="tab" onclick="openTab('user_management')"><i class="fas fa-user-cog"></i> User Management</div>
+        <div class="tab" onclick="openTab('daily_reward_admin')"><i class="fas fa-gift"></i> Daily Reward</div>
         <div class="tab" onclick="openTab('vip_list')"><i class="fas fa-star"></i> VIP List</div>
         <div class="tab" onclick="openTab('updates')"><i class="fas fa-file-upload"></i> File Updates</div>
         <div class="tab" onclick="openTab('free_update')"><i class="fas fa-download"></i> Free Update</div>
@@ -6999,27 +7018,26 @@ body {
         </div>
     </div>
     
-    <!-- Reviews Tab -->
     <div id="reviews" class="tab-content">
         <div class="card">
             <div class="card-title glow-cyan">
-                <i class="fas fa-star"></i> Manage Reviews
+                <i class="fas fa-star"></i> Manage Reviews & Komentar File
                 <button class="btn btn-primary btn-sm" onclick="loadReviewsAdmin()" style="margin-left:auto;">
                     <i class="fas fa-sync-alt"></i> Refresh
                 </button>
             </div>
-        
+
             <div class="filter-tabs">
                 <div class="filter-tab active" onclick="filterReviewsAdmin('all')">📋 All</div>
                 <div class="filter-tab" onclick="filterReviewsAdmin('pending')">⏳ Pending</div>
                 <div class="filter-tab" onclick="filterReviewsAdmin('approved')">✅ Approved</div>
                 <div class="filter-tab" onclick="filterReviewsAdmin('rejected')">❌ Rejected</div>
             </div>
-        
+
             <div class="search-box">
-                <input type="text" class="search-input" id="reviewSearch" placeholder="🔍 Search by UID..." onkeyup="filterReviewsAdmin()">
+                <input type="text" class="search-input" id="reviewSearch" placeholder="🔍 Search by UID or file..." onkeyup="filterReviewsAdmin()">
             </div>
-        
+
             <div id="reviewsAdminList" style="max-height:600px; overflow-y:auto; margin-top:15px;"></div>
         </div>
     </div>
@@ -9574,6 +9592,28 @@ body {
             }
         );
     }
+    
+    async function removeVIP(uid) {
+        showConfirm('Hapus VIP', `Yakin ingin menghapus VIP untuk user ${uid}?`, async () => {
+            showLoading();
+            try {
+                await db.ref('vip_members/' + uid).remove();
+                await db.ref('chats/' + uid).push({
+                    sender: 'system',
+                    text: `⚠️ *VIP ANDA DIHAPUS OLEH ADMIN*\n\nStatus VIP Anda telah dihapus oleh admin.`,
+                    timestamp: Date.now()
+                });
+                addActivityLog('Remove VIP', `VIP removed for ${uid}`);
+                hideLoading();
+                showToast(`✅ VIP untuk ${uid} dihapus!`);
+                loadVIPMembers();
+                loadAllData();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
 
     // ============================================================
     // EDIT VIP UPDATE
@@ -10719,6 +10759,136 @@ body {
                 }
             };
         });
+    }
+    
+    // ============================================================
+    // LOAD FILE COMMENTS FOR ADMIN
+    // ============================================================
+    async function loadFileCommentsAdmin() {
+        showLoading();
+        try {
+            const snap = await db.ref('file_comments').once('value');
+            const allComments = snap.val() || {};
+            const container = document.getElementById('reviewsAdminList');
+            if (!container) return;
+        
+            // Ambil foto profil untuk setiap user
+            const profileSnap = await db.ref('profiles').once('value');
+            const profiles = profileSnap.val() || {};
+        
+            let html = '';
+            let totalComments = 0;
+        
+            Object.keys(allComments).forEach(fileId => {
+                const comments = allComments[fileId] || {};
+                Object.keys(comments).forEach(key => {
+                    const c = comments[key];
+                    totalComments++;
+                
+                    const uid = c.uid || 'Unknown';
+                    const profileImg = profiles[uid]?.image || 
+                        'https://ui-avatars.com/api/?name=' + encodeURIComponent(uid) + '&background=00ffff&color=000&size=50&font-size=0.5&bold=true';
+                
+                    const isEdited = c.edited ? ' (diedit)' : '';
+                    const date = c.timestamp ? new Date(c.timestamp).toLocaleString('id-ID') : '-';
+                
+                    html += `
+                        <div style="background:rgba(0,0,0,0.6); border:2px solid rgba(0,255,255,0.2); border-radius:25px; padding:20px; margin-bottom:15px; transition:all 0.3s; box-shadow: 0 5px 25px rgba(0,255,255,0.05);">
+                            <div style="display:flex; align-items:center; gap:15px; margin-bottom:12px; flex-wrap:wrap;">
+                                <img src="${profileImg}" style="width:45px; height:45px; border-radius:50%; border:2px solid var(--neon-cyan); object-fit:cover;">
+                                <div style="flex:1;">
+                                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                        <span style="font-weight:bold; color:var(--neon-cyan); font-size:16px; font-family:'Orbitron',monospace;">${escapeHtml(uid)}</span>
+                                        <span style="font-size:11px; color:#888; background:rgba(0,0,0,0.4); padding:2px 12px; border-radius:15px; border:1px solid rgba(255,255,255,0.1);">
+                                            <i class="fas fa-file"></i> File: ${escapeHtml(fileId.substring(0, 15))}...
+                                        </span>
+                                    </div>
+                                    <div style="font-size:13px; color:#aaa; margin-top:4px;">${date}</div>
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="editFileCommentAdmin('${fileId}','${key}','${escapeHtml(c.text)}')" style="background:linear-gradient(135deg,#ffaa00,#ff8800); border:none; border-radius:15px; padding:5px 14px; color:#000; cursor:pointer; font-size:11px; font-weight:bold;">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button onclick="deleteFileCommentAdmin('${fileId}','${key}','${uid}')" style="background:linear-gradient(135deg,#ff4444,#cc0000); border:none; border-radius:15px; padding:5px 14px; color:white; cursor:pointer; font-size:11px; font-weight:bold;">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.3); border-radius:15px; padding:14px 18px; border-left:3px solid var(--neon-cyan);">
+                                <div style="color:#fff; font-size:14px; line-height:1.6;">${escapeHtml(c.text)}${isEdited}</div>
+                            </div>
+                            ${c.edited ? `<div style="font-size:10px; color:#666; margin-top:6px; text-align:right;">Diedit: ${new Date(c.editedAt).toLocaleString('id-ID')}</div>` : ''}
+                        </div>
+                    `;
+                });
+            });
+        
+            if (totalComments === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px; color:#888;">
+                        <i class="fas fa-comment-slash" style="font-size:48px; display:block; margin-bottom:15px; opacity:0.3;"></i>
+                        Belum ada komentar dari user
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; padding:10px 15px; background:rgba(0,255,255,0.05); border-radius:15px; margin-bottom:15px; border:1px solid rgba(0,255,255,0.15);">
+                        <span style="color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:13px;">
+                            <i class="fas fa-comments"></i> Total Komentar: ${totalComments}
+                        </span>
+                    </div>
+                    ${html}
+                `;
+            }
+        
+            hideLoading();
+        } catch (error) {
+            hideLoading();
+            showToast('Error loading comments: ' + error.message);
+        }
+    }
+
+    // ============================================================
+    // DELETE FILE COMMENT - ADMIN
+    // ============================================================
+    function deleteFileCommentAdmin(fileId, commentId, uid) {
+        showConfirm('Hapus Komentar', `Yakin ingin menghapus komentar dari ${uid}?`, async () => {
+            showLoading();
+            try {
+                await db.ref('file_comments/' + fileId + '/' + commentId).remove();
+                addActivityLog('Delete File Comment', `Komentar dari ${uid} dihapus pada file ${fileId}`);
+                hideLoading();
+                showToast('✅ Komentar dihapus!');
+                loadFileCommentsAdmin();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+
+    // ============================================================
+    // EDIT FILE COMMENT - ADMIN
+    // ============================================================
+    function editFileCommentAdmin(fileId, commentId, currentText) {
+        const newText = prompt('Edit komentar user:', currentText);
+        if (newText && newText.trim()) {
+            showLoading();
+            db.ref('file_comments/' + fileId + '/' + commentId).update({
+                text: newText.trim(),
+                edited: true,
+                editedAt: Date.now(),
+                editedByAdmin: true
+            }).then(() => {
+                addActivityLog('Edit File Comment', `Komentar diedit oleh admin pada file ${fileId}`);
+                hideLoading();
+                showToast('✅ Komentar diedit!');
+                loadFileCommentsAdmin();
+            }).catch(error => {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            });
+        }
     }
     
     // ============================================================
@@ -15220,6 +15390,7 @@ function startChartRealtime() {
         else if (tabId === 'public_chat') loadPublicChat(); 
         else if (tabId === 'user_files') loadUserFiles(); 
         else if (tabId === 'logs') loadActivityLogs(); 
+        else if (tabId === 'reviews') { loadFileCommentsAdmin(); }
         else if (tabId === 'announcements') { loadAnnouncementHistory(); } 
         else if (tabId === 'maintenance') loadMaintenanceStatus(); 
         else if (tabId === 'support_chat') { loadVideoPopupStatus(); setTimeout(loadSupportUsers, 300); }
