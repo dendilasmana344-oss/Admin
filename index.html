@@ -6161,6 +6161,105 @@ body {
             border-top: 2px solid rgba(0, 255, 255, 0.3);
             font-size: 12px;
         }
+        
+        <!-- ============================================================
+         NOTIFICATION ADMIN - STYLE (Tambahan)
+         ============================================================ -->
+            /* Tambahan style untuk notifikasi admin */
+        .notification-admin-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .notification-admin-toast {
+            background: linear-gradient(145deg, #0a0a0a, #1a0a0a);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 20px;
+            padding: 16px 20px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+            animation: notifSlideIn 0.5s ease forwards;
+            pointer-events: auto;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .notification-admin-toast::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+
+        .notification-admin-toast.info::before { background: var(--neon-cyan); box-shadow: 0 0 20px var(--neon-cyan); }
+        .notification-admin-toast.success::before { background: #00ff88; box-shadow: 0 0 20px #00ff88; }
+        .notification-admin-toast.warning::before { background: #ffaa00; box-shadow: 0 0 20px #ffaa00; }
+        .notification-admin-toast.error::before { background: #ff4444; box-shadow: 0 0 20px #ff4444; }
+
+        .notification-admin-toast.hide {
+            animation: notifSlideOut 0.4s ease forwards;
+        }
+
+        .notification-admin-toast .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .notification-admin-toast .notif-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-admin-toast .notif-close {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 5px;
+            transition: all 0.3s;
+        }
+
+        .notification-admin-toast .notif-close:hover {
+            color: #ff4444;
+            transform: rotate(90deg);
+        }
+
+        .notification-admin-toast .notif-body {
+            font-size: 13px;
+            color: #ccc;
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+
+        .notification-admin-toast .notif-body .highlight {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        .notification-admin-toast .notif-time {
+            font-size: 10px;
+            color: #666;
+            margin-top: 6px;
+            text-align: right;
+        }
 
         /* ============================================================
            CREATE USER PAGE
@@ -6376,6 +6475,8 @@ body {
 
 <!-- NOTIFICATION CONTAINER -->
 <div class="notification-container" id="notificationContainer"></div>
+<!-- Container Notifikasi Admin -->
+<div class="notification-admin-container" id="notificationAdminContainer"></div>
 
 <!-- VIDEO BACKGROUND ADMIN -->
 <div class="admin-video-bg" id="adminVideoBg">
@@ -7817,22 +7918,6 @@ body {
         if (adminLogs.length > 100) adminLogs.pop();
         localStorage.setItem('admin_activity_logs', JSON.stringify(adminLogs));
         displayActivityLogs();
-    }
-    
-    async function sendCustomUserNotification() {
-        const uid = document.getElementById('notifUserUID').value.trim();
-        const title = document.getElementById('notifUserTitle').value.trim();
-        const message = document.getElementById('notifUserMessage').value.trim();
-    
-        if (!uid) { showToast('❌ Masukkan UID user!'); return; }
-        if (!title) { showToast('❌ Masukkan judul!'); return; }
-        if (!message) { showToast('❌ Masukkan isi pesan!'); return; }
-    
-        await sendAdminNotificationToUser(uid, title, message, 'info', 5);
-    
-        document.getElementById('notifUserUID').value = '';
-        document.getElementById('notifUserTitle').value = '';
-        document.getElementById('notifUserMessage').value = '';
     }
 
     // ============================================================
@@ -10163,19 +10248,87 @@ body {
     let adminNotifShown = false;
     const adminIcon = 'https://i.ibb.co.com/4wHZpnFB/IMG-20260610-WA0000.jpg';
     
-    // Cek izin notifikasi admin
-    function checkAdminNotificationPermission() {
-        if ('Notification' in window) {
-            if (Notification.permission === 'granted') {
-                adminNotifPermissionGranted = true;
-                return true;
-            } else if (Notification.permission === 'denied') {
-                adminNotifPermissionGranted = false;
-                return false;
-            }
-            return null;
+    // ============================================================
+    // NOTIFIKASI ADMIN - FUNGSI TAMBAHAN
+    // ============================================================
+    
+    // Fungsi kirim notifikasi admin ke user
+    async function sendAdminNotificationToUser(uid, title, message, type = 'info', duration = 5) {
+        if (!uid) {
+            showAdminToast('❌ UID tidak boleh kosong!');
+            return;
         }
-        return null;
+        
+        try {
+            await db.ref('user_notifications/' + uid).push({
+                title: title,
+                message: message,
+                type: type,
+                duration: duration,
+                sentAt: Date.now(),
+                sentBy: 'Admin'
+            });
+            
+            await db.ref('chats/' + uid).push({
+                sender: 'system',
+                text: `📢 *${title}*\n\n${message}`,
+                timestamp: Date.now(),
+                isAnnouncement: true
+            });
+            
+            showAdminToast(`✅ Notifikasi terkirim ke ${uid}`);
+            addActivityLog('Kirim Notifikasi User', `Notifikasi "${title}" ke ${uid}`);
+            
+            // Kirim notifikasi admin juga
+            sendAdminNotification(
+                '📨 Notifikasi Terkirim',
+                `"${title}" dikirim ke ${uid}`,
+                `notif_sent_${Date.now()}`
+            );
+            
+        } catch (error) {
+            showAdminToast('❌ Gagal kirim: ' + error.message);
+        }
+    }
+    
+    // Fungsi kirim notifikasi custom dari form
+    async function sendCustomUserNotification() {
+        const uid = document.getElementById('notifUserUID').value.trim();
+        const title = document.getElementById('notifUserTitle').value.trim();
+        const message = document.getElementById('notifUserMessage').value.trim();
+    
+        if (!uid) { showToast('❌ Masukkan UID user!'); return; }
+        if (!title) { showToast('❌ Masukkan judul!'); return; }
+        if (!message) { showToast('❌ Masukkan isi pesan!'); return; }
+    
+        await sendAdminNotificationToUser(uid, title, message, 'info', 5);
+    
+        document.getElementById('notifUserUID').value = '';
+        document.getElementById('notifUserTitle').value = '';
+        document.getElementById('notifUserMessage').value = '';
+    }
+    
+    // Fungsi show toast admin
+    function showAdminToast(message) {
+        const toast = document.getElementById('toastNeon');
+        if (toast) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    }
+    
+    // Inisialisasi notifikasi admin
+    function initAdminNotification() {
+        // Tunggu 5 detik setelah halaman admin dimuat
+        setTimeout(function() {
+            const savedAdminNotif = localStorage.getItem('admin_notif_permission_denied');
+            if (savedAdminNotif === 'true') {
+                console.log('⚠️ Admin: Izin notifikasi sudah ditolak sebelumnya');
+                return;
+            }
+            showAdminNotificationPermissionPopup();
+        }, 5000);
     }
     
     // Tampilkan popup izin notifikasi admin
@@ -10260,6 +10413,7 @@ body {
         console.log('📢 Admin: Popup izin notifikasi ditampilkan');
     }
     
+    // Minta izin notifikasi admin
     function requestAdminNotificationPermission() {
         if (!('Notification' in window)) {
             showAdminToast('❌ Browser Anda tidak mendukung notifikasi.');
@@ -10313,6 +10467,7 @@ body {
         });
     }
     
+    // Tutup popup izin notifikasi admin
     function closeAdminNotificationPermissionPopup() {
         const overlay = document.getElementById('notifAdminPermissionOverlay');
         if (overlay) {
@@ -10324,6 +10479,21 @@ body {
                 document.body.style.overflow = '';
             }, 400);
         }
+    }
+    
+    // Cek izin notifikasi admin
+    function checkAdminNotificationPermission() {
+        if ('Notification' in window) {
+            if (Notification.permission === 'granted') {
+                adminNotifPermissionGranted = true;
+                return true;
+            } else if (Notification.permission === 'denied') {
+                adminNotifPermissionGranted = false;
+                return false;
+            }
+            return null;
+        }
+        return null;
     }
     
     // Kirim notifikasi uji coba admin
@@ -10353,217 +10523,7 @@ body {
             console.log('Test notification error:', e);
         }
     }
-    
-    // Kirim notifikasi admin
-    function sendAdminNotification(title, message, tag = null) {
-        if (!adminNotifPermissionGranted && !('Notification' in window)) {
-            console.log('❌ Admin: Notifikasi tidak diizinkan');
-            return;
-        }
-        
-        try {
-            const options = {
-                body: message,
-                icon: adminIcon,
-                badge: adminIcon,
-                vibrate: [200, 100, 200],
-                requireInteraction: true,
-                silent: false
-            };
-            
-            if (tag) options.tag = tag;
-            
-            const notification = new Notification(title, options);
-            
-            notification.onclick = function() {
-                window.focus();
-                notification.close();
-            };
-            
-            setTimeout(function() {
-                if (notification.close) {
-                    notification.close();
-                }
-            }, 8000);
-            
-            console.log(`📢 Admin: Notifikasi dikirim - ${title}`);
-            
-            // Tampilkan juga di toast
-            showAdminToast(title + ': ' + message);
-            
-        } catch(e) {
-            console.log('Send notification error:', e);
-        }
-    }
-    
-    // Toast untuk admin (tampilan di dalam panel)
-    function showAdminToast(message) {
-        const toast = document.getElementById('toastNeon');
-        if (toast) {
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-    }
-    
-    // ============================================================
-    // INISIALISASI ADMIN NOTIFIKASI
-    // ============================================================
-    function initAdminNotification() {
-        // Tunggu 5 detik setelah halaman admin dimuat
-        setTimeout(function() {
-            const savedAdminNotif = localStorage.getItem('admin_notif_permission_denied');
-            if (savedAdminNotif === 'true') {
-                console.log('⚠️ Admin: Izin notifikasi sudah ditolak sebelumnya');
-                return;
-            }
-            showAdminNotificationPermissionPopup();
-        }, 5000);
-    }
-    
-    // ============================================================
-    // AUTO NOTIFIKASI UNTUK ADMIN - ORDER BARU, PESAN, DLL
-    // ============================================================
-    
-    // Setup listener untuk deposit baru
-    function setupAdminDepositNotif() {
-        if (!adminNotifPermissionGranted) return;
-        
-        db.ref('deposits').on('child_added', function(snap) {
-            const uid = snap.key;
-            const deposits = snap.val() || {};
-            const lastKey = Object.keys(deposits).sort((a,b) => deposits[b].timestamp - deposits[a].timestamp)[0];
-            const deposit = deposits[lastKey];
-            
-            if (deposit && deposit.status === 'pending') {
-                sendAdminNotification(
-                    '💰 DEPOSIT BARU!',
-                    `${uid} - Rp ${formatRupiah(deposit.jumlah)}`,
-                    `deposit_${lastKey}`
-                );
-            }
-        });
-    }
-    
-    // Setup listener untuk VIP purchase baru
-    function setupAdminVIPNotif() {
-        if (!adminNotifPermissionGranted) return;
-        
-        db.ref('purchases').on('child_added', function(snap) {
-            const uid = snap.key;
-            const purchases = snap.val() || {};
-            const lastKey = Object.keys(purchases).sort((a,b) => purchases[b].timestamp - purchases[a].timestamp)[0];
-            const purchase = purchases[lastKey];
-            
-            if (purchase && purchase.status === 'pending') {
-                sendAdminNotification(
-                    '👑 VIP ORDER BARU!',
-                    `${uid} - ${purchase.package} (Rp ${formatRupiah(purchase.price)})`,
-                    `vip_${lastKey}`
-                );
-            }
-        });
-    }
-    
-    // Setup listener untuk pesan baru dari customer (private chat)
-    function setupAdminChatNotif() {
-        if (!adminNotifPermissionGranted) return;
-        
-        db.ref('chats').on('child_added', function(snap) {
-            const uid = snap.key;
-            const messages = snap.val() || {};
-            const sortedKeys = Object.keys(messages).sort((a,b) => messages[b].timestamp - messages[a].timestamp);
-            
-            if (sortedKeys.length > 0) {
-                const lastMsg = messages[sortedKeys[0]];
-                if (lastMsg && lastMsg.sender === 'customer') {
-                    const text = lastMsg.text ? lastMsg.text.substring(0, 80) : 'Mengirim pesan';
-                    sendAdminNotification(
-                        '💬 Pesan dari Customer',
-                        `${uid}: ${text}`,
-                        `chat_${uid}_${sortedKeys[0]}`
-                    );
-                }
-            }
-        });
-    }
-    
-    // Setup listener untuk public chat
-    function setupAdminPublicChatNotif() {
-        if (!adminNotifPermissionGranted) return;
-        
-        db.ref('all_comments').orderByChild('timestamp').limitToLast(1).on('child_added', function(snap) {
-            const msg = snap.val();
-            if (msg && msg.uid !== 'ADMIN') {
-                const text = msg.text ? msg.text.substring(0, 80) : 'Mengirim pesan';
-                sendAdminNotification(
-                    '💬 Public Chat',
-                    `${msg.uid}: ${text}`,
-                    `public_${snap.key}`
-                );
-            }
-        });
-    }
-    
-    // Setup listener untuk support chat
-    function setupAdminSupportChatNotif() {
-        if (!adminNotifPermissionGranted) return;
-        
-        db.ref('support_chats').on('child_added', function(snap) {
-            const chat = snap.val() || {};
-            if (chat.lastSender === 'user' && !chat.adminRead) {
-                const uid = chat.uid || 'Guest';
-                const msg = chat.lastMessage || 'Ada pesan baru';
-                sendAdminNotification(
-                    '💬 Support Chat',
-                    `${uid}: ${msg.substring(0, 80)}`,
-                    `support_${snap.key}`
-                );
-            }
-        });
-    }
-    
-    // ============================================================
-    // FUNGSI UNTUK KIRIM NOTIFIKASI KE USER VIA ADMIN
-    // ============================================================
-    async function sendAdminNotificationToUser(uid, title, message, type = 'info', duration = 5) {
-        if (!uid) {
-            showAdminToast('❌ UID tidak boleh kosong!');
-            return;
-        }
-        
-        try {
-            await db.ref('user_notifications/' + uid).push({
-                title: title,
-                message: message,
-                type: type,
-                duration: duration,
-                sentAt: Date.now(),
-                sentBy: 'Admin'
-            });
-            
-            await db.ref('chats/' + uid).push({
-                sender: 'system',
-                text: `📢 *${title}*\n\n${message}`,
-                timestamp: Date.now(),
-                isAnnouncement: true
-            });
-            
-            showAdminToast(`✅ Notifikasi terkirim ke ${uid}`);
-            addActivityLog('Kirim Notifikasi User', `Notifikasi "${title}" ke ${uid}`);
-            
-            // Kirim notifikasi admin juga
-            sendAdminNotification(
-                '📨 Notifikasi Terkirim',
-                `"${title}" dikirim ke ${uid}`,
-                `notif_sent_${Date.now()}`
-            );
-            
-        } catch (error) {
-            showAdminToast('❌ Gagal kirim: ' + error.message);
-        }
-    }
-    
+
     // ============================================================
     // SERVICE WORKER REGISTRATION - ADMIN
     // ============================================================
