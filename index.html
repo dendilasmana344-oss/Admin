@@ -6812,6 +6812,45 @@ body {
     </div>
     
     <!-- ============================================================
+     LIVE LOCATION TAB
+     ============================================================ -->
+    <div id="live_location" class="tab-content">
+        <div class="card">
+            <div class="card-title glow-cyan">
+                <i class="fas fa-map-marked-alt"></i> Live Location Users
+                <button class="btn btn-primary btn-sm" onclick="loadUserLocations()" style="margin-left:auto;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-success btn-sm" onclick="startLocationTracking()" style="margin-left:10px;">
+                    <i class="fas fa-play"></i> Start Tracking
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="stopLocationTracking()" style="margin-left:5px;">
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+            </div>
+        
+            <!-- Peta Lokasi User -->
+            <div class="location-map-container" id="locationMapContainer">
+                <div id="locationMapFrame">
+                    <iframe 
+                        id="locationMapIframe"
+                        src="https://www.google.com/maps/embed/v1/place?key=AIzaSyCT3zQGBGmPNMm00wbU02hGFBA4xO7P6b0&q=-6.2088,106.8456&zoom=10"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+                <div style="margin-top:10px; display:flex; gap:15px; flex-wrap:wrap; align-items:center; justify-content:center;">
+                    <span style="color:#888; font-size:12px;"><i class="fas fa-circle" style="color:#00ff88;"></i> Online</span>
+                    <span style="color:#888; font-size:12px;"><i class="fas fa-circle" style="color:#ffaa00;"></i> Offline</span>
+                    <span style="color:#888; font-size:12px;" id="locationUserCount"><i class="fas fa-users"></i> 0 user</span>
+                </div>
+            </div>
+        
+            <!-- Daftar User dengan Lokasi -->
+            <div id="userLocationsList" style="margin-top:15px;"></div>
+        </div>
+    </div>
+    
+    <!-- ============================================================
      EDIT DISCOUNT MODAL
      ============================================================ -->
     <div class="edit-discount-modal" id="editDiscountModal">
