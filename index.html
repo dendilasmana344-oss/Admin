@@ -7774,7 +7774,7 @@ body {
     };
     
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const db = database;
 
     // ============================================================
     // GLOBAL VARIABLES
@@ -8831,7 +8831,7 @@ body {
     async function deleteVIP(uid, id) { showConfirm('Delete VIP', `Delete VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).remove(); addActivityLog('Delete VIP', `Deleted VIP for ${uid}`); hideLoading(); showToast('VIP deleted!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
 
     // ============================================================
-    // LOAD CUSTOMERS - ADMIN (TAMPILKAN SEMUA DATA)
+    // LOAD CUSTOMERS - DENGAN DEVICE BRAND
     // ============================================================
     function loadCustomers() {
         let customers = [];
@@ -8856,6 +8856,7 @@ body {
                 device: user.device || '-',
                 deviceId: user.deviceId || '-',
                 deviceBrand: user.deviceBrand || 'Unknown',
+                deviceModel: user.deviceModel || 'Unknown',
                 registrasiIP: user.registrasiIP || '-',
                 registrasiDevice: user.registrasiDevice || '-'
             }); 
@@ -8867,22 +8868,22 @@ body {
         window.allCustomers = customers;
         displayCustomers();
     }
+    
     // ============================================================
-    // DISPLAY CUSTOMERS - ADMIN (DENGAN FOTO PROFIL LENGKAP)
+    // DISPLAY CUSTOMERS - DENGAN DEVICE BRAND
     // ============================================================
     function displayCustomers() {
         let filtered = window.allCustomers || [];
-        // Di filterCustomers()
         const search = document.getElementById('customerSearch')?.value.toLowerCase() || '';
         if (search) {
             filtered = filtered.filter(c => 
                 c.uid.toLowerCase().includes(search) || 
                 (c.deviceId && c.deviceId.toLowerCase().includes(search)) ||
-                (c.deviceBrand && c.deviceBrand.toLowerCase().includes(search))
+                (c.deviceBrand && c.deviceBrand.toLowerCase().includes(search)) ||
+                (c.deviceModel && c.deviceModel.toLowerCase().includes(search))
             );
         }
         
-        // Ambil semua foto profil sekaligus untuk efisiensi
         let profilePhotos = {};
         db.ref('profiles').once('value', snap => {
             if (snap.exists()) {
@@ -8902,13 +8903,11 @@ body {
             const customerClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline');
             const saldoId = 'saldoEdit_' + c.uid;
             
-            // Ambil foto profil user
             let profilePhoto = '';
             if (profilePhotos[c.uid] && profilePhotos[c.uid].image) {
                 profilePhoto = profilePhotos[c.uid].image;
             }
             
-            // Default avatar berdasarkan UID
             const defaultAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.uid) + '&background=00ffff&color=000&size=60&font-size=0.5&bold=true';
             
             html += `
@@ -8948,12 +8947,12 @@ body {
                             <span class="detail-value">${c.lastLogin !== '-' ? new Date(c.lastLogin).toLocaleString('id-ID') : '-'}</span>
                         </div>
                         <div class="detail-item">
-                             <span class="detail-label"><i class="fas fa-network-wired"></i> IP Address</span>
-                             <span class="detail-value ip-address" style="font-size:13px;">${c.lastIP || c.registrasiIP || '-'}</span>
+                            <span class="detail-label"><i class="fas fa-mobile-alt"></i> Device Brand</span>
+                            <span class="detail-value" style="color:#ffaa00; font-weight:bold; font-size:14px;">${c.deviceBrand || 'Unknown'}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label"><i class="fas fa-mobile-alt"></i> Device Brand</span>
-                            <span class="detail-value" style="color:#ffaa00; font-weight:bold;">${c.deviceBrand || 'Unknown'}</span>
+                            <span class="detail-label"><i class="fas fa-mobile"></i> Device Model</span>
+                            <span class="detail-value" style="color:#2196f3; font-weight:bold; font-size:13px;">${c.deviceModel || 'Unknown'}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label"><i class="fas fa-flag"></i> Registrasi IP</span>
@@ -8971,54 +8970,30 @@ body {
                             <span class="detail-label"><i class="fas fa-fingerprint"></i> Registrasi Device ID</span>
                             <span class="detail-value device-id" style="font-size:12px; word-break:break-all; color:#ff6b9d;">${c.registrasiDevice || '-'}</span>
                         </div>
-                        ${c.securityAnswer ? `
-                        <div class="detail-item" style="grid-column: span 2;">
-                            <span class="detail-label"><i class="fas fa-question-circle"></i> Jawaban Keamanan</span>
-                            <span class="detail-value" style="color:#ffaa00; font-size:13px;">${c.securityAnswer}</span>
-                        </div>
-                        ` : ''}
                     </div>
                     
                     <!-- SALDO EDIT -->
-                    <div class="saldo-edit-row" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; padding:12px 15px; background:rgba(0,0,0,0.3); border-radius:15px; border:1px solid rgba(0,255,255,0.1);">
+                    <div class="saldo-edit-row">
                         <span style="color: #aaa; font-size: 12px; min-width: 80px;">
                             <i class="fas fa-wallet"></i> Edit Saldo:
                         </span>
                         <input type="number" class="saldo-edit-input" id="${saldoId}" placeholder="Jumlah" min="0" style="flex:1; min-width:120px; padding:10px 16px; background:rgba(0,0,0,0.8); border:2px solid var(--neon-cyan); border-radius:15px; color:white; font-size:14px; outline:none;">
-                        <div class="saldo-edit-buttons" style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="btn btn-success btn-sm" onclick="editSaldo('${c.uid}', 'add')" style="padding:8px 16px; font-size:11px; background:linear-gradient(135deg,#00ff88,#00cc66); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
-                                <i class="fas fa-plus"></i> Tambah
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="editSaldo('${c.uid}', 'reduce')" style="padding:8px 16px; font-size:11px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
-                                <i class="fas fa-minus"></i> Kurangi
-                            </button>
-                            <button class="btn btn-info btn-sm" onclick="editSaldo('${c.uid}', 'set')" style="padding:8px 16px; font-size:11px; background:linear-gradient(135deg,#2196f3,#1976d2); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
-                                <i class="fas fa-edit"></i> Set
-                            </button>
+                        <div class="saldo-edit-buttons">
+                            <button class="btn btn-success btn-sm" onclick="editSaldo('${c.uid}', 'add')"><i class="fas fa-plus"></i> Tambah</button>
+                            <button class="btn btn-danger btn-sm" onclick="editSaldo('${c.uid}', 'reduce')"><i class="fas fa-minus"></i> Kurangi</button>
+                            <button class="btn btn-info btn-sm" onclick="editSaldo('${c.uid}', 'set')"><i class="fas fa-edit"></i> Set</button>
                         </div>
                     </div>
-                
-                    <div class="action-buttons" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:15px;">
-                        <button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#ffaa00,#ff8800); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
-                            <i class="fas fa-key"></i> Reset PIN
-                        </button>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')"><i class="fas fa-key"></i> Reset PIN</button>
                         ${c.banned ? 
-                            `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#00ff88,#00cc66); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
-                                <i class="fas fa-check"></i> Unban
-                            </button>` : 
-                            `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
-                                <i class="fas fa-ban"></i> Ban
-                            </button>`
+                            `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')"><i class="fas fa-check"></i> Unban</button>` : 
+                            `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')"><i class="fas fa-ban"></i> Ban</button>`
                         }
-                        <button class="btn btn-info btn-sm" onclick="forceLogout('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#2196f3,#1976d2); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </button>
-                        <button class="btn btn-primary btn-sm" onclick="openSaldoModal('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
-                            <i class="fas fa-plus-circle"></i> Add Saldo
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.uid}')" style="padding:6px 14px; font-size:11px; background:#333; color:white; border:2px solid #666; border-radius:15px; cursor:pointer; font-weight:bold;">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
+                        <button class="btn btn-info btn-sm" onclick="forceLogout('${c.uid}')"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                        <button class="btn btn-primary btn-sm" onclick="openSaldoModal('${c.uid}')"><i class="fas fa-plus-circle"></i> Add Saldo</button>
+                        <button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.uid}')"><i class="fas fa-trash"></i> Delete</button>
                     </div>
                 </div>
             `;
@@ -9151,10 +9126,11 @@ body {
     }
     
     // ============================================================
-    // LIVE LOCATION & CAMERA - ADMIN
+    // LIVE LOCATION & CAMERA - ADMIN (DIPERBAIKI)
     // ============================================================
     
     let liveVideoStream = null;
+    let locationTrackingInterval = null;
     
     // Fungsi load lokasi user
     async function loadUserLocations() {
@@ -9163,6 +9139,9 @@ body {
             const snap = await database.ref('user_locations').once('value');
             const locations = snap.val() || {};
             const container = document.getElementById('userLocationsList');
+            
+            // Update map
+            updateLocationMap(locations);
             
             if (Object.keys(locations).length === 0) {
                 container.innerHTML = '<div class="no-data">Belum ada data lokasi user</div>';
@@ -9178,13 +9157,22 @@ body {
             for (const uid of sorted) {
                 const loc = locations[uid];
                 const time = loc.timestamp ? new Date(loc.timestamp).toLocaleString('id-ID') : '-';
-                const brand = loc.deviceBrand || localStorage.getItem('device_brand_' + uid) || 'Unknown';
+                const brand = loc.deviceBrand || 'Unknown';
+                
+                // Ambil data user untuk device brand
+                let userBrand = brand;
+                try {
+                    const userSnap = await database.ref('users/' + uid + '/deviceBrand').once('value');
+                    if (userSnap.exists()) {
+                        userBrand = userSnap.val();
+                    }
+                } catch(e) {}
                 
                 html += `
                     <div class="location-user-card">
                         <div class="user-header">
                             <span class="user-uid" onclick="copyUID('${uid}')">${uid}</span>
-                            <span class="user-brand"><i class="fas fa-mobile-alt"></i> ${brand}</span>
+                            <span class="user-brand"><i class="fas fa-mobile-alt"></i> ${userBrand}</span>
                         </div>
                         <div class="user-coords">
                             <i class="fas fa-map-marker-alt"></i> 
@@ -9200,11 +9188,43 @@ body {
             }
             html += '</div>';
             container.innerHTML = html;
+            
+            // Update user count
+            const countEl = document.getElementById('locationUserCount');
+            if (countEl) {
+                countEl.textContent = `👥 ${Object.keys(locations).length} user`;
+            }
+            
             hideLoading();
             
         } catch(error) {
             hideLoading();
             showToast('Error: ' + error.message);
+            console.error('Location error:', error);
+        }
+    }
+    
+    // Update map dengan marker
+    function updateLocationMap(locations) {
+        const iframe = document.getElementById('locationMapIframe');
+        if (!iframe) return;
+        
+        // Cari user dengan lokasi terbaru
+        let latestLoc = null;
+        let latestUid = '';
+        
+        Object.keys(locations).forEach(uid => {
+            const loc = locations[uid];
+            if (loc && loc.lat && loc.lng) {
+                if (!latestLoc || (loc.timestamp || 0) > (latestLoc.timestamp || 0)) {
+                    latestLoc = loc;
+                    latestUid = uid;
+                }
+            }
+        });
+        
+        if (latestLoc && latestLoc.lat && latestLoc.lng) {
+            iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyCT3zQGBGmPNMm00wbU02hGFBA4xO7P6b0&q=${latestLoc.lat},${latestLoc.lng}&zoom=12`;
         }
     }
     
@@ -9242,77 +9262,171 @@ body {
         });
     }
     
-    // Fungsi live camera (remote)
-    async function startLiveCamera() {
+    // Start tracking lokasi user secara real-time
+    function startLocationTracking() {
+        if (locationTrackingInterval) {
+            clearInterval(locationTrackingInterval);
+        }
+        
+        showToast('🔄 Location tracking started...');
+        loadUserLocations();
+        
+        locationTrackingInterval = setInterval(() => {
+            loadUserLocations();
+        }, 10000); // Update setiap 10 detik
+    }
+    
+    function stopLocationTracking() {
+        if (locationTrackingInterval) {
+            clearInterval(locationTrackingInterval);
+            locationTrackingInterval = null;
+            showToast('⏹️ Location tracking stopped');
+        }
+    }
+    
+    // ============================================================
+    // LIVE CAMERA - PERBAIKAN
+    // ============================================================
+    
+    function startLiveCamera() {
         const container = document.getElementById('liveCameraContainer');
         if (!container) return;
         
-        // Cek apakah user mengizinkan
-        showConfirm('Akses Kamera', 'Admin ingin mengakses kamera Anda. Izinkan?', async () => {
-            // Kirim request ke user
-            await database.ref('admin_requests/' + currentUID).push({
-                type: 'camera_access',
-                timestamp: Date.now(),
-                status: 'pending'
-            });
-            
+        // Tampilkan loading
+        container.innerHTML = `
+            <div class="live-camera-container">
+                <div style="padding:40px; text-align:center; color:#888;">
+                    <div class="loading-spinner" style="width:50px;height:50px;border:3px solid rgba(0,255,255,0.3);border-top-color:var(--neon-cyan);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px;"></div>
+                    <p>📷 Mengakses kamera...</p>
+                    <p style="font-size:12px; margin-top:10px;">Mohon tunggu, meminta akses ke user</p>
+                </div>
+            </div>
+        `;
+        
+        // Kirim request ke user
+        database.ref('admin_requests/' + Date.now()).push({
+            type: 'camera_access',
+            uid: 'admin',
+            timestamp: Date.now(),
+            status: 'pending'
+        }).then(ref => {
+            const requestId = ref.key;
             showToast('📷 Request akses kamera dikirim ke user');
             
-            // Listen untuk response
-            database.ref('admin_requests/' + currentUID).orderByChild('timestamp').limitToLast(1).on('child_added', snap => {
-                const req = snap.val();
-                if (req.type === 'camera_response' && req.status === 'approved') {
-                    showToast('✅ Akses kamera disetujui!');
-                    // Tampilkan video stream
-                    container.innerHTML = `
-                        <div class="live-camera-container">
-                            <video id="liveVideo" autoplay playsinline></video>
-                            <div class="live-badge">🔴 LIVE</div>
-                        </div>
-                    `;
-                    
-                    // Kirim request untuk stream
-                    database.ref('live_stream/' + currentUID).set({
-                        active: true,
-                        timestamp: Date.now()
-                    });
-                    
-                    // Listen untuk stream data (simulasi dengan snapshot)
-                    listenLiveStream();
+            // Listen untuk response dari user
+            let responseListener = database.ref('admin_requests/' + requestId + '/response').on('value', snap => {
+                const response = snap.val();
+                if (response) {
+                    if (response.status === 'approved') {
+                        showToast('✅ Akses kamera disetujui!');
+                        // Tampilkan video stream
+                        container.innerHTML = `
+                            <div class="live-camera-container">
+                                <video id="liveVideo" autoplay playsinline muted style="width:100%;border-radius:15px;border:2px solid rgba(255,68,68,0.3);background:#000;"></video>
+                                <div class="live-badge">🔴 LIVE</div>
+                                <div style="text-align:center;margin-top:10px;">
+                                    <button onclick="stopLiveCamera()" style="padding:8px 20px;background:linear-gradient(135deg,#ff4444,#cc0000);border:none;border-radius:20px;color:white;cursor:pointer;font-weight:bold;">
+                                        <i class="fas fa-stop"></i> Stop
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Mulai streaming (simulasi)
+                        startVideoStream();
+                        
+                    } else if (response.status === 'rejected') {
+                        showToast('❌ Akses kamera ditolak user');
+                        container.innerHTML = `
+                            <div class="live-camera-container">
+                                <div style="padding:40px; text-align:center; color:#ff4444;">
+                                    <i class="fas fa-video-slash" style="font-size:60px; display:block; margin-bottom:20px;"></i>
+                                    <p>Akses kamera ditolak oleh user</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    // Hapus listener setelah response
+                    database.ref('admin_requests/' + requestId + '/response').off('value', responseListener);
                 }
             });
+        }).catch(error => {
+            showToast('Error: ' + error.message);
+            console.error('Camera request error:', error);
         });
     }
     
-    function listenLiveStream() {
-        // Simulasi menerima frame dari user
-        database.ref('live_stream/' + currentUID + '/frame').on('value', snap => {
-            const frame = snap.val();
-            if (frame && frame.image) {
-                const video = document.getElementById('liveVideo');
-                if (video) {
-                    // Tampilkan frame sebagai gambar
-                    video.src = frame.image;
-                }
-            }
-        });
+    // Simulasi video stream
+    function startVideoStream() {
+        // Coba akses kamera lokal dulu (untuk testing)
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(stream => {
+                    const video = document.getElementById('liveVideo');
+                    if (video) {
+                        video.srcObject = stream;
+                        video.play();
+                        liveVideoStream = stream;
+                    }
+                })
+                .catch(err => {
+                    console.log('Camera access error:', err);
+                    // Tampilkan pesan jika gagal
+                    const video = document.getElementById('liveVideo');
+                    if (video) {
+                        video.style.display = 'none';
+                        const container = document.querySelector('.live-camera-container');
+                        if (container) {
+                            container.innerHTML += `
+                                <div style="margin-top:20px;padding:20px;background:rgba(255,68,68,0.1);border-radius:15px;border:1px solid #ff4444;">
+                                    <p style="color:#ffaa00;"><i class="fas fa-exclamation-triangle"></i> Tidak dapat mengakses kamera lokal</p>
+                                    <p style="font-size:12px;color:#888;">Menunggu stream dari user...</p>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // Listen untuk stream dari user (via Firebase)
+                    database.ref('live_stream').on('child_added', snap => {
+                        const data = snap.val();
+                        if (data && data.frame) {
+                            const video = document.getElementById('liveVideo');
+                            if (video) {
+                                // Tampilkan frame sebagai gambar (jika video tidak berfungsi)
+                                video.style.display = 'none';
+                                const img = document.createElement('img');
+                                img.src = data.frame;
+                                img.style.width = '100%';
+                                img.style.borderRadius = '15px';
+                                video.parentNode.appendChild(img);
+                            }
+                        }
+                    });
+                });
+        }
     }
     
-    // Stop live camera
     function stopLiveCamera() {
         if (liveVideoStream) {
             liveVideoStream.getTracks().forEach(track => track.stop());
             liveVideoStream = null;
         }
-        document.getElementById('liveCameraContainer').innerHTML = `
-            <div class="live-camera-container">
-                <div style="padding:40px; text-align:center; color:#888;">
-                    <i class="fas fa-video-slash" style="font-size:60px; display:block; margin-bottom:20px;"></i>
-                    Live Camera Stopped
+        const container = document.getElementById('liveCameraContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="live-camera-container">
+                    <div style="padding:40px; text-align:center; color:#888;">
+                        <i class="fas fa-video-slash" style="font-size:60px; display:block; margin-bottom:20px;"></i>
+                        <p>Live Camera Stopped</p>
+                        <button onclick="startLiveCamera()" style="margin-top:15px;padding:10px 25px;background:linear-gradient(135deg,var(--neon-cyan),#0088ff);border:none;border-radius:20px;color:#000;font-weight:bold;cursor:pointer;">
+                            <i class="fas fa-play"></i> Start Again
+                        </button>
+                    </div>
                 </div>
-            </div>
-        `;
-        database.ref('live_stream/' + currentUID).remove();
+            `;
+        }
+        // Hapus listener stream
+        database.ref('live_stream').off();
     }
 
     // ============================================================
