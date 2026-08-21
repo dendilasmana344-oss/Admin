@@ -2514,6 +2514,134 @@
         }
         
         /* ============================================================
+        LIVE LOCATION & CAMERA - ADMIN
+        ============================================================ */
+        .location-map-container {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid var(--neon-cyan);
+            margin: 15px 0;
+            min-height: 300px;
+            position: relative;
+        }
+        
+        .location-map-container iframe {
+            width: 100%;
+            height: 300px;
+            border-radius: 15px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .live-camera-container {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid #ff4444;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .live-camera-container video {
+            width: 100%;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 68, 68, 0.3);
+            background: #000;
+        }
+        
+        .live-camera-container .live-badge {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: #ff4444;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .location-user-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .location-user-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 18px;
+            transition: all 0.3s;
+        }
+        
+        .location-user-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
+        }
+        
+        .location-user-card .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .location-user-card .user-uid {
+            font-family: monospace;
+            color: var(--neon-cyan);
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .location-user-card .user-brand {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .location-user-card .user-coords {
+            color: #00ff88;
+            font-size: 13px;
+            font-family: monospace;
+            margin: 8px 0;
+        }
+        
+        .location-user-card .user-time {
+            color: #888;
+            font-size: 11px;
+        }
+        
+        .location-user-card .btn-view-location {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            border: none;
+            border-radius: 20px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            width: 100%;
+        }
+        
+        .location-user-card .btn-view-location:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+        
+        /* ============================================================
            EYE ICON - PACKAGE DETAIL (ADMIN)
            ============================================================ */
         .package-eye-icon {
@@ -3330,6 +3458,181 @@ body {
             .package-detail-popup-admin .popup-package-price {
                 font-size: 22px;
             }
+        }
+        
+        /* ============================================================
+   REVIEWS ADMIN - 3D DESIGN
+   ============================================================ */
+        .review-3d-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        .review-3d-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.05) 0%, transparent 70%);
+            animation: spin 25s linear infinite;
+            z-index: 0;
+        }
+        
+        .review-3d-card:hover {
+            transform: perspective(1000px) rotateX(2deg) rotateY(2deg) translateY(-5px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 15px 45px rgba(0, 255, 255, 0.25), 0 0 60px rgba(0, 255, 255, 0.05);
+        }
+        
+        .review-3d-card .review-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .review-3d-card .review-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid var(--neon-cyan);
+            object-fit: cover;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .review-3d-card:hover .review-avatar {
+            border-color: #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .review-3d-card .review-user-info {
+            flex: 1;
+        }
+        
+        .review-3d-card .review-username {
+            font-weight: bold;
+            color: var(--neon-cyan);
+            font-size: 16px;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .review-3d-card .review-file-name {
+            font-size: 12px;
+            color: #ffaa00;
+        }
+        
+        .review-3d-card .review-stars {
+            color: #ffd700;
+            font-size: 20px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        
+        .review-3d-card .review-text {
+            color: #ddd;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            border-left: 3px solid var(--neon-cyan);
+            margin: 10px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .review-3d-card .review-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #888;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .review-3d-card .review-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .review-3d-card .review-actions button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .review-3d-card .review-actions .btn-edit-review {
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            color: #000;
+        }
+        
+        .review-3d-card .review-actions .btn-edit-review:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 170, 0, 0.4);
+        }
+        
+        .review-3d-card .review-actions .btn-delete-review {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+        }
+        
+        .review-3d-card .review-actions .btn-delete-review:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 68, 68, 0.4);
+        }
+        
+        .review-3d-card .review-actions .btn-reply-review {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+        }
+        
+        .review-3d-card .review-actions .btn-reply-review:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(33, 150, 243, 0.4);
+        }
+        
+        .review-3d-card .review-reply {
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 15px;
+            border-left: 3px solid #ffaa00;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .review-3d-card .review-reply .reply-label {
+            font-size: 12px;
+            color: #ffaa00;
+            font-weight: bold;
+        }
+        
+        .review-3d-card .review-reply .reply-text {
+            color: #ddd;
+            font-size: 13px;
+            margin-top: 4px;
         }
         
         /* ============================================================
@@ -6157,6 +6460,8 @@ body {
         <div class="tab" onclick="openTab('user_management')"><i class="fas fa-user-cog"></i> User Management</div>
         <div class="tab" onclick="openTab('daily_reward_admin')"><i class="fas fa-gift"></i> Daily Reward</div>
         <div class="tab" onclick="openTab('vip_list')"><i class="fas fa-star"></i> VIP List</div>
+        <div class="tab" onclick="openTab('live_location')"><i class="fas fa-map-marked-alt"></i> Live Location</div>
+        <div class="tab" onclick="openTab('live_camera')"><i class="fas fa-video"></i> Live Camera</div>
         <div class="tab" onclick="openTab('updates')"><i class="fas fa-file-upload"></i> File Updates</div>
         <div class="tab" onclick="openTab('free_update')"><i class="fas fa-download"></i> Free Update</div>
         <div class="tab" onclick="openTab('discounts')"><i class="fas fa-tags"></i> Discounts</div>
@@ -6822,6 +7127,40 @@ body {
                 <button class="btn btn-primary" onclick="activateVideoPopup()"><i class="fas fa-play"></i> Aktifkan Video Popup</button>
                 <button class="btn btn-danger" onclick="deactivateVideoPopup()"><i class="fas fa-stop"></i> Nonaktifkan</button>
                 <button class="btn btn-info" onclick="loadVideoPopupStatus()"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="live_camera" class="tab-content">
+        <div class="card">
+            <div class="card-title glow-cyan">
+                <i class="fas fa-video"></i> Live Camera
+                <button class="btn btn-danger btn-sm" onclick="startLiveCamera()" style="margin-left:10px;">
+                    <i class="fas fa-play"></i> Start
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="stopLiveCamera()" style="margin-left:5px;">
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="loadUserLocations()" style="margin-left:10px;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        
+        <!-- Live Camera Container -->
+            <div id="liveCameraContainer">
+                <div class="live-camera-container">
+                    <div style="padding:40px; text-align:center; color:#888;">
+                            <i class="fas fa-video" style="font-size:60px; display:block; margin-bottom:20px;"></i>
+                        <p>Klik <strong style="color:var(--neon-cyan);">Start</strong> untuk memulai live camera</p>
+                        <p style="font-size:12px; margin-top:10px;">Admin akan meminta akses kamera ke user</p>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- User Location List untuk referensi -->
+            <div style="margin-top:20px; border-top:2px solid rgba(0,255,255,0.2); padding-top:20px;">
+                <h4 style="color:var(--neon-cyan); margin-bottom:15px;"><i class="fas fa-map-marked-alt"></i> User Locations</h4>
+                <div id="userLocationsList"></div>
             </div>
         </div>
     </div>
@@ -8477,6 +8816,7 @@ body {
                 lastIP: user.lastIP || '-',
                 device: user.device || '-',
                 deviceId: user.deviceId || '-',
+                deviceBrand: user.deviceBrand || 'Unknown',
                 registrasiIP: user.registrasiIP || '-',
                 registrasiDevice: user.registrasiDevice || '-'
             }); 
@@ -8493,11 +8833,13 @@ body {
     // ============================================================
     function displayCustomers() {
         let filtered = window.allCustomers || [];
+        // Di filterCustomers()
         const search = document.getElementById('customerSearch')?.value.toLowerCase() || '';
         if (search) {
             filtered = filtered.filter(c => 
                 c.uid.toLowerCase().includes(search) || 
-                (c.deviceId && c.deviceId.toLowerCase().includes(search))
+                (c.deviceId && c.deviceId.toLowerCase().includes(search)) ||
+                (c.deviceBrand && c.deviceBrand.toLowerCase().includes(search))
             );
         }
         
@@ -8567,8 +8909,12 @@ body {
                             <span class="detail-value">${c.lastLogin !== '-' ? new Date(c.lastLogin).toLocaleString('id-ID') : '-'}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label"><i class="fas fa-network-wired"></i> IP Address</span>
-                            <span class="detail-value ip-address" style="font-size:13px;">${c.lastIP || c.registrasiIP || '-'}</span>
+                             <span class="detail-label"><i class="fas fa-network-wired"></i> IP Address</span>
+                             <span class="detail-value ip-address" style="font-size:13px;">${c.lastIP || c.registrasiIP || '-'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="fas fa-mobile-alt"></i> Device Brand</span>
+                            <span class="detail-value" style="color:#ffaa00; font-weight:bold;">${c.deviceBrand || 'Unknown'}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label"><i class="fas fa-flag"></i> Registrasi IP</span>
@@ -8593,7 +8939,7 @@ body {
                         </div>
                         ` : ''}
                     </div>
-                
+                    
                     <!-- SALDO EDIT -->
                     <div class="saldo-edit-row" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; padding:12px 15px; background:rgba(0,0,0,0.3); border-radius:15px; border:1px solid rgba(0,255,255,0.1);">
                         <span style="color: #aaa; font-size: 12px; min-width: 80px;">
@@ -8687,6 +9033,248 @@ body {
     function openSaldoModal(uid) { document.getElementById('saldoUID').value = uid; document.getElementById('saldoAmount').value = ''; document.getElementById('saldoModal').classList.add('active'); }
     function closeSaldoModal() { document.getElementById('saldoModal').classList.remove('active'); }
     async function addSaldo() { const uid = document.getElementById('saldoUID').value; const amount = parseInt(document.getElementById('saldoAmount').value); if (!uid || !amount || amount <= 0) { showToast('Invalid input!'); return; } showLoading(); try { const snap = await db.ref(`saldo/${uid}`).once('value'); const current = snap.val()?.amount || 0; await db.ref(`saldo/${uid}`).set({ amount: current + amount }); addActivityLog('Add Saldo', `Added Rp ${formatRupiah(amount)} to ${uid}`); hideLoading(); showToast(`Added Rp ${formatRupiah(amount)} to ${uid}`); closeSaldoModal(); loadCustomers(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }
+    
+    // ============================================================
+    // DEVICE BRAND DETECTION
+    // ============================================================
+    async function getDeviceBrand() {
+        // Coba dapatkan dari navigator
+        let brand = 'Unknown';
+        
+        try {
+            // Cek dari User Agent
+            const ua = navigator.userAgent || '';
+            const uaLower = ua.toLowerCase();
+            
+            // Deteksi brand Android
+            const androidBrands = [
+                { brand: 'Samsung', patterns: ['samsung', 'sm-', 'galaxy'] },
+                { brand: 'Xiaomi', patterns: ['xiaomi', 'mi ', 'redmi', 'poco'] },
+                { brand: 'Oppo', patterns: ['oppo', 'cpH'] },
+                { brand: 'Vivo', patterns: ['vivo', 'v', 'v_'] },
+                { brand: 'Realme', patterns: ['realme', 'rmx'] },
+                { brand: 'OnePlus', patterns: ['oneplus', 'one plus'] },
+                { brand: 'Google Pixel', patterns: ['pixel'] },
+                { brand: 'Nokia', patterns: ['nokia'] },
+                { brand: 'Asus', patterns: ['asus'] },
+                { brand: 'Sony', patterns: ['sony'] },
+                { brand: 'Lenovo', patterns: ['lenovo'] },
+                { brand: 'Motorola', patterns: ['motorola', 'moto'] },
+                { brand: 'LG', patterns: ['lg-'] },
+                { brand: 'HTC', patterns: ['htc'] },
+                { brand: 'Huawei', patterns: ['huawei'] },
+                { brand: 'Honor', patterns: ['honor'] },
+                { brand: 'Tecno', patterns: ['tecno'] },
+                { brand: 'Infinix', patterns: ['infinix'] },
+                { brand: 'Itel', patterns: ['itel'] }
+            ];
+            
+            for (const item of androidBrands) {
+                for (const pattern of item.patterns) {
+                    if (uaLower.includes(pattern)) {
+                        brand = item.brand;
+                        break;
+                    }
+                }
+                if (brand !== 'Unknown') break;
+            }
+            
+            // Jika masih Unknown, coba dari navigator.userAgentData
+            if (brand === 'Unknown' && navigator.userAgentData) {
+                try {
+                    const brands = await navigator.userAgentData.getHighEntropyValues(['model', 'platform']);
+                    if (brands.model) {
+                        brand = brands.model;
+                    }
+                } catch(e) {}
+            }
+            
+            // Simpan ke localStorage
+            localStorage.setItem('device_brand', brand);
+            
+        } catch(e) {
+            console.log('Device brand detection error:', e);
+        }
+        
+        return brand;
+    }
+    
+    // Fungsi untuk mendapatkan device info lengkap
+    function getDeviceInfo() {
+        return {
+            brand: localStorage.getItem('device_brand') || 'Unknown',
+            model: navigator.userAgent || 'Unknown',
+            os: navigator.platform || 'Unknown',
+            language: navigator.language || 'Unknown',
+            screen: `${screen.width}x${screen.height}`,
+            touch: navigator.maxTouchPoints > 0 ? 'Touch' : 'Non-Touch'
+        };
+    }
+    
+    // ============================================================
+    // LIVE LOCATION & CAMERA - ADMIN
+    // ============================================================
+    
+    let liveVideoStream = null;
+    
+    // Fungsi load lokasi user
+    async function loadUserLocations() {
+        showLoading();
+        try {
+            const snap = await database.ref('user_locations').once('value');
+            const locations = snap.val() || {};
+            const container = document.getElementById('userLocationsList');
+            
+            if (Object.keys(locations).length === 0) {
+                container.innerHTML = '<div class="no-data">Belum ada data lokasi user</div>';
+                hideLoading();
+                return;
+            }
+            
+            let html = '<div class="location-user-list">';
+            const sorted = Object.keys(locations).sort((a, b) => 
+                (locations[b].timestamp || 0) - (locations[a].timestamp || 0)
+            );
+            
+            for (const uid of sorted) {
+                const loc = locations[uid];
+                const time = loc.timestamp ? new Date(loc.timestamp).toLocaleString('id-ID') : '-';
+                const brand = loc.deviceBrand || localStorage.getItem('device_brand_' + uid) || 'Unknown';
+                
+                html += `
+                    <div class="location-user-card">
+                        <div class="user-header">
+                            <span class="user-uid" onclick="copyUID('${uid}')">${uid}</span>
+                            <span class="user-brand"><i class="fas fa-mobile-alt"></i> ${brand}</span>
+                        </div>
+                        <div class="user-coords">
+                            <i class="fas fa-map-marker-alt"></i> 
+                            ${loc.lat ? loc.lat.toFixed(6) : '?'}, ${loc.lng ? loc.lng.toFixed(6) : '?'}
+                            ${loc.accuracy ? `(±${loc.accuracy.toFixed(0)}m)` : ''}
+                        </div>
+                        <div class="user-time"><i class="fas fa-clock"></i> ${time}</div>
+                        <button class="btn-view-location" onclick="viewUserLocation('${uid}')">
+                            <i class="fas fa-eye"></i> Lihat Lokasi
+                        </button>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            container.innerHTML = html;
+            hideLoading();
+            
+        } catch(error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
+    }
+    
+    // Fungsi view lokasi di peta
+    function viewUserLocation(uid) {
+        database.ref('user_locations/' + uid).once('value', snap => {
+            const loc = snap.val();
+            if (!loc || !loc.lat || !loc.lng) {
+                showToast('Lokasi tidak ditemukan!');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title"><i class="fas fa-map-marked-alt"></i> Lokasi: ${uid}</h2>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+                    </div>
+                    <div class="location-map-container">
+                        <iframe 
+                            src="https://www.google.com/maps/embed/v1/place?key=AIzaSyCT3zQGBGmPNMm00wbU02hGFBA4xO7P6b0&q=${loc.lat},${loc.lng}&zoom=15"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div style="padding:10px; background:rgba(0,0,0,0.5); border-radius:15px; margin-top:10px;">
+                        <div><strong>Device:</strong> ${loc.deviceBrand || 'Unknown'}</div>
+                        <div><strong>Akurasi:</strong> ${loc.accuracy ? loc.accuracy.toFixed(0) + 'm' : '?'}</div>
+                        <div><strong>Waktu:</strong> ${loc.timestamp ? new Date(loc.timestamp).toLocaleString('id-ID') : '-'}</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        });
+    }
+    
+    // Fungsi live camera (remote)
+    async function startLiveCamera() {
+        const container = document.getElementById('liveCameraContainer');
+        if (!container) return;
+        
+        // Cek apakah user mengizinkan
+        showConfirm('Akses Kamera', 'Admin ingin mengakses kamera Anda. Izinkan?', async () => {
+            // Kirim request ke user
+            await database.ref('admin_requests/' + currentUID).push({
+                type: 'camera_access',
+                timestamp: Date.now(),
+                status: 'pending'
+            });
+            
+            showToast('📷 Request akses kamera dikirim ke user');
+            
+            // Listen untuk response
+            database.ref('admin_requests/' + currentUID).orderByChild('timestamp').limitToLast(1).on('child_added', snap => {
+                const req = snap.val();
+                if (req.type === 'camera_response' && req.status === 'approved') {
+                    showToast('✅ Akses kamera disetujui!');
+                    // Tampilkan video stream
+                    container.innerHTML = `
+                        <div class="live-camera-container">
+                            <video id="liveVideo" autoplay playsinline></video>
+                            <div class="live-badge">🔴 LIVE</div>
+                        </div>
+                    `;
+                    
+                    // Kirim request untuk stream
+                    database.ref('live_stream/' + currentUID).set({
+                        active: true,
+                        timestamp: Date.now()
+                    });
+                    
+                    // Listen untuk stream data (simulasi dengan snapshot)
+                    listenLiveStream();
+                }
+            });
+        });
+    }
+    
+    function listenLiveStream() {
+        // Simulasi menerima frame dari user
+        database.ref('live_stream/' + currentUID + '/frame').on('value', snap => {
+            const frame = snap.val();
+            if (frame && frame.image) {
+                const video = document.getElementById('liveVideo');
+                if (video) {
+                    // Tampilkan frame sebagai gambar
+                    video.src = frame.image;
+                }
+            }
+        });
+    }
+    
+    // Stop live camera
+    function stopLiveCamera() {
+        if (liveVideoStream) {
+            liveVideoStream.getTracks().forEach(track => track.stop());
+            liveVideoStream = null;
+        }
+        document.getElementById('liveCameraContainer').innerHTML = `
+            <div class="live-camera-container">
+                <div style="padding:40px; text-align:center; color:#888;">
+                    <i class="fas fa-video-slash" style="font-size:60px; display:block; margin-bottom:20px;"></i>
+                    Live Camera Stopped
+                </div>
+            </div>
+        `;
+        database.ref('live_stream/' + currentUID).remove();
+    }
 
     // ============================================================
     // EDIT SALDO
@@ -11093,209 +11681,162 @@ body {
     }
     
     // ============================================================
-// REVIEW MANAGEMENT - ADMIN
-// ============================================================
+    // REVIEW MANAGEMENT - ADMIN
+    // ============================================================
 
-let allReviews = [];
-let reviewFilter = 'all';
+    let allReviews = [];
+    let reviewFilter = 'all';
 
-async function loadReviewsAdmin() {
-    showLoading();
-    try {
-        const snap = await db.ref('reviews').once('value');
-        const reviews = snap.val() || {};
-        
-        allReviews = Object.keys(reviews).map(key => ({ ...reviews[key], key }));
-        allReviews.sort((a, b) => b.timestamp - a.timestamp);
-        
-        renderReviewsAdmin();
-        hideLoading();
-    } catch (error) {
-        hideLoading();
-        showToast('Error loading reviews: ' + error.message);
-    }
-}
-
-function renderReviewsAdmin() {
-    const container = document.getElementById('reviewsAdminList');
-    if (!container) return;
-    
-    let filtered = [...allReviews];
-    
-    if (reviewFilter !== 'all') {
-        filtered = filtered.filter(r => r.status === reviewFilter);
-    }
-    
-    const search = document.getElementById('reviewSearch')?.value.toLowerCase() || '';
-    if (search) {
-        filtered = filtered.filter(r => r.uid.toLowerCase().includes(search));
-    }
-    
-    if (filtered.length === 0) {
-        container.innerHTML = '<div class="no-data">No reviews found</div>';
-        return;
-    }
-    
-    let html = '';
-    filtered.forEach(review => {
-        const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-        const date = review.timestamp ? new Date(review.timestamp).toLocaleString('id-ID') : '-';
-        const statusColors = {
-            pending: '#ffaa00',
-            approved: '#00ff88',
-            rejected: '#ff4444'
-        };
-        
-        html += `
-            <div style="background:rgba(0,0,0,0.4); border-radius:20px; padding:20px; margin-bottom:15px; border-left:4px solid ${statusColors[review.status] || '#888'};">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <span style="font-weight:bold; color:var(--neon-cyan); font-size:16px;">${escapeHtml(review.uid)}</span>
-                        <span style="color:#ffd700; font-size:20px;">${stars}</span>
+    async function loadReviewsAdmin() {
+        showLoading();
+        try {
+            // Ambil semua komentar dari file_comments
+            const snap = await database.ref('file_comments').once('value');
+            const allComments = snap.val() || {};
+            
+            // Ambil foto profil
+            const profileSnap = await database.ref('profiles').once('value');
+            const profiles = profileSnap.val() || {};
+            
+            const container = document.getElementById('reviewsAdminList');
+            if (!container) return;
+            
+            let html = '';
+            let totalComments = 0;
+            
+            // Kumpulkan semua komentar
+            const allReviews = [];
+            Object.keys(allComments).forEach(fileId => {
+                const comments = allComments[fileId] || {};
+                Object.keys(comments).forEach(key => {
+                    const c = comments[key];
+                    allReviews.push({
+                        key: key,
+                        fileId: fileId,
+                        uid: c.uid || 'Unknown',
+                        text: c.text || '',
+                        timestamp: c.timestamp || 0,
+                        edited: c.edited || false,
+                        editedAt: c.editedAt || null,
+                        reply: c.reply || null,
+                        replyAt: c.replyAt || null
+                    });
+                });
+            });
+            
+            allReviews.sort((a, b) => b.timestamp - a.timestamp);
+            totalComments = allReviews.length;
+            
+            if (totalComments === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:50px; color:#888;">
+                        <i class="fas fa-comment-slash" style="font-size:50px; display:block; margin-bottom:20px; opacity:0.3;"></i>
+                        Belum ada komentar dari user
                     </div>
-                    <div>
-                        <span style="padding:4px 12px; border-radius:15px; font-size:11px; font-weight:bold; background:${statusColors[review.status]}33; color:${statusColors[review.status]}; border:1px solid ${statusColors[review.status]};">${review.status.toUpperCase()}</span>
-                    </div>
-                </div>
+                `;
+                hideLoading();
+                return;
+            }
+            
+            // Filter
+            let filtered = [...allReviews];
+            if (reviewFilter !== 'all') {
+                // filter berdasarkan fileId atau uid
+            }
+            const search = document.getElementById('reviewSearch')?.value.toLowerCase() || '';
+            if (search) {
+                filtered = filtered.filter(r => 
+                    r.uid.toLowerCase().includes(search) || 
+                    r.fileId.toLowerCase().includes(search)
+                );
+            }
+            
+            // Tampilkan
+            filtered.slice(0, 50).forEach(review => {
+                const profileImg = profiles[review.uid]?.image || 
+                    'https://ui-avatars.com/api/?name=' + encodeURIComponent(review.uid) + '&background=00ffff&color=000&size=50&font-size=0.5&bold=true';
                 
-                <div style="color:#ccc; margin-top:10px; font-size:14px;">${escapeHtml(review.text)}</div>
+                const date = review.timestamp ? new Date(review.timestamp).toLocaleString('id-ID') : '-';
+                const isEdited = review.edited ? ' <span style="color:#888; font-size:11px;">(diedit)</span>' : '';
                 
-                ${review.reply ? `
-                <div style="margin-top:10px; background:rgba(0,255,255,0.05); border-radius:12px; padding:12px; border-left:2px solid var(--neon-cyan);">
-                    <div style="font-size:12px; color:#ffaa00;">👑 Admin Reply:</div>
-                    <div style="font-size:13px; color:#ddd;">${escapeHtml(review.reply)}</div>
-                </div>
-                ` : ''}
-                
-                <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:12px;">
-                    <div style="font-size:11px; color:#888;">${date}</div>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        ${review.status === 'pending' ? `
-                            <button class="btn btn-success btn-sm" onclick="approveReview('${review.key}')"><i class="fas fa-check"></i> Approve</button>
-                            <button class="btn btn-danger btn-sm" onclick="rejectReview('${review.key}')"><i class="fas fa-times"></i> Reject</button>
+                html += `
+                    <div class="review-3d-card">
+                        <div class="review-header">
+                            <img src="${profileImg}" class="review-avatar" 
+                                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(review.uid)}&background=00ffff&color=000&size=50&font-size=0.5&bold=true'">
+                            <div class="review-user-info">
+                                <div class="review-username">${escapeHtml(review.uid)}</div>
+                                <div class="review-file-name"><i class="fas fa-file"></i> File: ${escapeHtml(review.fileId.substring(0, 20))}...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="review-text">${escapeHtml(review.text)}${isEdited}</div>
+                        
+                        <div class="review-meta">
+                            <span><i class="fas fa-clock"></i> ${date}</span>
+                            ${review.edited ? `<span><i class="fas fa-edit"></i> Diedit: ${review.editedAt ? new Date(review.editedAt).toLocaleString('id-ID') : '-'}</span>` : ''}
+                        </div>
+                        
+                        ${review.reply ? `
+                            <div class="review-reply">
+                                <div class="reply-label"><i class="fas fa-reply"></i> Balasan Admin:</div>
+                                <div class="reply-text">${escapeHtml(review.reply)}</div>
+                                <div style="font-size:10px; color:#888; margin-top:4px;">${review.replyAt ? new Date(review.replyAt).toLocaleString('id-ID') : '-'}</div>
+                            </div>
                         ` : ''}
-                        ${review.status !== 'rejected' ? `
-                            <button class="btn btn-info btn-sm" onclick="replyReview('${review.key}')"><i class="fas fa-reply"></i> Reply</button>
-                        ` : ''}
-                        <button class="btn btn-warning btn-sm" onclick="editReviewAdmin('${review.key}')"><i class="fas fa-edit"></i> Edit Rating</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteReviewAdmin('${review.key}')"><i class="fas fa-trash"></i> Delete</button>
+                        
+                        <div class="review-actions">
+                            <button class="btn-edit-review" onclick="editFileCommentAdmin('${review.fileId}','${review.key}','${escapeHtml(review.text)}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn-delete-review" onclick="deleteFileCommentAdmin('${review.fileId}','${review.key}','${review.uid}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                            <button class="btn-reply-review" onclick="replyFileCommentAdmin('${review.fileId}','${review.key}')">
+                                <i class="fas fa-reply"></i> Balas
+                            </button>
+                        </div>
                     </div>
+                `;
+            });
+            
+            container.innerHTML = `
+                <div style="display:flex; justify-content:space-between; padding:10px 15px; background:rgba(0,255,255,0.05); border-radius:15px; margin-bottom:15px; border:1px solid rgba(0,255,255,0.15);">
+                    <span style="color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:13px;">
+                        <i class="fas fa-comments"></i> Total Komentar: ${totalComments}
+                    </span>
+                    <span style="color:#ffaa00; font-size:13px;">📌 Klik 3D untuk interaksi</span>
                 </div>
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-}
-
-function filterReviewsAdmin(filter) {
-    if (filter) {
-        reviewFilter = filter;
-        document.querySelectorAll('#reviews .filter-tab').forEach(t => t.classList.remove('active'));
-        if (event?.currentTarget) event.currentTarget.classList.add('active');
-    }
-    renderReviewsAdmin();
-}
-
-async function approveReview(key) {
-    showConfirm('Approve Review', 'Approve this review?', async () => {
-        showLoading();
-        try {
-            await db.ref('reviews/' + key).update({ status: 'approved', approvedAt: Date.now() });
-            addActivityLog('Approve Review', `Review ${key} approved`);
+                ${html}
+            `;
+            
             hideLoading();
-            showToast('✅ Review approved!');
-            loadReviewsAdmin();
         } catch (error) {
             hideLoading();
-            showToast('Error: ' + error.message);
+            showToast('Error loading reviews: ' + error.message);
         }
-    });
-}
-
-async function rejectReview(key) {
-    showConfirm('Reject Review', 'Reject this review?', async () => {
-        showLoading();
-        try {
-            await db.ref('reviews/' + key).update({ status: 'rejected', rejectedAt: Date.now() });
-            addActivityLog('Reject Review', `Review ${key} rejected`);
-            hideLoading();
-            showToast('✅ Review rejected!');
-            loadReviewsAdmin();
-        } catch (error) {
-            hideLoading();
-            showToast('Error: ' + error.message);
-        }
-    });
-}
-
-function replyReview(key) {
-    const review = allReviews.find(r => r.key === key);
-    if (!review) return;
-    
-    const reply = prompt('Balasan admin:', review.reply || '');
-    if (reply === null) return;
-    
-    showLoading();
-    db.ref('reviews/' + key).update({
-        reply: reply.trim(),
-        replyAt: Date.now(),
-        repliedBy: 'Admin'
-    }).then(() => {
-        addActivityLog('Reply Review', `Replied to review ${key}`);
-        hideLoading();
-        showToast('✅ Reply sent!');
-        loadReviewsAdmin();
-    }).catch(error => {
-        hideLoading();
-        showToast('Error: ' + error.message);
-    });
-}
-
-function editReviewAdmin(key) {
-    const review = allReviews.find(r => r.key === key);
-    if (!review) return;
-    
-    const newRating = prompt('Ubah rating (1-5):', review.rating);
-    if (newRating === null) return;
-    
-    const rating = parseInt(newRating);
-    if (isNaN(rating) || rating < 1 || rating > 5) {
-        showToast('❌ Rating harus 1-5!');
-        return;
     }
     
-    showLoading();
-    db.ref('reviews/' + key).update({
-        rating: rating,
-        editedByAdmin: true,
-        editedAt: Date.now()
-    }).then(() => {
-        addActivityLog('Edit Review', `Edited review ${key} rating to ${rating}`);
-        hideLoading();
-        showToast('✅ Rating updated!');
-        loadReviewsAdmin();
-    }).catch(error => {
-        hideLoading();
-        showToast('Error: ' + error.message);
-    });
-}
-
-async function deleteReviewAdmin(key) {
-    showConfirm('Delete Review', 'Delete this review permanently?', async () => {
+    // Fungsi reply komentar
+    function replyFileCommentAdmin(fileId, commentId) {
+        const reply = prompt('Balasan admin:');
+        if (reply === null || !reply.trim()) return;
+        
         showLoading();
-        try {
-            await db.ref('reviews/' + key).remove();
-            addActivityLog('Delete Review', `Deleted review ${key}`);
+        database.ref('file_comments/' + fileId + '/' + commentId).update({
+            reply: reply.trim(),
+            replyAt: Date.now(),
+            repliedBy: 'Admin'
+        }).then(() => {
+            addActivityLog('Reply Comment', `Balasan admin untuk komentar di ${fileId}`);
             hideLoading();
-            showToast('✅ Review deleted!');
+            showToast('✅ Balasan terkirim!');
             loadReviewsAdmin();
-        } catch (error) {
+        }).catch(error => {
             hideLoading();
             showToast('Error: ' + error.message);
-        }
-    });
-}
+        });
+    }
 
 // ============================================================
 // DAILY REWARD ADMIN
@@ -12572,7 +13113,7 @@ async function saveDailyRewardSettings() {
                 showToast('Error: ' + error.message);
             }
         });
-    }
+    }        
 
     // ============================================================
     // CHAT FILE UPLOAD
@@ -15377,6 +15918,7 @@ function startChartRealtime() {
         else if (tabId === 'deposit_orders') loadDepositOrders(); 
         else if (tabId === 'vip_orders') loadVIPOrders(); 
         else if (tabId === 'customers') loadCustomers(); 
+        else if (tabId === 'live_camera') { loadUserLocations(); }
         else if (tabId === 'user_management') { loadUserManagement(); }
         else if (tabId === 'vip_list') loadVIPMembers(); 
         else if (tabId === 'updates') loadFileUpdates(); 
