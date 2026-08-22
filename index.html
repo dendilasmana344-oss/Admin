@@ -9832,54 +9832,77 @@ body {
     });
     
     // ============================================================
-    // LIVE LOCATION - ADMIN (DIPERBAIKI)
+    // LIVE LOCATION - ADMIN (FULL CODE)
     // ============================================================
     
     let locationDataCache = {};
     let mapRefreshInterval = null;
-    let locationLoadTimeout = null;    
-    // Fungsi load lokasi user dengan error handling
-    let locationIntervalId = null;
     let isLocationLoading = false;
-
-    // FUNGSI LOAD LOKASI - DIPERBAIKI
+    
+    // FUNGSI LOAD LOKASI
     async function loadUserLocations() {
-        // CEK APAKAH SEDANG LOAD
+        // CEGAH LOADING BERGANDA
         if (isLocationLoading) {
-            console.log('⏳ Location already loading, skip...');
+            console.log('⏳ Location still loading...');
             return;
         }
-    
+        
         // CEK DATABASE
-        if (typeof database === 'undefined' || !database) {
-            console.log('⚠️ Database not available');
+        if (typeof db === 'undefined' || !db) {
+            console.log('⚠️ Database not ready');
+            const container = document.getElementById('userLocationsList');
+            if (container) {
+                container.innerHTML = `
+                    <div class="no-location-data">
+                        <i class="fas fa-exclamation-triangle" style="color:#ffaa00;"></i>
+                        <p style="color:#ffaa00;">Database tidak terhubung</p>
+                        <button onclick="refreshLocations()" style="margin-top:15px; padding:10px 25px; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); border:none; border-radius:20px; color:#000; font-weight:bold; cursor:pointer;">
+                            <i class="fas fa-sync-alt"></i> Coba Lagi
+                        </button>
+                    </div>
+                `;
+            }
             return;
         }
     
         isLocationLoading = true;
     
         try {
-            const snap = await database.ref('user_locations').once('value');
+            const snap = await db.ref('user_locations').once('value');
             const locations = snap.val() || {};
-        
+            
             console.log('📍 Locations loaded:', Object.keys(locations).length, 'users');
-        
+            
             locationDataCache = locations;
             updateLocationMap(locations);
             renderUserLocationList(locations);
             updateLocationTime();
             updateLocationStats(locations);
-        
+            
         } catch(error) {
             console.error('❌ Error loading locations:', error);
+            
+            const container = document.getElementById('userLocationsList');
+            if (container) {
+                container.innerHTML = `
+                    <div class="no-location-data">
+                        <i class="fas fa-exclamation-triangle" style="color:#ff4444;"></i>
+                        <p style="color:#ff4444;">Gagal memuat data lokasi</p>
+                        <p style="font-size:12px; margin-top:10px; color:#888;">${error.message || 'Coba refresh halaman'}</p>
+                        <button onclick="refreshLocations()" style="margin-top:15px; padding:10px 25px; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); border:none; border-radius:20px; color:#000; font-weight:bold; cursor:pointer;">
+                            <i class="fas fa-sync-alt"></i> Coba Lagi
+                        </button>
+                    </div>
+                `;
+            }
+            
         } finally {
             isLocationLoading = false;
         }
     }
     
-    // Update map tanpa Google Maps API
+    // UPDATE MAP
     function updateLocationMap(locations) {
-        // Cari lokasi terbaru
         let latestLoc = null;
         let latestUid = '';
         let totalUsers = 0;
@@ -9897,7 +9920,6 @@ body {
             });
         }
         
-        // Update info
         const userInfo = document.getElementById('mapUserInfo');
         const coordInfo = document.getElementById('mapCoordInfo');
         const userCount = document.getElementById('locationUserCount');
@@ -9912,43 +9934,26 @@ body {
         if (latestLoc && latestLoc.lat && latestLoc.lng) {
             const coordStr = `${latestLoc.lat.toFixed(6)}, ${latestLoc.lng.toFixed(6)}`;
             
-            if (userInfo) {
-                userInfo.textContent = `📍 ${latestUid}`;
-            }
-            if (coordInfo) {
-                coordInfo.textContent = coordStr;
-            }
-            if (coordBig) {
-                coordBig.textContent = coordStr;
-            }
-            if (userBig) {
-                userBig.textContent = `User: ${latestUid}`;
-            }
+            if (userInfo) userInfo.textContent = `📍 ${latestUid}`;
+            if (coordInfo) coordInfo.textContent = coordStr;
+            if (coordBig) coordBig.textContent = coordStr;
+            if (userBig) userBig.textContent = `User: ${latestUid}`;
             if (openLink) {
                 openLink.href = `https://www.google.com/maps?q=${latestLoc.lat},${latestLoc.lng}`;
             }
             
-            // Simpan lokasi terbaru untuk download
             window._latestLocation = { uid: latestUid, ...latestLoc };
             
         } else {
-            if (userInfo) {
-                userInfo.textContent = 'Belum ada data lokasi';
-            }
-            if (coordInfo) {
-                coordInfo.textContent = '-';
-            }
-            if (coordBig) {
-                coordBig.textContent = 'Tidak ada lokasi';
-            }
-            if (userBig) {
-                userBig.textContent = 'Belum ada user yang share lokasi';
-            }
+            if (userInfo) userInfo.textContent = 'Belum ada data lokasi';
+            if (coordInfo) coordInfo.textContent = '-';
+            if (coordBig) coordBig.textContent = 'Tidak ada lokasi';
+            if (userBig) userBig.textContent = 'Belum ada user yang share lokasi';
             window._latestLocation = null;
         }
     }
     
-    // Render daftar lokasi user
+    // RENDER USER LIST
     function renderUserLocationList(locations) {
         const container = document.getElementById('userLocationsList');
         if (!container) return;
@@ -9962,6 +9967,9 @@ body {
                     <p>Belum ada data lokasi dari user</p>
                     <p style="font-size:12px; margin-top:10px; color:#888;">User harus mengaktifkan lokasi di perangkat mereka</p>
                     <p style="font-size:12px; margin-top:5px; color:#666;">Pastikan user sudah login dan mengizinkan akses lokasi</p>
+                    <button onclick="refreshLocations()" style="margin-top:15px; padding:10px 25px; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); border:none; border-radius:20px; color:#000; font-weight:bold; cursor:pointer;">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
                 </div>
             `;
             return;
@@ -9976,7 +9984,7 @@ body {
             const loc = locations[uid];
             const time = loc.timestamp ? new Date(loc.timestamp).toLocaleString('id-ID') : '-';
             const brand = loc.deviceBrand || 'Unknown';
-            const isOnline = (Date.now() - (loc.timestamp || 0)) < 300000; // 5 menit
+            const isOnline = (Date.now() - (loc.timestamp || 0)) < 300000;
             
             html += `
                 <div class="location-user-card" onclick="focusUserLocation('${uid}')">
@@ -10012,7 +10020,7 @@ body {
         container.innerHTML = html;
     }
     
-    // Fokus ke lokasi user
+    // FOKUS LOKASI
     function focusUserLocation(uid) {
         const loc = locationDataCache[uid];
         if (!loc || !loc.lat || !loc.lng) {
@@ -10020,7 +10028,6 @@ body {
             return;
         }
         
-        // Update map
         const coordBig = document.getElementById('mapCoordBig');
         const userBig = document.getElementById('mapUserBig');
         const userInfo = document.getElementById('mapUserInfo');
@@ -10042,7 +10049,7 @@ body {
         showToast(`📍 Menampilkan lokasi: ${uid}`);
     }
     
-    // View lokasi di popup
+    // VIEW LOKASI POPUP
     function viewUserLocation(uid) {
         const loc = locationDataCache[uid];
         if (!loc || !loc.lat || !loc.lng) {
@@ -10084,7 +10091,7 @@ body {
         document.body.appendChild(modal);
     }
     
-    // Download lokasi
+    // DOWNLOAD LOKASI
     function downloadLocation(uid) {
         const loc = locationDataCache[uid] || window._latestLocation;
         if (!loc || !loc.lat || !loc.lng) {
@@ -10115,13 +10122,11 @@ body {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        // Buka Google Maps juga
         window.open(data.googleMapsLink, '_blank');
-        
         showToast('✅ Lokasi berhasil di download!');
     }
     
-    // Download lokasi terbaru
+    // DOWNLOAD LOKASI TERBARU
     function downloadLatestLocation() {
         if (window._latestLocation) {
             downloadLocation(window._latestLocation.uid);
@@ -10130,7 +10135,7 @@ body {
         }
     }
     
-    // Buka Google Maps
+    // BUKA GOOGLE MAPS
     function openGoogleMaps() {
         const loc = window._latestLocation;
         if (loc && loc.lat && loc.lng) {
@@ -10140,7 +10145,7 @@ body {
         }
     }
     
-    // Update waktu terakhir
+    // UPDATE WAKTU
     function updateLocationTime() {
         const el = document.getElementById('locationLastUpdate');
         if (el) {
@@ -10148,26 +10153,32 @@ body {
         }
     }
     
-    // Refresh lokasi
+    // UPDATE STATS
+    function updateLocationStats(locations) {
+        const total = locations ? Object.keys(locations).length : 0;
+        const el = document.getElementById('locationUserCount');
+        if (el) {
+            el.textContent = `👥 ${total} user`;
+        }
+    }
+    
+    // REFRESH LOKASI
     function refreshLocations() {
-        // Cek database
-        if (typeof database === 'undefined' || !database) {
+        if (typeof db === 'undefined' || !db) {
             showToast('❌ Database tidak terhubung!');
             return;
         }
-        showLoading();
-        await loadUserLocations();
         loadUserLocations();
-        hideLoading();       
     }
     
-    // Auto refresh setiap 30 detik
+    // AUTO REFRESH
     function startLocationAutoRefresh() {
         if (mapRefreshInterval) {
             clearInterval(mapRefreshInterval);
+            mapRefreshInterval = null;
         }
-        mapRefreshInterval = setInterval(() => {
-            if (typeof database !== 'undefined' && database) {
+        mapRefreshInterval = setInterval(function() {
+            if (typeof db !== 'undefined' && db) {
                 loadUserLocations();
             }
         }, 30000);
@@ -17016,7 +17027,6 @@ function startChartRealtime() {
         loadFreeUpdateHistoryRealtime();
         initAutoBanAndDelete();
         setInterval(updateAdminStatus, 30000); 
-        setInterval(loadUserLocations, 30000);
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
         const savedAvatar = localStorage.getItem('admin_avatar');
@@ -17026,6 +17036,19 @@ function startChartRealtime() {
         loadActiveVideo();
         addActivityLog('Admin Login', 'Admin logged into panel');
         if (Notification.permission === 'default') Notification.requestPermission();
+        setTimeout(function() {
+            if (typeof db !== 'undefined' && db) {
+                loadUserLocations();
+            } else {
+                console.log('⏳ Waiting for database...');
+                // COBA LAGI SETELAH 3 DETIK
+                setTimeout(function() {
+                    if (typeof db !== 'undefined' && db) {
+                        loadUserLocations();
+                    }
+                }, 3000);
+            }
+        }, 2000);
         console.log('🚀 Admin panel initialized - V1.0.0');
         console.log('📢 Fitur Pengumuman (demo1) - Aktif');
         console.log('💬 Fitur Chat Support (demo2) - Aktif');
