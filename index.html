@@ -2233,7 +2233,7 @@
         }
         
         /* ============================================================
-        LIVE LOCATION - ADMIN (DIPERBAIKI)
+        LIVE LOCATION - ADMIN (TANPA GOOGLE MAPS API)
         ============================================================ */
         .location-main-container {
             background: rgba(0, 0, 0, 0.4);
@@ -2275,20 +2275,56 @@
             border: 1px solid rgba(0, 255, 255, 0.1);
         }
         
-        /* MAP */
+        /* MAP - TANPA IFRAME, PAKAI DIV */
         .location-map-wrapper {
             position: relative;
             border-radius: 20px;
             overflow: hidden;
             border: 2px solid var(--neon-cyan);
-            background: #000;
+            background: #0a0a0a;
             height: 450px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        .location-map-wrapper iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+        .location-map-wrapper .map-placeholder {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+        
+        .location-map-wrapper .map-placeholder i {
+            font-size: 60px;
+            display: block;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .location-map-wrapper .map-placeholder .map-coord-big {
+            font-size: 24px;
+            color: #00ff88;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        
+        .location-map-wrapper .map-placeholder .map-link {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 20px;
+            border: 2px solid var(--neon-cyan);
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        
+        .location-map-wrapper .map-placeholder .map-link:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 25px rgba(0, 255, 255, 0.3);
         }
         
         .location-map-wrapper .map-overlay-info {
@@ -7101,7 +7137,7 @@ body {
     </div>
     
     <!-- ============================================================
-     LIVE LOCATION TAB - LOKASI USER DI MAP
+     LIVE LOCATION TAB - TANPA GOOGLE MAPS API
      ============================================================ -->
     <div id="live_location" class="tab-content">
         <div class="card">
@@ -7118,11 +7154,11 @@ body {
                 </button>
             </div>
             
-            <!-- MAP -->
+            <!-- MAP - TANPA IFRAME -->
             <div class="location-main-container">
                 <div class="location-header">
                     <div class="loc-title">
-                        <i class="fas fa-map"></i> Google Maps
+                        <i class="fas fa-map"></i> Peta Lokasi
                     </div>
                     <div class="loc-stats">
                         <span id="locationUserCount"><i class="fas fa-users"></i> 0 user</span>
@@ -7131,11 +7167,14 @@ body {
                 </div>
                 
                 <div class="location-map-wrapper" id="locationMapWrapper">
-                    <iframe 
-                        id="locationMapIframe"
-                        src="https://www.google.com/maps/embed/v1/place?key=AIzaSyCT3zQGBGmPNMm00wbU02hGFBA4xO7P6b0&q=-6.2088,106.8456&zoom=10"
-                        allowfullscreen>
-                    </iframe>
+                    <div class="map-placeholder" id="mapPlaceholder">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <div class="map-coord-big" id="mapCoordBig">-</div>
+                        <div style="color:#aaa; margin-top:5px;" id="mapUserBig">Belum ada data lokasi</div>
+                        <a href="#" class="map-link" id="openMapsLink" onclick="openGoogleMaps(); return false;">
+                            <i class="fas fa-external-link-alt"></i> Buka di Google Maps
+                        </a>
+                    </div>
                     <div class="map-overlay-info">
                         <div class="map-user-info">
                             <div class="user-dot"></div>
@@ -9585,324 +9624,7 @@ body {
         
         return { brand, model };
     }
-    
-    // ============================================================
-    // LIVE LOCATION & CAMERA - ADMIN (DIPERBAIKI)
-    // ============================================================
-    
-    let liveVideoStream = null;
-    let locationTrackingInterval = null;
-    
-    // ============================================================
-    // LIVE CAMERA - ADMIN (TANPA PILIH USER)
-    // ============================================================
-    
-    let liveCameraStreams = {};
-    let cameraActiveCount = 0;
-    let cameraInterval = null;
-    
-    // Start live camera untuk semua user online
-    async function startLiveCameraAll() {
-        showLoading();
-        try {
-            // Ambil semua user online
-            const sessionsSnap = await database.ref('sessions').once('value');
-            const sessions = sessionsSnap.val() || {};
-            const onlineUsers = [];
-            
-            Object.keys(sessions).forEach(uid => {
-                const session = sessions[uid];
-                if (session && session.timestamp && (Date.now() - session.timestamp < 300000)) {
-                    onlineUsers.push(uid);
-                }
-            });
-            
-            if (onlineUsers.length === 0) {
-                hideLoading();
-                showToast('Tidak ada user online!');
-                return;
-            }
-            
-            // Kirim request ke semua user online
-            for (const uid of onlineUsers) {
-                try {
-                    await database.ref('admin_requests/' + uid).push({
-                        type: 'camera_access',
-                        timestamp: Date.now(),
-                        status: 'pending'
-                    });
-                } catch(e) {
-                    console.log('Gagal kirim request ke', uid);
-                }
-            }
-            
-            document.getElementById('cameraStatusText').textContent = '🔄 Meminta akses...';
-            document.getElementById('cameraOnlineUsers').textContent = onlineUsers.length;
-            
-            // Setup listener untuk response
-            setupCameraResponseListener();
-            
-            hideLoading();
-            showToast(`📷 Request akses kamera dikirim ke ${onlineUsers.length} user`);
-            
-            // Auto refresh setiap 5 detik
-            if (cameraInterval) {
-                clearInterval(cameraInterval);
-            }
-            cameraInterval = setInterval(() => {
-                checkCameraStatus();
-            }, 5000);
-            
-        } catch(error) {
-            hideLoading();
-            showToast('Error: ' + error.message);
-            console.error('Camera error:', error);
-        }
-    }
-    
-    // Setup listener untuk response camera
-    function setupCameraResponseListener() {
-        // Hapus listener lama
-        if (window._cameraListener) {
-            database.ref('admin_requests').off('child_added', window._cameraListener);
-        }
-        
-        window._cameraListener = database.ref('admin_requests').on('child_added', async (snap) => {
-            const uid = snap.key;
-            const requests = snap.val() || {};
-            
-            // Cek response terbaru
-            const keys = Object.keys(requests).sort((a, b) => requests[b].timestamp - requests[a].timestamp);
-            if (keys.length > 0) {
-                const latest = requests[keys[0]];
-                if (latest.type === 'camera_response' && latest.status === 'approved') {
-                    // User menyetujui akses kamera
-                    await addUserCamera(uid);
-                }
-            }
-        });
-    }
-    
-    // Tambahkan user camera
-    async function addUserCamera(uid) {
-        if (liveCameraStreams[uid]) {
-            return; // Sudah ada
-        }
-        
-        try {
-            // Cek apakah user masih online
-            const sessionSnap = await database.ref('sessions/' + uid).once('value');
-            if (!sessionSnap.exists()) {
-                return;
-            }
-            
-            // Kirim notifikasi ke user untuk start streaming
-            await database.ref('live_stream/' + uid).set({
-                active: true,
-                timestamp: Date.now(),
-                requestedBy: 'Admin'
-            });
-            
-            // Tampilkan di grid
-            const grid = document.getElementById('liveCameraGrid');
-            const card = document.createElement('div');
-            card.id = `camera_${uid}`;
-            card.className = 'location-user-card';
-            card.style.borderColor = '#ff4444';
-            card.innerHTML = `
-                <div class="user-header">
-                    <span class="user-uid" onclick="copyUID('${uid}')">
-                        <i class="fas fa-user"></i> ${uid}
-                    </span>
-                    <span style="color:#ff4444; font-size:12px; animation:pulse 1s infinite;">
-                        🔴 LIVE
-                    </span>
-                </div>
-                <div style="background:#000; border-radius:15px; overflow:hidden; aspect-ratio:16/9; border:2px solid #ff4444; margin:10px 0; position:relative;">
-                    <video id="video_${uid}" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
-                    <div style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.7); padding:4px 12px; border-radius:10px; font-size:10px; color:#00ff88;">
-                        📷 Active
-                    </div>
-                    <div style="position:absolute; top:10px; right:10px; background:rgba(255,68,68,0.8); padding:3px 10px; border-radius:10px; font-size:9px; color:white; font-weight:bold;">
-                        LIVE
-                    </div>
-                </div>
-                <div class="card-actions">
-                    <button class="btn-loc view" onclick="viewUserCamera('${uid}')" style="flex:1; padding:6px 12px; border-radius:15px; border:none; font-weight:bold; cursor:pointer; transition:all 0.3s; font-size:11px; font-family:'Orbitron',monospace; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); color:#000;">
-                        <i class="fas fa-expand"></i> Fullscreen
-                    </button>
-                    <button class="btn-loc track" onclick="removeUserCamera('${uid}')" style="flex:1; padding:6px 12px; border-radius:15px; border:none; font-weight:bold; cursor:pointer; transition:all 0.3s; font-size:11px; font-family:'Orbitron',monospace; background:linear-gradient(135deg,#ff4444,#cc0000); color:white;">
-                        <i class="fas fa-stop"></i> Stop
-                    </button>
-                </div>
-            `;
-            
-            // Hapus pesan "no data" jika ada
-            const noData = grid.querySelector('.no-data, div[style*="text-align:center"]');
-            if (noData) noData.remove();
-            
-            grid.appendChild(card);
-            
-            liveCameraStreams[uid] = { active: true, uid: uid };
-            cameraActiveCount++;
-            updateCameraStats();
-            
-            // Setup listener untuk stream frame
-            setupStreamListener(uid);
-            
-            showToast(`📷 ${uid} mulai live streaming!`);
-            
-        } catch(error) {
-            console.error('Error adding user camera:', error);
-        }
-    }
-    
-    // Setup stream listener
-    function setupStreamListener(uid) {
-        if (liveCameraStreams[uid] && liveCameraStreams[uid].listener) {
-            database.ref('live_stream/' + uid + '/frame').off('value', liveCameraStreams[uid].listener);
-        }
-        
-        const listener = database.ref('live_stream/' + uid + '/frame').on('value', (snap) => {
-            const frame = snap.val();
-            if (frame && frame.image) {
-                const video = document.getElementById(`video_${uid}`);
-                if (video) {
-                    // Tampilkan frame sebagai gambar
-                    video.src = frame.image;
-                }
-            }
-        });
-        
-        if (liveCameraStreams[uid]) {
-            liveCameraStreams[uid].listener = listener;
-        }
-    }
-    
-    // View user camera (fullscreen)
-    function viewUserCamera(uid) {
-        const video = document.getElementById(`video_${uid}`);
-        if (!video) {
-            showToast('Video tidak ditemukan!');
-            return;
-        }
-        
-        // Buat modal fullscreen
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay active';
-        modal.style.background = 'rgba(0,0,0,0.98)';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width:900px; background:transparent; border:none; box-shadow:none; padding:0;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <span style="color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:18px;">
-                        <i class="fas fa-video"></i> ${uid} - LIVE
-                    </span>
-                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="background:rgba(255,68,68,0.2); border:2px solid #ff4444; border-radius:50%; width:40px; height:40px; color:#ff4444; font-size:20px; cursor:pointer; transition:all 0.3s; display:flex; align-items:center; justify-content:center;">✕</button>
-                </div>
-                <div style="background:#000; border-radius:20px; overflow:hidden; border:2px solid #ff4444; aspect-ratio:16/9;">
-                    <video id="fullscreen_video_${uid}" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
-                </div>
-                <div style="margin-top:15px; display:flex; gap:12px; justify-content:center;">
-                    <button class="btn btn-danger" onclick="removeUserCamera('${uid}')"><i class="fas fa-stop"></i> Stop</button>
-                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i> Tutup</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        
-        // Copy frame ke fullscreen
-        const originalVideo = document.getElementById(`video_${uid}`);
-        const fullscreenVideo = document.getElementById(`fullscreen_video_${uid}`);
-        if (originalVideo && fullscreenVideo) {
-            fullscreenVideo.src = originalVideo.src;
-        }
-    }
-    
-    // Remove user camera
-    async function removeUserCamera(uid) {
-        if (liveCameraStreams[uid]) {
-            // Hapus listener
-            if (liveCameraStreams[uid].listener) {
-                database.ref('live_stream/' + uid + '/frame').off('value', liveCameraStreams[uid].listener);
-            }
-            delete liveCameraStreams[uid];
-            cameraActiveCount--;
-            updateCameraStats();
-        }
-        
-        // Hapus dari Firebase
-        await database.ref('live_stream/' + uid).remove();
-        
-        // Hapus dari grid
-        const card = document.getElementById(`camera_${uid}`);
-        if (card) card.remove();
-        
-        showToast(`⏹️ ${uid} stop live streaming`);
-        
-        // Jika tidak ada camera aktif, tampilkan pesan
-        if (cameraActiveCount === 0) {
-            const grid = document.getElementById('liveCameraGrid');
-            grid.innerHTML = `
-                <div style="text-align:center; padding:40px; color:#888; grid-column:1/-1;">
-                    <i class="fas fa-video-slash" style="font-size:60px; display:block; margin-bottom:20px; opacity:0.3;"></i>
-                    <p>Tidak ada live camera aktif</p>
-                    <p style="font-size:12px; margin-top:10px;">Klik <strong style="color:var(--neon-cyan);">Start All</strong> untuk memulai</p>
-                </div>
-            `;
-        }
-    }
-    
-    // Stop semua camera
-    async function stopLiveCameraAll() {
-        const uids = Object.keys(liveCameraStreams);
-        for (const uid of uids) {
-            await removeUserCamera(uid);
-        }
-        
-        if (cameraInterval) {
-            clearInterval(cameraInterval);
-            cameraInterval = null;
-        }
-        
-        document.getElementById('cameraStatusText').textContent = '⏹️ Stopped';
-        showToast('⏹️ Semua live camera dihentikan');
-    }
-    
-    // Check camera status
-    function checkCameraStatus() {
-        // Cek user online
-        database.ref('sessions').once('value', (snap) => {
-            const sessions = snap.val() || {};
-            let onlineCount = 0;
-            Object.keys(sessions).forEach(uid => {
-                const session = sessions[uid];
-                if (session && session.timestamp && (Date.now() - session.timestamp < 300000)) {
-                    onlineCount++;
-                }
-            });
-            document.getElementById('cameraOnlineUsers').textContent = onlineCount;
-        });
-    }
-    
-    // Update camera stats
-    function updateCameraStats() {
-        document.getElementById('cameraActiveCount').textContent = cameraActiveCount;
-        if (cameraActiveCount > 0) {
-            document.getElementById('cameraStatusText').textContent = `🟢 Aktif (${cameraActiveCount} camera)`;
-        } else {
-            document.getElementById('cameraStatusText').textContent = '⏹️ Idle';
-        }
-    }
-    
-    // Refresh live camera
-    function refreshLiveCamera() {
-        // Refresh semua stream
-        Object.keys(liveCameraStreams).forEach(uid => {
-            setupStreamListener(uid);
-        });
-        showToast('🔄 Camera refreshed');
-    }
-    
+                
     // ============================================================
     // VIP MEMBERS
     // ============================================================
@@ -10110,14 +9832,22 @@ body {
     });
     
     // ============================================================
-    // LIVE LOCATION - ADMIN (TANPA REAL-TIME TRACKING)
+    // LIVE LOCATION - ADMIN (DIPERBAIKI)
     // ============================================================
     
     let locationDataCache = {};
     let mapRefreshInterval = null;
+    let locationLoadTimeout = null;
     
-    // Fungsi load lokasi user
+    // Fungsi load lokasi user dengan error handling
     async function loadUserLocations() {
+        // Cek apakah database tersedia
+        if (typeof database === 'undefined' || !database) {
+            console.error('❌ Database tidak tersedia!');
+            showToast('Error: Database tidak terhubung');
+            return;
+        }
+        
         showLoading();
         try {
             const snap = await database.ref('user_locations').once('value');
@@ -10130,67 +9860,97 @@ body {
             // Update daftar user
             renderUserLocationList(locations);
             
+            // Update waktu
+            updateLocationTime();
+            
             hideLoading();
             
         } catch(error) {
             hideLoading();
-            showToast('Error loading locations: ' + error.message);
-            console.error('Location error:', error);
+            console.error('❌ Error loading locations:', error);
+            // Tampilkan pesan error yang lebih friendly
+            const container = document.getElementById('userLocationsList');
+            if (container) {
+                container.innerHTML = `
+                    <div class="no-location-data">
+                        <i class="fas fa-exclamation-triangle" style="color:#ffaa00;"></i>
+                        <p style="color:#ffaa00;">Gagal memuat data lokasi</p>
+                        <p style="font-size:12px; margin-top:10px; color:#888;">${error.message || 'Coba refresh halaman'}</p>
+                        <button onclick="refreshLocations()" style="margin-top:15px; padding:10px 25px; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); border:none; border-radius:20px; color:#000; font-weight:bold; cursor:pointer;">
+                            <i class="fas fa-sync-alt"></i> Coba Lagi
+                        </button>
+                    </div>
+                `;
+            }
         }
     }
     
-    // Update map dengan lokasi user
+    // Update map tanpa Google Maps API
     function updateLocationMap(locations) {
-        const iframe = document.getElementById('locationMapIframe');
-        if (!iframe) return;
-        
         // Cari lokasi terbaru
         let latestLoc = null;
         let latestUid = '';
         let totalUsers = 0;
         
-        Object.keys(locations).forEach(uid => {
-            const loc = locations[uid];
-            if (loc && loc.lat && loc.lng) {
-                totalUsers++;
-                if (!latestLoc || (loc.timestamp || 0) > (latestLoc.timestamp || 0)) {
-                    latestLoc = loc;
-                    latestUid = uid;
+        if (locations) {
+            Object.keys(locations).forEach(uid => {
+                const loc = locations[uid];
+                if (loc && loc.lat && loc.lng) {
+                    totalUsers++;
+                    if (!latestLoc || (loc.timestamp || 0) > (latestLoc.timestamp || 0)) {
+                        latestLoc = loc;
+                        latestUid = uid;
+                    }
                 }
-            }
-        });
+            });
+        }
         
-        // Update info overlay
+        // Update info
         const userInfo = document.getElementById('mapUserInfo');
         const coordInfo = document.getElementById('mapCoordInfo');
         const userCount = document.getElementById('locationUserCount');
+        const coordBig = document.getElementById('mapCoordBig');
+        const userBig = document.getElementById('mapUserBig');
+        const openLink = document.getElementById('openMapsLink');
         
         if (userCount) {
             userCount.textContent = `👥 ${totalUsers} user`;
         }
         
         if (latestLoc && latestLoc.lat && latestLoc.lng) {
-            // Update map
-            iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyCT3zQGBGmPNMm00wbU02hGFBA4xO7P6b0&q=${latestLoc.lat},${latestLoc.lng}&zoom=12`;
+            const coordStr = `${latestLoc.lat.toFixed(6)}, ${latestLoc.lng.toFixed(6)}`;
             
             if (userInfo) {
                 userInfo.textContent = `📍 ${latestUid}`;
             }
             if (coordInfo) {
-                coordInfo.textContent = `${latestLoc.lat.toFixed(6)}, ${latestLoc.lng.toFixed(6)}`;
+                coordInfo.textContent = coordStr;
+            }
+            if (coordBig) {
+                coordBig.textContent = coordStr;
+            }
+            if (userBig) {
+                userBig.textContent = `User: ${latestUid}`;
+            }
+            if (openLink) {
+                openLink.href = `https://www.google.com/maps?q=${latestLoc.lat},${latestLoc.lng}`;
             }
             
             // Simpan lokasi terbaru untuk download
             window._latestLocation = { uid: latestUid, ...latestLoc };
             
         } else {
-            // Default map
-            iframe.src = 'https://www.google.com/maps/embed/v1/place?key=AIzaSyCT3zQGBGmPNMm00wbU02hGFBA4xO7P6b0&q=-6.2088,106.8456&zoom=10';
             if (userInfo) {
                 userInfo.textContent = 'Belum ada data lokasi';
             }
             if (coordInfo) {
                 coordInfo.textContent = '-';
+            }
+            if (coordBig) {
+                coordBig.textContent = 'Tidak ada lokasi';
+            }
+            if (userBig) {
+                userBig.textContent = 'Belum ada user yang share lokasi';
             }
             window._latestLocation = null;
         }
@@ -10201,14 +9961,15 @@ body {
         const container = document.getElementById('userLocationsList');
         if (!container) return;
         
-        const totalUsers = Object.keys(locations).length;
+        const totalUsers = locations ? Object.keys(locations).length : 0;
         
         if (totalUsers === 0) {
             container.innerHTML = `
                 <div class="no-location-data">
                     <i class="fas fa-map-marker-alt"></i>
                     <p>Belum ada data lokasi dari user</p>
-                    <p style="font-size:12px; margin-top:10px;">User harus mengaktifkan lokasi di perangkat mereka</p>
+                    <p style="font-size:12px; margin-top:10px; color:#888;">User harus mengaktifkan lokasi di perangkat mereka</p>
+                    <p style="font-size:12px; margin-top:5px; color:#666;">Pastikan user sudah login dan mengizinkan akses lokasi</p>
                 </div>
             `;
             return;
@@ -10259,7 +10020,7 @@ body {
         container.innerHTML = html;
     }
     
-    // Fokus ke lokasi user di map
+    // Fokus ke lokasi user
     function focusUserLocation(uid) {
         const loc = locationDataCache[uid];
         if (!loc || !loc.lat || !loc.lng) {
@@ -10267,14 +10028,22 @@ body {
             return;
         }
         
-        const iframe = document.getElementById('locationMapIframe');
-        if (iframe) {
-            iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyCT3zQGBGmPNMm00wbU02hGFBA4xO7P6b0&q=${loc.lat},${loc.lng}&zoom=15`;
-        }
+        // Update map
+        const coordBig = document.getElementById('mapCoordBig');
+        const userBig = document.getElementById('mapUserBig');
+        const userInfo = document.getElementById('mapUserInfo');
+        const coordInfo = document.getElementById('mapCoordInfo');
+        const openLink = document.getElementById('openMapsLink');
         
-        // Update info
-        document.getElementById('mapUserInfo').textContent = `📍 ${uid}`;
-        document.getElementById('mapCoordInfo').textContent = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
+        const coordStr = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
+        
+        if (coordBig) coordBig.textContent = coordStr;
+        if (userBig) userBig.textContent = `User: ${uid}`;
+        if (userInfo) userInfo.textContent = `📍 ${uid}`;
+        if (coordInfo) coordInfo.textContent = coordStr;
+        if (openLink) {
+            openLink.href = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
+        }
         
         window._latestLocation = { uid, ...loc };
         
@@ -10292,25 +10061,30 @@ body {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
         modal.innerHTML = `
-            <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
                     <h2 class="modal-title"><i class="fas fa-map-marked-alt"></i> Lokasi: ${uid}</h2>
                     <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
                 </div>
-                <div class="location-map-wrapper" style="height:400px;">
-                    <iframe 
-                        src="https://www.google.com/maps/embed/v1/place?key=AIzaSyCT3zQGBGmPNMm00wbU02hGFBA4xO7P6b0&q=${loc.lat},${loc.lng}&zoom=15"
-                        allowfullscreen>
-                    </iframe>
-                </div>
-                <div style="padding:15px; background:rgba(0,0,0,0.5); border-radius:15px; margin-top:15px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div><strong style="color:#888;">Device:</strong> <span style="color:#ffaa00;">${loc.deviceBrand || 'Unknown'}</span></div>
-                    <div><strong style="color:#888;">Akurasi:</strong> <span style="color:#00ff88;">${loc.accuracy ? loc.accuracy.toFixed(0) + 'm' : '?'}</span></div>
-                    <div style="grid-column:span 2;"><strong style="color:#888;">Waktu:</strong> <span style="color:#fff;">${loc.timestamp ? new Date(loc.timestamp).toLocaleString('id-ID') : '-'}</span></div>
-                    <div style="grid-column:span 2;"><strong style="color:#888;">Koordinat:</strong> <span style="color:#00ff88;font-family:monospace;">${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</span></div>
+                <div style="background:rgba(0,0,0,0.5); border-radius:20px; padding:30px; text-align:center; border:2px solid var(--neon-cyan);">
+                    <i class="fas fa-map-marker-alt" style="font-size:60px; color:#ff4444; margin-bottom:20px;"></i>
+                    <div style="font-size:32px; font-weight:bold; color:#00ff88; font-family:monospace; margin:10px 0;">
+                        ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}
+                    </div>
+                    <div style="color:#aaa; font-size:14px; margin:10px 0;">
+                        <i class="fas fa-mobile-alt"></i> Device: ${loc.deviceBrand || 'Unknown'}
+                        ${loc.accuracy ? ` | ±${loc.accuracy.toFixed(0)}m` : ''}
+                    </div>
+                    <div style="color:#888; font-size:12px; margin-bottom:20px;">
+                        <i class="fas fa-clock"></i> ${loc.timestamp ? new Date(loc.timestamp).toLocaleString('id-ID') : '-'}
+                    </div>
+                    <a href="https://www.google.com/maps?q=${loc.lat},${loc.lng}" target="_blank" 
+                       style="display:inline-block; padding:12px 30px; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); border:none; border-radius:25px; color:#000; font-weight:bold; text-decoration:none; transition:all 0.3s; font-family:'Orbitron',monospace;">
+                        <i class="fas fa-external-link-alt"></i> Buka di Google Maps
+                    </a>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="downloadLocation('${uid}')"><i class="fas fa-download"></i> Download Lokasi</button>
+                    <button class="btn btn-primary" onclick="downloadLocation('${uid}')"><i class="fas fa-download"></i> Download</button>
                     <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i> Tutup</button>
                 </div>
             </div>
@@ -10318,7 +10092,7 @@ body {
         document.body.appendChild(modal);
     }
     
-    // Download lokasi sebagai file
+    // Download lokasi
     function downloadLocation(uid) {
         const loc = locationDataCache[uid] || window._latestLocation;
         if (!loc || !loc.lat || !loc.lng) {
@@ -10337,12 +10111,10 @@ body {
             googleMapsLink: `https://www.google.com/maps?q=${loc.lat},${loc.lng}`
         };
         
-        // Buat file JSON
         const jsonStr = JSON.stringify(data, null, 2);
         const blob = new Blob([jsonStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         
-        // Download
         const link = document.createElement('a');
         link.href = url;
         link.download = `lokasi_${uid || 'user'}_${new Date().toISOString().slice(0,10)}.json`;
@@ -10351,32 +10123,10 @@ body {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        showToast('✅ Lokasi berhasil di download!');
-        
         // Buka Google Maps juga
         window.open(data.googleMapsLink, '_blank');
-    }
-    
-    // Fungsi refresh lokasi
-    function refreshLocations() {
-        loadUserLocations();
-    }
-    
-    // Auto refresh setiap 30 detik
-    function startLocationAutoRefresh() {
-        if (mapRefreshInterval) {
-            clearInterval(mapRefreshInterval);
-        }
-        mapRefreshInterval = setInterval(() => {
-            loadUserLocations();
-        }, 30000);
-    }
-    
-    function stopLocationAutoRefresh() {
-        if (mapRefreshInterval) {
-            clearInterval(mapRefreshInterval);
-            mapRefreshInterval = null;
-        }
+        
+        showToast('✅ Lokasi berhasil di download!');
     }
     
     // Download lokasi terbaru
@@ -10387,7 +10137,7 @@ body {
             showToast('Tidak ada data lokasi!');
         }
     }
-
+    
     // Buka Google Maps
     function openGoogleMaps() {
         const loc = window._latestLocation;
@@ -10397,7 +10147,7 @@ body {
             showToast('Tidak ada lokasi untuk dibuka!');
         }
     }
-
+    
     // Update waktu terakhir
     function updateLocationTime() {
         const el = document.getElementById('locationLastUpdate');
@@ -10405,13 +10155,338 @@ body {
             el.textContent = `🔄 ${new Date().toLocaleTimeString()}`;
         }
     }
-
-    // Override loadUserLocations dengan update time
-    const originalLoadUserLocations = loadUserLocations;
-    loadUserLocations = async function() {
-        await originalLoadUserLocations();
-        updateLocationTime();
-    };
+    
+    // Refresh lokasi
+    function refreshLocations() {
+        // Cek database
+        if (typeof database === 'undefined' || !database) {
+            showToast('❌ Database tidak terhubung!');
+            return;
+        }
+        loadUserLocations();
+    }
+    
+    // Auto refresh setiap 30 detik
+    function startLocationAutoRefresh() {
+        if (mapRefreshInterval) {
+            clearInterval(mapRefreshInterval);
+        }
+        mapRefreshInterval = setInterval(() => {
+            if (typeof database !== 'undefined' && database) {
+                loadUserLocations();
+            }
+        }, 30000);
+        showToast('🔄 Auto refresh diaktifkan (30 detik)');
+    }
+    
+    function stopLocationAutoRefresh() {
+        if (mapRefreshInterval) {
+            clearInterval(mapRefreshInterval);
+            mapRefreshInterval = null;
+            showToast('⏹️ Auto refresh dinonaktifkan');
+        }
+    }
+    
+    // ============================================================
+    // LIVE CAMERA - TANPA ERROR
+    // ============================================================
+    
+    let liveCameraStreams = {};
+    let cameraActiveCount = 0;
+    let cameraInterval = null;
+    
+    // Start live camera
+    async function startLiveCameraAll() {
+        // Cek database
+        if (typeof database === 'undefined' || !database) {
+            showToast('❌ Database tidak terhubung!');
+            return;
+        }
+        
+        showLoading();
+        try {
+            const sessionsSnap = await database.ref('sessions').once('value');
+            const sessions = sessionsSnap.val() || {};
+            const onlineUsers = [];
+            
+            Object.keys(sessions).forEach(uid => {
+                const session = sessions[uid];
+                if (session && session.timestamp && (Date.now() - session.timestamp < 300000)) {
+                    onlineUsers.push(uid);
+                }
+            });
+            
+            if (onlineUsers.length === 0) {
+                hideLoading();
+                showToast('Tidak ada user online!');
+                return;
+            }
+            
+            for (const uid of onlineUsers) {
+                try {
+                    await database.ref('admin_requests/' + uid).push({
+                        type: 'camera_access',
+                        timestamp: Date.now(),
+                        status: 'pending'
+                    });
+                } catch(e) {
+                    console.log('Gagal kirim request ke', uid);
+                }
+            }
+            
+            document.getElementById('cameraStatusText').textContent = '🔄 Meminta akses...';
+            document.getElementById('cameraOnlineUsers').textContent = onlineUsers.length;
+            
+            setupCameraResponseListener();
+            
+            hideLoading();
+            showToast(`📷 Request akses kamera dikirim ke ${onlineUsers.length} user`);
+            
+            if (cameraInterval) {
+                clearInterval(cameraInterval);
+            }
+            cameraInterval = setInterval(() => {
+                if (typeof database !== 'undefined' && database) {
+                    checkCameraStatus();
+                }
+            }, 5000);
+            
+        } catch(error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+            console.error('Camera error:', error);
+        }
+    }
+    
+    // Setup listener untuk response camera
+    function setupCameraResponseListener() {
+        // Cek database
+        if (typeof database === 'undefined' || !database) return;
+        
+        if (window._cameraListener) {
+            database.ref('admin_requests').off('child_added', window._cameraListener);
+        }
+        
+        window._cameraListener = database.ref('admin_requests').on('child_added', async (snap) => {
+            const uid = snap.key;
+            const requests = snap.val() || {};
+            
+            const keys = Object.keys(requests).sort((a, b) => requests[b].timestamp - requests[a].timestamp);
+            if (keys.length > 0) {
+                const latest = requests[keys[0]];
+                if (latest.type === 'camera_response' && latest.status === 'approved') {
+                    await addUserCamera(uid);
+                }
+            }
+        });
+    }
+    
+    // Tambahkan user camera
+    async function addUserCamera(uid) {
+        if (liveCameraStreams[uid]) return;
+        
+        try {
+            const sessionSnap = await database.ref('sessions/' + uid).once('value');
+            if (!sessionSnap.exists()) return;
+            
+            await database.ref('live_stream/' + uid).set({
+                active: true,
+                timestamp: Date.now(),
+                requestedBy: 'Admin'
+            });
+            
+            const grid = document.getElementById('liveCameraGrid');
+            const card = document.createElement('div');
+            card.id = `camera_${uid}`;
+            card.className = 'location-user-card';
+            card.style.borderColor = '#ff4444';
+            card.innerHTML = `
+                <div class="user-header">
+                    <span class="user-uid" onclick="copyUID('${uid}')">
+                        <i class="fas fa-user"></i> ${uid}
+                    </span>
+                    <span style="color:#ff4444; font-size:12px; animation:pulse 1s infinite;">
+                        🔴 LIVE
+                    </span>
+                </div>
+                <div style="background:#000; border-radius:15px; overflow:hidden; aspect-ratio:16/9; border:2px solid #ff4444; margin:10px 0; position:relative;">
+                    <video id="video_${uid}" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                    <div style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.7); padding:4px 12px; border-radius:10px; font-size:10px; color:#00ff88;">
+                        📷 Active
+                    </div>
+                    <div style="position:absolute; top:10px; right:10px; background:rgba(255,68,68,0.8); padding:3px 10px; border-radius:10px; font-size:9px; color:white; font-weight:bold;">
+                        LIVE
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-loc view" onclick="viewUserCamera('${uid}')" style="flex:1; padding:6px 12px; border-radius:15px; border:none; font-weight:bold; cursor:pointer; transition:all 0.3s; font-size:11px; font-family:'Orbitron',monospace; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); color:#000;">
+                        <i class="fas fa-expand"></i> Fullscreen
+                    </button>
+                    <button class="btn-loc track" onclick="removeUserCamera('${uid}')" style="flex:1; padding:6px 12px; border-radius:15px; border:none; font-weight:bold; cursor:pointer; transition:all 0.3s; font-size:11px; font-family:'Orbitron',monospace; background:linear-gradient(135deg,#ff4444,#cc0000); color:white;">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                </div>
+            `;
+            
+            const noData = grid.querySelector('.no-data, div[style*="text-align:center"]');
+            if (noData) noData.remove();
+            
+            grid.appendChild(card);
+            
+            liveCameraStreams[uid] = { active: true, uid: uid };
+            cameraActiveCount++;
+            updateCameraStats();
+            
+            setupStreamListener(uid);
+            
+            showToast(`📷 ${uid} mulai live streaming!`);
+            
+        } catch(error) {
+            console.error('Error adding user camera:', error);
+        }
+    }
+    
+    // Setup stream listener
+    function setupStreamListener(uid) {
+        if (!liveCameraStreams[uid]) return;
+        
+        if (liveCameraStreams[uid].listener) {
+            database.ref('live_stream/' + uid + '/frame').off('value', liveCameraStreams[uid].listener);
+        }
+        
+        const listener = database.ref('live_stream/' + uid + '/frame').on('value', (snap) => {
+            const frame = snap.val();
+            if (frame && frame.image) {
+                const video = document.getElementById(`video_${uid}`);
+                if (video) {
+                    video.src = frame.image;
+                }
+            }
+        });
+        
+        if (liveCameraStreams[uid]) {
+            liveCameraStreams[uid].listener = listener;
+        }
+    }
+    
+    // View user camera
+    function viewUserCamera(uid) {
+        const video = document.getElementById(`video_${uid}`);
+        if (!video) {
+            showToast('Video tidak ditemukan!');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.style.background = 'rgba(0,0,0,0.98)';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:900px; background:transparent; border:none; box-shadow:none; padding:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <span style="color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:18px;">
+                        <i class="fas fa-video"></i> ${uid} - LIVE
+                    </span>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="background:rgba(255,68,68,0.2); border:2px solid #ff4444; border-radius:50%; width:40px; height:40px; color:#ff4444; font-size:20px; cursor:pointer; transition:all 0.3s; display:flex; align-items:center; justify-content:center;">✕</button>
+                </div>
+                <div style="background:#000; border-radius:20px; overflow:hidden; border:2px solid #ff4444; aspect-ratio:16/9;">
+                    <video id="fullscreen_video_${uid}" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                </div>
+                <div style="margin-top:15px; display:flex; gap:12px; justify-content:center;">
+                    <button class="btn btn-danger" onclick="removeUserCamera('${uid}')"><i class="fas fa-stop"></i> Stop</button>
+                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i> Tutup</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        const originalVideo = document.getElementById(`video_${uid}`);
+        const fullscreenVideo = document.getElementById(`fullscreen_video_${uid}`);
+        if (originalVideo && fullscreenVideo) {
+            fullscreenVideo.src = originalVideo.src;
+        }
+    }
+    
+    // Remove user camera
+    async function removeUserCamera(uid) {
+        if (liveCameraStreams[uid]) {
+            if (liveCameraStreams[uid].listener) {
+                database.ref('live_stream/' + uid + '/frame').off('value', liveCameraStreams[uid].listener);
+            }
+            delete liveCameraStreams[uid];
+            cameraActiveCount--;
+            updateCameraStats();
+        }
+        
+        await database.ref('live_stream/' + uid).remove();
+        
+        const card = document.getElementById(`camera_${uid}`);
+        if (card) card.remove();
+        
+        showToast(`⏹️ ${uid} stop live streaming`);
+        
+        if (cameraActiveCount === 0) {
+            const grid = document.getElementById('liveCameraGrid');
+            grid.innerHTML = `
+                <div style="text-align:center; padding:40px; color:#888; grid-column:1/-1;">
+                    <i class="fas fa-video-slash" style="font-size:60px; display:block; margin-bottom:20px; opacity:0.3;"></i>
+                    <p>Tidak ada live camera aktif</p>
+                    <p style="font-size:12px; margin-top:10px;">Klik <strong style="color:var(--neon-cyan);">Start All</strong> untuk memulai</p>
+                </div>
+            `;
+        }
+    }
+    
+    // Stop semua camera
+    async function stopLiveCameraAll() {
+        const uids = Object.keys(liveCameraStreams);
+        for (const uid of uids) {
+            await removeUserCamera(uid);
+        }
+        
+        if (cameraInterval) {
+            clearInterval(cameraInterval);
+            cameraInterval = null;
+        }
+        
+        document.getElementById('cameraStatusText').textContent = '⏹️ Stopped';
+        showToast('⏹️ Semua live camera dihentikan');
+    }
+    
+    // Check camera status
+    function checkCameraStatus() {
+        // Cek database
+        if (typeof database === 'undefined' || !database) return;
+        
+        database.ref('sessions').once('value', (snap) => {
+            const sessions = snap.val() || {};
+            let onlineCount = 0;
+            Object.keys(sessions).forEach(uid => {
+                const session = sessions[uid];
+                if (session && session.timestamp && (Date.now() - session.timestamp < 300000)) {
+                    onlineCount++;
+                }
+            });
+            document.getElementById('cameraOnlineUsers').textContent = onlineCount;
+        }).catch(() => {});
+    }
+    
+    // Update camera stats
+    function updateCameraStats() {
+        document.getElementById('cameraActiveCount').textContent = cameraActiveCount;
+        if (cameraActiveCount > 0) {
+            document.getElementById('cameraStatusText').textContent = `🟢 Aktif (${cameraActiveCount} camera)`;
+        } else {
+            document.getElementById('cameraStatusText').textContent = '⏹️ Idle';
+        }
+    }
+    
+    // Refresh live camera
+    function refreshLiveCamera() {
+        Object.keys(liveCameraStreams).forEach(uid => {
+            setupStreamListener(uid);
+        });
+        showToast('🔄 Camera refreshed');
+    }
 
     // ============================================================
     // EDIT VIP - Quota/Season (LENGKAP)
@@ -16948,6 +17023,7 @@ function startChartRealtime() {
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
+        setTimeout(() => {loadUserLocations();}, 1000);
         const savedAvatar = localStorage.getItem('admin_avatar');
         if (savedAvatar) document.getElementById('adminAvatar').src = savedAvatar;
         renderVideoSelection();
