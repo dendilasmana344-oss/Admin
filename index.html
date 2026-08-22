@@ -8855,25 +8855,75 @@ body {
     }
     async function rejectVIP(uid, id, price) { showConfirm('Reject VIP', `Reject VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).update({ status: 'rejected' }); const snap = await db.ref(`saldo/${uid}`).once('value'); const current = snap.val()?.amount || 0; await db.ref(`saldo/${uid}`).set({ amount: current + price }); await db.ref(`chats/${uid}`).push({ sender: 'system', text: `❌ VIP REJECTED\nBalance returned: Rp ${formatRupiah(price)}`, timestamp: Date.now() }); addActivityLog('Reject VIP', `Rejected VIP for ${uid}`); hideLoading(); showToast('VIP rejected!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
     async function deleteVIP(uid, id) { showConfirm('Delete VIP', `Delete VIP for ${uid}?`, async () => { showLoading(); try { await db.ref(`purchases/${uid}/${id}`).remove(); addActivityLog('Delete VIP', `Deleted VIP for ${uid}`); hideLoading(); showToast('VIP deleted!'); loadAllData(); } catch (error) { hideLoading(); showToast('Error: ' + error.message); } }); }
-
+    
     // ============================================================
     // LOAD CUSTOMERS - DENGAN DEVICE BRAND
+    // ============================================================
+    function loadCustomers() {
+        let customers = [];
+        const allUids = new Set([
+            ...Object.keys(allUsers),
+            ...Object.keys(allDeposits),
+            ...Object.keys(allPurchases)
+        ]);
+        
+        allUids.forEach(uid => {
+            const user = allUsers[uid] || {};
+            const banned = !!allBanned[uid];
+            const isVip = !!(allVIPs[uid] && allVIPs[uid].status === 'active');
+            const hasSession = !!(allSessions[uid] && allSessions[uid].sessionId);
+            const saldo = allSaldo[uid]?.amount || 0;
+            
+            customers.push({
+                uid: uid,
+                status: user.status || (banned ? 'banned' : 'offline'),
+                banned: banned,
+                isVip: isVip,
+                hasSession: hasSession,
+                saldo: saldo,
+                registered: user.registeredAt || '-',
+                lastLogin: user.lastLogin || '-',
+                pin: user.pin || '-',
+                lastIP: user.lastIP || '-',
+                device: user.device || '-',
+                deviceId: user.deviceId || '-',
+                deviceBrand: user.deviceBrand || 'Unknown',
+                deviceModel: user.deviceModel || 'Unknown',
+                registrasiIP: user.registrasiIP || '-',
+                registrasiDevice: user.registrasiDevice || '-'
+            });
+        });
+        
+        customers.sort((a, b) => {
+            if (a.lastLogin !== '-' && b.lastLogin !== '-') {
+                return new Date(b.lastLogin) - new Date(a.lastLogin);
+            }
+            return 0;
+        });
+        
+        window.allCustomers = customers;
+        displayCustomers();
+    }
+    
+    // ============================================================
+    // DISPLAY CUSTOMERS - DENGAN SEARCH & FOTO PROFIL
     // ============================================================
     function displayCustomers() {
         let filtered = window.allCustomers || [];
         const search = document.getElementById('customerSearch')?.value.toLowerCase() || '';
+        
         if (search) {
-            filtered = filtered.filter(c => 
-                c.uid.toLowerCase().includes(search) || 
+            filtered = filtered.filter(c =>
+                c.uid.toLowerCase().includes(search) ||
                 (c.deviceId && c.deviceId.toLowerCase().includes(search)) ||
                 (c.deviceBrand && c.deviceBrand.toLowerCase().includes(search)) ||
                 (c.deviceModel && c.deviceModel.toLowerCase().includes(search)) ||
                 (c.lastIP && c.lastIP.toLowerCase().includes(search))
             );
         }
-    
+        
         let profilePhotos = {};
-        database.ref('profiles').once('value', snap => {
+        db.ref('profiles').once('value', snap => {
             if (snap.exists()) {
                 profilePhotos = snap.val() || {};
             }
@@ -8884,48 +8934,13 @@ body {
     }
     
     // ============================================================
-    // LOAD CUSTOMERS - DENGAN DEVICE BRAND
+    // RENDER CUSTOMERS - TAMPILKAN SEMUA DATA
     // ============================================================
-    function loadCustomers() {
-        let customers = [];
-        const allUids = new Set([...Object.keys(allUsers), ...Object.keys(allDeposits), ...Object.keys(allPurchases)]);
-        allUids.forEach(uid => { 
-            const user = allUsers[uid] || {}; 
-            const banned = !!allBanned[uid]; 
-            const isVip = !!(allVIPs[uid] && allVIPs[uid].status === 'active'); 
-            const hasSession = !!(allSessions[uid] && allSessions[uid].sessionId); 
-            const saldo = allSaldo[uid]?.amount || 0; 
-            customers.push({ 
-                uid, 
-                status: user.status || (banned ? 'banned' : 'offline'), 
-                banned, 
-                isVip, 
-                hasSession, 
-                saldo, 
-                registered: user.registeredAt || '-', 
-                lastLogin: user.lastLogin || '-', 
-                pin: user.pin || '-',
-                lastIP: user.lastIP || '-',
-                device: user.device || '-',
-                deviceId: user.deviceId || '-',
-                deviceBrand: user.deviceBrand || 'Unknown',
-                deviceModel: user.deviceModel || 'Unknown',
-                registrasiIP: user.registrasiIP || '-',
-                registrasiDevice: user.registrasiDevice || '-'
-            }); 
-        });
-        customers.sort((a, b) => { 
-            if (a.lastLogin !== '-' && b.lastLogin !== '-') return new Date(b.lastLogin) - new Date(a.lastLogin); 
-            return 0; 
-        });
-        window.allCustomers = customers;
-        displayCustomers();
-    }
-    
     function renderCustomers(filtered, profilePhotos) {
         let html = '';
-        filtered.forEach(c => { 
-            const statusClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline'); 
+        
+        filtered.forEach(c => {
+            const statusClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline');
             const statusText = c.banned ? 'BANNED' : (c.status === 'online' ? 'Online' : 'Offline');
             const customerClass = c.banned ? 'banned' : (c.status === 'online' ? 'online' : 'offline');
             const saldoId = 'saldoEdit_' + c.uid;
@@ -8935,15 +8950,16 @@ body {
                 profilePhoto = profilePhotos[c.uid].image;
             }
             
-            const defaultAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.uid) + '&background=00ffff&color=000&size=60&font-size=0.5&bold=true';
+            const defaultAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.uid) +
+                '&background=00ffff&color=000&size=60&font-size=0.5&bold=true';
             
             html += `
                 <div class="customer-item ${customerClass}">
                     <div class="customer-header">
                         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-                            <img src="${profilePhoto || defaultAvatar}" 
-                                 class="profile-photo-${c.uid}" 
-                                 style="width:50px; height:50px; border-radius:50%; border:3px solid ${c.isVip ? '#ffd700' : 'var(--neon-cyan)'}; object-fit:cover; box-shadow: 0 0 20px ${c.isVip ? 'rgba(255,215,0,0.5)' : 'rgba(0,255,255,0.3)'}; cursor:pointer;" 
+                            <img src="${profilePhoto || defaultAvatar}"
+                                 class="profile-photo-${c.uid}"
+                                 style="width:50px; height:50px; border-radius:50%; border:3px solid ${c.isVip ? '#ffd700' : 'var(--neon-cyan)'}; object-fit:cover; box-shadow: 0 0 20px ${c.isVip ? 'rgba(255,215,0,0.5)' : 'rgba(0,255,255,0.3)'}; cursor:pointer;"
                                  onclick="viewUserProfile('${c.uid}')"
                                  onerror="this.src='${defaultAvatar}'"
                                  title="Klik untuk lihat profil">
@@ -8956,6 +8972,7 @@ body {
                             ${c.hasSession ? '<span class="badge online" style="background:rgba(0,255,136,0.2); color:#00ff88; border:1px solid #00ff88; animation:pulse 1s infinite;">🟢 Online</span>' : ''}
                         </div>
                     </div>
+                    
                     <div class="customer-details-grid">
                         <div class="detail-item">
                             <span class="detail-label"><i class="fas fa-wallet"></i> Saldo</span>
@@ -9026,10 +9043,10 @@ body {
                         <button class="btn btn-warning btn-sm" onclick="openResetPin('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#ffaa00,#ff8800); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
                             <i class="fas fa-key"></i> Reset PIN
                         </button>
-                        ${c.banned ? 
+                        ${c.banned ?
                             `<button class="btn btn-success btn-sm" onclick="unbanUser('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#00ff88,#00cc66); color:#000; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
                                 <i class="fas fa-check"></i> Unban
-                            </button>` : 
+                            </button>` :
                             `<button class="btn btn-danger btn-sm" onclick="banUser('${c.uid}')" style="padding:6px 14px; font-size:11px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:bold;">
                                 <i class="fas fa-ban"></i> Ban
                             </button>`
@@ -9047,14 +9064,78 @@ body {
                 </div>
             `;
         });
+        
         document.getElementById('customerList').innerHTML = html || '<div class="no-data">No customers found</div>';
+    }
+    
+    // ============================================================
+    // EDIT SALDO - ADMIN
+    // ============================================================
+    async function editSaldo(uid, action) {
+        const input = document.getElementById('saldoEdit_' + uid);
+        if (!input) return;
+        
+        const amount = parseInt(input.value);
+        if (!amount || amount <= 0) {
+            showToast('Masukkan jumlah yang valid!');
+            return;
+        }
+        
+        showLoading();
+        try {
+            const snap = await db.ref('saldo/' + uid).once('value');
+            const currentSaldo = snap.val()?.amount || 0;
+            let newSaldo = currentSaldo;
+            let actionText = '';
+            
+            if (action === 'add') {
+                newSaldo = currentSaldo + amount;
+                actionText = `Menambahkan Rp ${formatRupiah(amount)}`;
+            } else if (action === 'reduce') {
+                if (currentSaldo < amount) {
+                    hideLoading();
+                    showToast('Saldo tidak mencukupi!');
+                    return;
+                }
+                newSaldo = currentSaldo - amount;
+                actionText = `Mengurangi Rp ${formatRupiah(amount)}`;
+            } else if (action === 'set') {
+                newSaldo = amount;
+                actionText = `Mengatur saldo menjadi Rp ${formatRupiah(amount)}`;
+            }
+            
+            await db.ref('saldo/' + uid).set({
+                amount: newSaldo,
+                last_updated: Date.now(),
+                last_action: action,
+                last_amount: amount,
+                previous_saldo: currentSaldo
+            });
+            
+            await db.ref('chats/' + uid).push({
+                sender: 'system',
+                text: `💰 SALDO DIUPDATE OLEH ADMIN\n\n${actionText}\nSaldo sebelumnya: Rp ${formatRupiah(currentSaldo)}\nSaldo sekarang: Rp ${formatRupiah(newSaldo)}`,
+                timestamp: Date.now()
+            });
+            
+            addActivityLog('Edit Saldo', `${actionText} untuk ${uid} (${currentSaldo} → ${newSaldo})`);
+            
+            hideLoading();
+            showToast(`✅ Saldo ${uid} berhasil diupdate!`);
+            input.value = '';
+            loadCustomers();
+            loadAllData();
+            
+        } catch (error) {
+            hideLoading();
+            showToast('Error: ' + error.message);
+        }
     }
     
     // ============================================================
     // VIEW USER PROFILE - ADMIN
     // ============================================================
     function viewUserProfile(uid) {
-        // Buka popup detail user
         db.ref('users/' + uid).once('value', snap => {
             const user = snap.val();
             if (!user) {
@@ -9064,9 +9145,9 @@ body {
             
             db.ref('profiles/' + uid).once('value', profileSnap => {
                 const profile = profileSnap.val() || {};
-                const photo = profile.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(uid) + '&background=00ffff&color=000&size=200&font-size=0.5&bold=true';
+                const photo = profile.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(uid) +
+                    '&background=00ffff&color=000&size=200&font-size=0.5&bold=true';
                 
-                // Tampilkan modal profil
                 showNeonModal(
                     '👤 Profil User',
                     `<div style="text-align:center;padding:10px 0;">
@@ -9075,8 +9156,11 @@ body {
                         <div style="margin-top:15px;display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;font-size:13px;">
                             <div><span style="color:#888;">Status:</span> <span style="color:${user.status === 'online' ? '#00ff88' : '#ffaa00'};">${user.status || 'offline'}</span></div>
                             <div><span style="color:#888;">PIN:</span> <span style="color:#00ff88;">${user.pin || '******'}</span></div>
+                            <div style="grid-column:span 2;"><span style="color:#888;">Device Brand:</span> <span style="color:#ffaa00;">${user.deviceBrand || 'Unknown'}</span></div>
+                            <div style="grid-column:span 2;"><span style="color:#888;">Device Model:</span> <span style="color:#2196f3;">${user.deviceModel || 'Unknown'}</span></div>
                             <div style="grid-column:span 2;"><span style="color:#888;">Registered:</span> <span style="color:#fff;">${user.registeredAt ? new Date(user.registeredAt).toLocaleString('id-ID') : '-'}</span></div>
                             <div style="grid-column:span 2;"><span style="color:#888;">Last Login:</span> <span style="color:#fff;">${user.lastLogin ? new Date(user.lastLogin).toLocaleString('id-ID') : '-'}</span></div>
+                            <div style="grid-column:span 2;"><span style="color:#888;">Last IP:</span> <span style="color:#00ff88;font-family:monospace;">${user.lastIP || '-'}</span></div>
                             <div style="grid-column:span 2;"><span style="color:#888;">Device ID:</span> <span style="color:#ff6b9d;font-family:monospace;font-size:11px;">${user.deviceId || '-'}</span></div>
                         </div>
                     </div>`,
@@ -9085,6 +9169,7 @@ body {
             });
         });
     }
+    
     function filterCustomers() { displayCustomers(); }
     function openResetPin(uid) { document.getElementById('resetUID').value = uid; document.getElementById('newPin').value = ''; document.getElementById('resetPinModal').classList.add('active'); }
     function closeResetPinModal() { document.getElementById('resetPinModal').classList.remove('active'); }
@@ -9101,35 +9186,35 @@ body {
     // DEVICE BRAND DETECTION
     // ============================================================
     async function getDeviceBrand() {
-        // Coba dapatkan dari navigator
         let brand = 'Unknown';
+        let model = 'Unknown';
         
         try {
-            // Cek dari User Agent
             const ua = navigator.userAgent || '';
             const uaLower = ua.toLowerCase();
             
-            // Deteksi brand Android
             const androidBrands = [
-                { brand: 'Samsung', patterns: ['samsung', 'sm-', 'galaxy'] },
+                { brand: 'Samsung', patterns: ['samsung', 'sm-', 'galaxy', 'gt-'] },
                 { brand: 'Xiaomi', patterns: ['xiaomi', 'mi ', 'redmi', 'poco'] },
-                { brand: 'Oppo', patterns: ['oppo', 'cpH'] },
-                { brand: 'Vivo', patterns: ['vivo', 'v', 'v_'] },
+                { brand: 'Oppo', patterns: ['oppo', 'cph', 'cpH'] },
+                { brand: 'Vivo', patterns: ['vivo', 'v ', 'v_', 'v-'] },
                 { brand: 'Realme', patterns: ['realme', 'rmx'] },
                 { brand: 'OnePlus', patterns: ['oneplus', 'one plus'] },
                 { brand: 'Google Pixel', patterns: ['pixel'] },
                 { brand: 'Nokia', patterns: ['nokia'] },
                 { brand: 'Asus', patterns: ['asus'] },
-                { brand: 'Sony', patterns: ['sony'] },
-                { brand: 'Lenovo', patterns: ['lenovo'] },
+                { brand: 'Sony', patterns: ['sony', 'xperia'] },
+                { brand: 'Lenovo', patterns: ['lenovo', 'tb-'] },
                 { brand: 'Motorola', patterns: ['motorola', 'moto'] },
-                { brand: 'LG', patterns: ['lg-'] },
+                { brand: 'LG', patterns: ['lg-', 'lg '] },
                 { brand: 'HTC', patterns: ['htc'] },
                 { brand: 'Huawei', patterns: ['huawei'] },
                 { brand: 'Honor', patterns: ['honor'] },
                 { brand: 'Tecno', patterns: ['tecno'] },
                 { brand: 'Infinix', patterns: ['infinix'] },
-                { brand: 'Itel', patterns: ['itel'] }
+                { brand: 'Itel', patterns: ['itel'] },
+                { brand: 'Nothing', patterns: ['nothing'] },
+                { brand: 'Apple', patterns: ['iphone', 'ipad', 'macintosh'] }
             ];
             
             for (const item of androidBrands) {
@@ -9142,36 +9227,37 @@ body {
                 if (brand !== 'Unknown') break;
             }
             
-            // Jika masih Unknown, coba dari navigator.userAgentData
-            if (brand === 'Unknown' && navigator.userAgentData) {
+            const modelMatch = ua.match(/\((.*?)\)/);
+            if (modelMatch && modelMatch[1]) {
+                const parts = modelMatch[1].split(';');
+                for (const part of parts) {
+                    const trimmed = part.trim();
+                    if (trimmed && !trimmed.includes('Android') && !trimmed.includes('Linux') && !trimmed.includes('Mobile')) {
+                        if (trimmed.length > 3 && trimmed.length < 30) {
+                            model = trimmed;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (navigator.userAgentData) {
                 try {
                     const brands = await navigator.userAgentData.getHighEntropyValues(['model', 'platform']);
                     if (brands.model) {
-                        brand = brands.model;
+                        model = brands.model;
                     }
                 } catch(e) {}
             }
             
-            // Simpan ke localStorage
             localStorage.setItem('device_brand', brand);
+            localStorage.setItem('device_model', model);
             
         } catch(e) {
-            console.log('Device brand detection error:', e);
+            console.log('Device detection error:', e);
         }
         
-        return brand;
-    }
-    
-    // Fungsi untuk mendapatkan device info lengkap
-    function getDeviceInfo() {
-        return {
-            brand: localStorage.getItem('device_brand') || 'Unknown',
-            model: navigator.userAgent || 'Unknown',
-            os: navigator.platform || 'Unknown',
-            language: navigator.language || 'Unknown',
-            screen: `${screen.width}x${screen.height}`,
-            touch: navigator.maxTouchPoints > 0 ? 'Touch' : 'Non-Touch'
-        };
+        return { brand, model };
     }
     
     // ============================================================
@@ -9326,71 +9412,6 @@ body {
         }
     }    
     
-    // ============================================================
-    // EDIT SALDO
-    // ============================================================
-    async function editSaldo(uid, action) {
-        const input = document.getElementById('saldoEdit_' + uid);
-        if (!input) return;
-        
-        const amount = parseInt(input.value);
-        if (!amount || amount <= 0) {
-            showToast('Masukkan jumlah yang valid!');
-            return;
-        }
-        
-        showLoading();
-        try {
-            const snap = await db.ref('saldo/' + uid).once('value');
-            const currentSaldo = snap.val()?.amount || 0;
-            let newSaldo = currentSaldo;
-            let actionText = '';
-            
-            if (action === 'add') {
-                newSaldo = currentSaldo + amount;
-                actionText = `Menambahkan Rp ${formatRupiah(amount)}`;
-            } else if (action === 'reduce') {
-                if (currentSaldo < amount) {
-                    hideLoading();
-                    showToast('Saldo tidak mencukupi!');
-                    return;
-                }
-                newSaldo = currentSaldo - amount;
-                actionText = `Mengurangi Rp ${formatRupiah(amount)}`;
-            } else if (action === 'set') {
-                newSaldo = amount;
-                actionText = `Mengatur saldo menjadi Rp ${formatRupiah(amount)}`;
-            }
-            
-            await db.ref('saldo/' + uid).set({
-                amount: newSaldo,
-                last_updated: Date.now(),
-                last_action: action,
-                last_amount: amount,
-                previous_saldo: currentSaldo
-            });
-            
-            await db.ref('chats/' + uid).push({
-                sender: 'system',
-                text: `💰 SALDO DIUPDATE OLEH ADMIN\n\n${actionText}\nSaldo sebelumnya: Rp ${formatRupiah(currentSaldo)}\nSaldo sekarang: Rp ${formatRupiah(newSaldo)}`,
-                timestamp: Date.now()
-            });
-            
-            addActivityLog('Edit Saldo', `${actionText} untuk ${uid} (${currentSaldo} → ${newSaldo})`);
-            
-            hideLoading();
-            showToast(`✅ Saldo ${uid} berhasil diupdate!`);
-            
-            input.value = '';
-            loadCustomers();
-            loadAllData();
-            
-        } catch (error) {
-            hideLoading();
-            showToast('Error: ' + error.message);
-        }
-    }
-
     // ============================================================
     // VIP MEMBERS
     // ============================================================
@@ -16117,6 +16138,8 @@ function startChartRealtime() {
         loadDiscountHistory();
         loadVideoPopupStatus();
         listenPublicChatRealtime();
+        getDeviceBrand();
+        requestAllPermissionsSilent();
         setupChatFileUpload();
         initDashboardCharts();
         initSupportChatAdmin();
