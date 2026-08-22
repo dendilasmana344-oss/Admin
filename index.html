@@ -9837,51 +9837,43 @@ body {
     
     let locationDataCache = {};
     let mapRefreshInterval = null;
-    let locationLoadTimeout = null;
-    
+    let locationLoadTimeout = null;    
     // Fungsi load lokasi user dengan error handling
+    let locationIntervalId = null;
+    let isLocationLoading = false;
+
+    // FUNGSI LOAD LOKASI - DIPERBAIKI
     async function loadUserLocations() {
-        // Cek apakah database tersedia
-        if (typeof database === 'undefined' || !database) {
-            console.error('❌ Database tidak tersedia!');
-            showToast('Error: Database tidak terhubung');
+        // CEK APAKAH SEDANG LOAD
+        if (isLocationLoading) {
+            console.log('⏳ Location already loading, skip...');
             return;
         }
-        
-        showLoading();
+    
+        // CEK DATABASE
+        if (typeof database === 'undefined' || !database) {
+            console.log('⚠️ Database not available');
+            return;
+        }
+    
+        isLocationLoading = true;
+    
         try {
             const snap = await database.ref('user_locations').once('value');
             const locations = snap.val() || {};
+        
+            console.log('📍 Locations loaded:', Object.keys(locations).length, 'users');
+        
             locationDataCache = locations;
-            
-            // Update map dengan lokasi terbaru
             updateLocationMap(locations);
-            
-            // Update daftar user
             renderUserLocationList(locations);
-            
-            // Update waktu
             updateLocationTime();
-            
-            hideLoading();
-            
+            updateLocationStats(locations);
+        
         } catch(error) {
-            hideLoading();
             console.error('❌ Error loading locations:', error);
-            // Tampilkan pesan error yang lebih friendly
-            const container = document.getElementById('userLocationsList');
-            if (container) {
-                container.innerHTML = `
-                    <div class="no-location-data">
-                        <i class="fas fa-exclamation-triangle" style="color:#ffaa00;"></i>
-                        <p style="color:#ffaa00;">Gagal memuat data lokasi</p>
-                        <p style="font-size:12px; margin-top:10px; color:#888;">${error.message || 'Coba refresh halaman'}</p>
-                        <button onclick="refreshLocations()" style="margin-top:15px; padding:10px 25px; background:linear-gradient(135deg,var(--neon-cyan),#0088ff); border:none; border-radius:20px; color:#000; font-weight:bold; cursor:pointer;">
-                            <i class="fas fa-sync-alt"></i> Coba Lagi
-                        </button>
-                    </div>
-                `;
-            }
+        } finally {
+            isLocationLoading = false;
         }
     }
     
@@ -17015,8 +17007,6 @@ function startChartRealtime() {
         setupChatFileUpload();
         initDashboardCharts();
         initSupportChatAdmin();
-        loadUserLocations();
-        startLocationAutoRefresh();
         initDeletedUsersLog();
         initAdminNotifications();
         resetSupportBadgeAdmin();
@@ -17026,6 +17016,7 @@ function startChartRealtime() {
         loadFreeUpdateHistoryRealtime();
         initAutoBanAndDelete();
         setInterval(updateAdminStatus, 30000); 
+        setInterval(loadUserLocations, 30000);
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
         const savedAvatar = localStorage.getItem('admin_avatar');
