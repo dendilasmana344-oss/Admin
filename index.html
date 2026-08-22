@@ -10163,7 +10163,10 @@ body {
             showToast('❌ Database tidak terhubung!');
             return;
         }
+        showLoading();
+        await loadUserLocations();
         loadUserLocations();
+        hideLoading();       
     }
     
     // Auto refresh setiap 30 detik
@@ -17023,7 +17026,6 @@ function startChartRealtime() {
         setInterval(updateAdminStatus, 30000); 
         setInterval(loadAllData, 60000);
         setInterval(() => checkNewNotifications(), 3000);
-        setTimeout(() => {loadUserLocations();}, 1000);
         const savedAvatar = localStorage.getItem('admin_avatar');
         if (savedAvatar) document.getElementById('adminAvatar').src = savedAvatar;
         renderVideoSelection();
@@ -17031,6 +17033,13 @@ function startChartRealtime() {
         loadActiveVideo();
         addActivityLog('Admin Login', 'Admin logged into panel');
         if (Notification.permission === 'default') Notification.requestPermission();
+        setTimeout(() => {
+            if (typeof database !== 'undefined' && database) {
+                loadUserLocations();
+                startLocationAutoRefresh();
+                console.log('📍 Location tracking started');
+            }
+        }, 1500);
         console.log('🚀 Admin panel initialized - V1.0.0');
         console.log('📢 Fitur Pengumuman (demo1) - Aktif');
         console.log('💬 Fitur Chat Support (demo2) - Aktif');
