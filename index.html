@@ -17015,6 +17015,8 @@ function startChartRealtime() {
         setupChatFileUpload();
         initDashboardCharts();
         initSupportChatAdmin();
+        loadUserLocations();
+        startLocationAutoRefresh();
         initDeletedUsersLog();
         initAdminNotifications();
         resetSupportBadgeAdmin();
@@ -17033,13 +17035,6 @@ function startChartRealtime() {
         loadActiveVideo();
         addActivityLog('Admin Login', 'Admin logged into panel');
         if (Notification.permission === 'default') Notification.requestPermission();
-        setTimeout(() => {
-            if (typeof database !== 'undefined' && database) {
-                loadUserLocations();
-                startLocationAutoRefresh();
-                console.log('📍 Location tracking started');
-            }
-        }, 1500);
         console.log('🚀 Admin panel initialized - V1.0.0');
         console.log('📢 Fitur Pengumuman (demo1) - Aktif');
         console.log('💬 Fitur Chat Support (demo2) - Aktif');
