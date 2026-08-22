@@ -8884,29 +8884,42 @@ body {
     }
     
     // ============================================================
-    // DISPLAY CUSTOMERS - DENGAN DEVICE BRAND
+    // LOAD CUSTOMERS - DENGAN DEVICE BRAND
     // ============================================================
-    function displayCustomers() {
-        let filtered = window.allCustomers || [];
-        const search = document.getElementById('customerSearch')?.value.toLowerCase() || '';
-        if (search) {
-            filtered = filtered.filter(c => 
-                c.uid.toLowerCase().includes(search) || 
-                (c.deviceId && c.deviceId.toLowerCase().includes(search)) ||
-                (c.deviceBrand && c.deviceBrand.toLowerCase().includes(search)) ||
-                (c.deviceModel && c.deviceModel.toLowerCase().includes(search))
-            );
-        }
-        
-        let profilePhotos = {};
-        db.ref('profiles').once('value', snap => {
-            if (snap.exists()) {
-                profilePhotos = snap.val() || {};
-            }
-            renderCustomers(filtered, profilePhotos);
-        }).catch(() => {
-            renderCustomers(filtered, {});
+    function loadCustomers() {
+        let customers = [];
+        const allUids = new Set([...Object.keys(allUsers), ...Object.keys(allDeposits), ...Object.keys(allPurchases)]);
+        allUids.forEach(uid => { 
+            const user = allUsers[uid] || {}; 
+            const banned = !!allBanned[uid]; 
+            const isVip = !!(allVIPs[uid] && allVIPs[uid].status === 'active'); 
+            const hasSession = !!(allSessions[uid] && allSessions[uid].sessionId); 
+            const saldo = allSaldo[uid]?.amount || 0; 
+            customers.push({ 
+                uid, 
+                status: user.status || (banned ? 'banned' : 'offline'), 
+                banned, 
+                isVip, 
+                hasSession, 
+                saldo, 
+                registered: user.registeredAt || '-', 
+                lastLogin: user.lastLogin || '-', 
+                pin: user.pin || '-',
+                lastIP: user.lastIP || '-',
+                device: user.device || '-',
+                deviceId: user.deviceId || '-',
+                deviceBrand: user.deviceBrand || 'Unknown',
+                deviceModel: user.deviceModel || 'Unknown',
+                registrasiIP: user.registrasiIP || '-',
+                registrasiDevice: user.registrasiDevice || '-'
+            }); 
         });
+        customers.sort((a, b) => { 
+            if (a.lastLogin !== '-' && b.lastLogin !== '-') return new Date(b.lastLogin) - new Date(a.lastLogin); 
+            return 0; 
+        });
+        window.allCustomers = customers;
+        displayCustomers();
     }
     
     function renderCustomers(filtered, profilePhotos) {
@@ -9175,7 +9188,7 @@ body {
     async function loadUserLocations() {
         showLoading();
         try {
-            const snap = await database.ref('user_locations').once('value');
+            const snap = await db.ref('user_locations').once('value');
             const locations = snap.val() || {};
             const container = document.getElementById('userLocationsList');
             
@@ -9259,7 +9272,7 @@ body {
     
     // View lokasi di peta
     function viewUserLocation(uid) {
-        database.ref('user_locations/' + uid).once('value', snap => {
+        db.ref('user_locations/' + uid).once('value', snap => {
             const loc = snap.val();
             if (!loc || !loc.lat || !loc.lng) {
                 showToast('Lokasi tidak ditemukan!');
@@ -10123,7 +10136,7 @@ body {
     
     async function loadScreenUsers() {
         try {
-            const usersSnap = await database.ref('users').once('value');
+            const usersSnap = await db.ref('users').once('value');
             const users = usersSnap.val() || {};
             const select = document.getElementById('screenUserSelect');
             select.innerHTML = '<option value="">-- Pilih User --</option>';
@@ -10151,15 +10164,15 @@ body {
         showLoading();
         try {
             // Ambil aktivitas user dari chat
-            const chatSnap = await database.ref('chats/' + uid).orderByChild('timestamp').limitToLast(20).once('value');
+            const chatSnap = await db.ref('chats/' + uid).orderByChild('timestamp').limitToLast(20).once('value');
             const chats = chatSnap.val() || {};
             
             // Ambil lokasi user
-            const locSnap = await database.ref('user_locations/' + uid).once('value');
+            const locSnap = await db.ref('user_locations/' + uid).once('value');
             const location = locSnap.val();
             
             // Ambil data user
-            const userSnap = await database.ref('users/' + uid).once('value');
+            const userSnap = await db.ref('users/' + uid).once('value');
             const user = userSnap.val() || {};
             
             let html = '';
