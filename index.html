@@ -7675,6 +7675,13 @@ body {
                     <input type="number" class="modal-input" id="discountPercentage" placeholder="0" min="0" max="100" value="0">
                     <small style="color: #888;">Masukkan angka 0-100. Contoh: 50 = diskon 50%</small>
                 </div>
+                
+                <!-- Tambahkan di dalam form diskon global -->
+                <div class="modal-form-group">
+                    <label class="modal-label"><i class="fas fa-money-bill"></i> Harga Spesifik yang Didiskon</label>
+                    <input type="number" class="modal-input" id="discountSpecificPrice" placeholder="35000" min="0" value="0">
+                    <small style="color: #888;">Masukkan harga paket yang akan didiskon. Contoh: 35000 (hanya paket dengan harga 35.000 yang kena diskon)</small>
+                </div>
         
                 <div class="modal-form-group">
                     <label class="modal-label"><i class="fas fa-calendar-alt"></i> Masa Berlaku (Hari)</label>
@@ -11430,33 +11437,16 @@ body {
     }
 
     // ============================================================
-    // GLOBAL DISCOUNT - LENGKAP
+    // GLOBAL DISCOUNT - PERBAIKAN (HANYA UNTUK HARGA TERTENTU)
     // ============================================================
-    function loadGlobalDiscountStatus() {
-        db.ref('global_discount').on('value', (snap) => {
-            const data = snap.val();
-            const statusDiv = document.getElementById('currentDiscountStatus');
-            
-            if (data && data.active === true && new Date(data.expiryDate) > new Date()) {
-                statusDiv.style.display = 'block';
-                const expiry = new Date(data.expiryDate);
-                document.getElementById('currentDiscountDetails').innerHTML = `
-                    <div><strong>Persentase:</strong> <span style="color:#ffaa00;">${data.percentage}%</span></div>
-                    <div><strong>Minimal Pembelian:</strong> ${data.minPurchase > 0 ? 'Rp ' + formatRupiah(data.minPurchase) : 'Tidak ada'}</div>
-                    <div><strong>Berlaku hingga:</strong> ${expiry.toLocaleDateString('id-ID')}</div>
-                    <div><strong>Dibuat:</strong> ${data.startedAt ? new Date(data.startedAt).toLocaleString() : '-'}</div>
-                `;
-            } else {
-                statusDiv.style.display = 'none';
-            }
-        });
-    }
-    
+
     async function activateGlobalDiscount() {
         const percentage = parseInt(document.getElementById('discountPercentage').value);
         const duration = parseInt(document.getElementById('discountDuration').value);
         const minPurchase = parseInt(document.getElementById('discountMinPurchase').value) || 0;
-        
+        // TAMBAHKAN: Harga spesifik yang akan didiskon
+        const specificPrice = parseInt(document.getElementById('discountSpecificPrice').value) || 0;
+    
         if (isNaN(percentage) || percentage < 0 || percentage > 100) {
             showToast('Persentase diskon harus antara 0-100!');
             return;
@@ -11465,38 +11455,66 @@ body {
             showToast('Durasi minimal 1 hari!');
             return;
         }
-        
+        if (specificPrice <= 0) {
+            showToast('Masukkan harga spesifik yang akan didiskon!');
+            return;
+        }
+    
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + duration);
-        
+    
         showLoading();
         try {
             await db.ref('global_discount').set({
                 active: true,
                 percentage: percentage,
                 minPurchase: minPurchase,
+                specificPrice: specificPrice,
                 expiryDate: expiryDate.toISOString(),
                 startedAt: new Date().toISOString(),
                 activatedBy: 'Admin'
             });
-            
+        
             await db.ref('discount_history').push({
                 action: 'activated',
                 percentage: percentage,
                 minPurchase: minPurchase,
+                specificPrice: specificPrice,
                 expiryDate: expiryDate.toISOString(),
                 timestamp: Date.now()
             });
-            
-            addActivityLog('Activate Global Discount', `${percentage}% discount activated`);
+        
+            addActivityLog('Activate Global Discount', `${percentage}% discount activated for price ${specificPrice}`);
             hideLoading();
-            showToast(`✅ Diskon ${percentage}% berhasil diaktifkan!`);
+            showToast(`✅ Diskon ${percentage}% berhasil diaktifkan untuk harga Rp ${formatRupiah(specificPrice)}!`);
             loadGlobalDiscountStatus();
             loadDiscountHistory();
         } catch (error) {
             hideLoading();
             showToast('Error: ' + error.message);
         }
+    }
+
+    // MODIFIKASI FUNGSI loadGlobalDiscountStatus
+    function loadGlobalDiscountStatus() {
+        db.ref('global_discount').on('value', (snap) => {
+            const data = snap.val();
+            const statusDiv = document.getElementById('currentDiscountStatus');
+        
+            if (data && data.active === true && new Date(data.expiryDate) > new Date()) {
+                statusDiv.style.display = 'block';
+                const expiry = new Date(data.expiryDate);
+                document.getElementById('currentDiscountDetails').innerHTML = `
+                    <div><strong>Persentase:</strong> <span style="color:#ffaa00;">${data.percentage}%</span></div>
+                    <div><strong>Harga Spesifik:</strong> <span style="color:#00ff88;">Rp ${formatRupiah(data.specificPrice || 0)}</span></div>
+                    <div><strong>Minimal Pembelian:</strong> ${data.minPurchase > 0 ? 'Rp ' + formatRupiah(data.minPurchase) : 'Tidak ada'}</div>
+                    <div><strong>Berlaku hingga:</strong> ${expiry.toLocaleDateString('id-ID')}</div>
+                    <div><strong>Dibuat:</strong> ${data.startedAt ? new Date(data.startedAt).toLocaleString() : '-'}</div>
+                `;
+            } else {
+                statusDiv.style.display = 'none';
+            }
+        });
     }
     
     async function deactivateGlobalDiscount() {
@@ -16936,408 +16954,340 @@ function startChartRealtime() {
 }
     
     // ============================================================
-    // MANAJEMEN IKLAN - ADMIN
-    // ============================================================
-    
-    let allAds = [];
-    let adFilter = 'all';
-    let editingAdId = null;
-    
-    // LOAD IKLAN
-    function loadAds() {
-        if (typeof db === 'undefined' || !db) {
-            showToast('❌ Database tidak terhubung!');
+// POPUP IKLAN - USER (LENGKAP)
+// ============================================================
+let adData = [];
+let currentAdIndex = 0;
+let adPopupTimer = null;
+let adCountdownInterval = null;
+let adIsClicked = false;
+let adPopupActive = false;
+let adHistory = JSON.parse(localStorage.getItem('ad_history') || '[]');
+let lastAdShowTime = 0;
+
+// LOAD IKLAN DARI FIREBASE
+function loadAdsForUser() {
+    if (typeof database === 'undefined' || !database) {
+        console.log('❌ Database tidak terhubung!');
+        return;
+    }
+
+    database.ref('ads').orderByChild('status').equalTo('active').once('value', function(snap) {
+        const data = snap.val() || {};
+        adData = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        
+        adData = adData.filter(ad => ad.status === 'active');
+        
+        if (adData.length === 0) {
+            console.log('📢 Tidak ada iklan aktif');
             return;
         }
         
-        showLoading();
-        db.ref('ads').once('value', function(snap) {
-            const data = snap.val() || {};
-            allAds = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-            
-            // Urutkan berdasarkan waktu dibuat (terbaru di atas)
-            allAds.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-            
-            renderAds();
-            updateAdStats();
-            hideLoading();
-        }).catch(function(error) {
-            hideLoading();
-            showToast('Error loading ads: ' + error.message);
-        });
+        console.log('📢 Iklan dimuat:', adData.length, 'iklan');
+        checkAndShowAd();
+        
+    }).catch(function(error) {
+        console.log('❌ Gagal load iklan:', error);
+    });
+}
+
+// CEK DAN TAMPILKAN IKLAN
+function checkAndShowAd() {
+    if (adData.length === 0) return;
+    if (adPopupActive) return;
+    
+    const now = Date.now();
+    const cooldown = 5 * 60 * 1000; // 5 menit
+    
+    if (now - lastAdShowTime < cooldown) {
+        const remaining = Math.ceil((cooldown - (now - lastAdShowTime)) / 60000);
+        console.log(`⏳ Tunggu ${remaining} menit untuk iklan berikutnya`);
+        return;
     }
     
-    // RENDER IKLAN
-    function renderAds() {
-        const container = document.getElementById('adsList');
-        if (!container) return;
-        
-        let filtered = [...allAds];
-        
-        // Filter status
-        if (adFilter !== 'all') {
-            filtered = filtered.filter(ad => ad.status === adFilter);
-        }
-        
-        // Search
-        const search = document.getElementById('adSearch')?.value.toLowerCase() || '';
-        if (search) {
-            filtered = filtered.filter(ad => 
-                (ad.title && ad.title.toLowerCase().includes(search)) ||
-                (ad.description && ad.description.toLowerCase().includes(search)) ||
-                (ad.link && ad.link.toLowerCase().includes(search))
-            );
-        }
-        
-        if (filtered.length === 0) {
-            container.innerHTML = `
-                <div style="text-align:center; padding:40px; color:#888;">
-                    <i class="fas fa-ad" style="font-size:40px; display:block; margin-bottom:15px; opacity:0.3;"></i>
-                    <p>Belum ada iklan</p>
-                    <p style="font-size:12px; margin-top:5px;">Tambahkan iklan pertama Anda</p>
+    let availableAds = adData.filter(ad => {
+        return !adHistory.includes(ad.id);
+    });
+    
+    if (availableAds.length === 0) {
+        adHistory = [];
+        availableAds = adData;
+    }
+    
+    const randomIndex = Math.floor(Math.random() * availableAds.length);
+    const selectedAd = availableAds[randomIndex];
+    
+    showAdPopup(selectedAd);
+}
+
+// ============================================================
+// IKLAN ADMIN - PERBAIKAN UNTUK SCRIPT & BANNER
+// ============================================================
+
+// MODIFIKASI FUNGSI showAdPopup di USER
+function showAdPopup(ad) {
+    adPopupActive = true;
+    adIsClicked = false;
+    lastAdShowTime = Date.now();
+    
+    const overlay = document.getElementById('adPopup');
+    const title = document.getElementById('adPopupTitle');
+    const timer = document.getElementById('adPopupTimer');
+    const content = document.getElementById('adContent');
+    const closeBtn = document.getElementById('adCloseBtn');
+    const infoText = document.getElementById('adInfoText');
+    
+    title.textContent = `📢 ${ad.title || 'Iklan'}`;
+    
+    let html = '';
+    const link = ad.link || '';
+    
+    // DETEKSI JENIS IKLAN
+    const isScript = link.includes('<script') || link.includes('invoke.js');
+    const isIframe = link.includes('iframe') || link.includes('highrevenueformat');
+    const isUrl = link.startsWith('http://') || link.startsWith('https://');
+    
+    if (isScript || isIframe) {
+        // IKLAN SCRIPT / BANNER
+        html = `
+            <div class="ad-script-container" style="min-height:150px; display:flex; justify-content:center; align-items:center; flex-direction:column; width:100%;">
+                <div id="adScriptContainer" style="width:100%; display:flex; justify-content:center; align-items:center; flex-direction:column;">
+                    ${link}
                 </div>
-            `;
-            return;
-        }
-        
-        let html = '';
-        filtered.forEach((ad, index) => {
-            const isActive = ad.status === 'active';
-            const date = ad.createdAt ? new Date(ad.createdAt).toLocaleString('id-ID') : '-';
-            const views = ad.views || 0;
-            const clicks = ad.clicks || 0;
-            
-            html += `
-                <div class="update-item" style="border-left: 5px solid ${isActive ? '#00ff88' : '#ff4444'};">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
-                        <div style="flex:1;">
-                            <div class="update-title" style="color:${isActive ? 'var(--neon-cyan)' : '#888'};">
-                                ${escapeHtml(ad.title || 'Iklan Tanpa Judul')}
-                                <span style="font-size:11px; padding:2px 12px; border-radius:15px; background:${isActive ? 'rgba(0,255,136,0.2)' : 'rgba(158,158,158,0.2)'}; color:${isActive ? '#00ff88' : '#9e9e9e'}; border:1px solid ${isActive ? '#00ff88' : '#9e9e9e'}; margin-left:10px;">
-                                    ${isActive ? '✅ Aktif' : '⛔ Nonaktif'}
-                                </span>
-                            </div>
-                            <div class="update-desc" style="font-size:12px; color:#aaa; word-break:break-all;">
-                                <strong>Link:</strong> ${ad.link ? escapeHtml(ad.link.substring(0, 60)) + (ad.link.length > 60 ? '...' : '') : '-'}
-                            </div>
-                            ${ad.description ? `<div class="update-desc" style="font-size:13px;">${escapeHtml(ad.description)}</div>` : ''}
-                            <div class="update-meta">
-                                <span><i class="fas fa-eye"></i> ${views} views</span>
-                                <span><i class="fas fa-mouse-pointer"></i> ${clicks} clicks</span>
-                                <span><i class="fas fa-clock"></i> ${ad.duration || 10}s</span>
-                                <span><i class="fas fa-calendar"></i> ${date}</span>
-                                <span><i class="fas fa-hashtag"></i> #${index + 1}</span>
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="btn btn-info btn-sm" onclick="viewAdDetail('${ad.id}')" title="Lihat Detail" style="padding:6px 12px; background:linear-gradient(135deg,#2196f3,#1976d2); color:white; border:none; border-radius:15px; cursor:pointer;">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-warning btn-sm" onclick="openEditAd('${ad.id}')" style="padding:6px 12px; background:linear-gradient(135deg,#ffaa00,#ff8800); color:#000; border:none; border-radius:15px; cursor:pointer;">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            ${isActive ? 
-                                `<button class="btn btn-danger btn-sm" onclick="toggleAdStatus('${ad.id}', 'inactive')" style="padding:6px 12px; background:linear-gradient(135deg,#ff9800,#f57c00); color:white; border:none; border-radius:15px; cursor:pointer;">
-                                    <i class="fas fa-pause"></i>
-                                </button>` :
-                                `<button class="btn btn-success btn-sm" onclick="toggleAdStatus('${ad.id}', 'active')" style="padding:6px 12px; background:linear-gradient(135deg,#00ff88,#00cc66); color:#000; border:none; border-radius:15px; cursor:pointer;">
-                                    <i class="fas fa-play"></i>
-                                </button>`
-                            }
-                            <button class="btn btn-danger btn-sm" onclick="deleteAd('${ad.id}')" style="padding:6px 12px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-    }
-    
-    // UPDATE STATS
-    function updateAdStats() {
-        const total = allAds.length;
-        const active = allAds.filter(a => a.status === 'active').length;
-        const totalViews = allAds.reduce((sum, a) => sum + (a.views || 0), 0);
-        const totalClicks = allAds.reduce((sum, a) => sum + (a.clicks || 0), 0);
-        
-        document.getElementById('adsTotalCount').textContent = `Total: ${total} iklan | Aktif: ${active} | Views: ${totalViews} | Clicks: ${totalClicks}`;
-    }
-    
-    // FILTER IKLAN
-    function filterAds(filter) {
-        if (filter) {
-            adFilter = filter;
-            document.querySelectorAll('#ads .filter-tab').forEach(t => t.classList.remove('active'));
-            if (event?.currentTarget) event.currentTarget.classList.add('active');
-        }
-        renderAds();
-    }
-    
-    // TAMBAH IKLAN
-    async function addAd() {
-        const title = document.getElementById('adTitle').value.trim();
-        const link = document.getElementById('adLink').value.trim();
-        const description = document.getElementById('adDescription').value.trim();
-        const duration = parseInt(document.getElementById('adDuration').value) || 10;
-        const status = document.getElementById('adStatus').value;
-        
-        if (!title) {
-            showToast('❌ Judul iklan harus diisi!');
-            return;
-        }
-        if (!link) {
-            showToast('❌ Link iklan harus diisi!');
-            return;
-        }
-        if (duration < 5 || duration > 60) {
-            showToast('❌ Durasi harus antara 5-60 detik!');
-            return;
-        }
-        
-        showLoading();
-        try {
-            const newAd = {
-                title: title,
-                link: link,
-                description: description,
-                duration: duration,
-                status: status,
-                views: 0,
-                clicks: 0,
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            };
-            
-            await db.ref('ads').push(newAd);
-            addActivityLog('Add Ad', `Menambahkan iklan: ${title}`);
-            
-            hideLoading();
-            showToast('✅ Iklan berhasil ditambahkan!');
-            clearAdForm();
-            loadAds();
-            
-        } catch(error) {
-            hideLoading();
-            showToast('❌ Gagal tambah iklan: ' + error.message);
-        }
-    }
-    
-    // CLEAR FORM
-    function clearAdForm() {
-        document.getElementById('adTitle').value = '';
-        document.getElementById('adLink').value = '';
-        document.getElementById('adDescription').value = '';
-        document.getElementById('adDuration').value = '10';
-        document.getElementById('adStatus').value = 'active';
-        editingAdId = null;
-        document.querySelector('#ads .btn-primary').innerHTML = '<i class="fas fa-save"></i> Tambah Iklan';
-    }
-    
-    // OPEN EDIT
-    function openEditAd(adId) {
-        const ad = allAds.find(a => a.id === adId);
-        if (!ad) {
-            showToast('Iklan tidak ditemukan!');
-            return;
-        }
-        
-        editingAdId = adId;
-        document.getElementById('adTitle').value = ad.title || '';
-        document.getElementById('adLink').value = ad.link || '';
-        document.getElementById('adDescription').value = ad.description || '';
-        document.getElementById('adDuration').value = ad.duration || 10;
-        document.getElementById('adStatus').value = ad.status || 'active';
-        
-        // Ubah tombol menjadi Update
-        const btn = document.querySelector('#ads .btn-primary');
-        btn.innerHTML = '<i class="fas fa-save"></i> Update Iklan';
-        btn.onclick = updateAd;
-        
-        // Scroll ke form
-        document.querySelector('#ads .card').scrollIntoView({ behavior: 'smooth' });
-    }
-    
-    // UPDATE IKLAN
-    async function updateAd() {
-        if (!editingAdId) {
-            showToast('❌ Tidak ada iklan yang diedit!');
-            return;
-        }
-        
-        const title = document.getElementById('adTitle').value.trim();
-        const link = document.getElementById('adLink').value.trim();
-        const description = document.getElementById('adDescription').value.trim();
-        const duration = parseInt(document.getElementById('adDuration').value) || 10;
-        const status = document.getElementById('adStatus').value;
-        
-        if (!title) {
-            showToast('❌ Judul iklan harus diisi!');
-            return;
-        }
-        if (!link) {
-            showToast('❌ Link iklan harus diisi!');
-            return;
-        }
-        if (duration < 5 || duration > 60) {
-            showToast('❌ Durasi harus antara 5-60 detik!');
-            return;
-        }
-        
-        showLoading();
-        try {
-            await db.ref('ads/' + editingAdId).update({
-                title: title,
-                link: link,
-                description: description,
-                duration: duration,
-                status: status,
-                updatedAt: Date.now()
-            });
-            
-            addActivityLog('Edit Ad', `Mengedit iklan: ${title}`);
-            
-            hideLoading();
-            showToast('✅ Iklan berhasil diupdate!');
-            clearAdForm();
-            
-            // Reset tombol
-            const btn = document.querySelector('#ads .btn-primary');
-            btn.innerHTML = '<i class="fas fa-save"></i> Tambah Iklan';
-            btn.onclick = addAd;
-            editingAdId = null;
-            
-            loadAds();
-            
-        } catch(error) {
-            hideLoading();
-            showToast('❌ Gagal update iklan: ' + error.message);
-        }
-    }
-    
-    // TOGGLE STATUS IKLAN
-    async function toggleAdStatus(adId, newStatus) {
-        const ad = allAds.find(a => a.id === adId);
-        if (!ad) return;
-        
-        const action = newStatus === 'active' ? 'mengaktifkan' : 'menonaktifkan';
-        showConfirm('Ubah Status', `Yakin ingin ${action} iklan "${ad.title}"?`, async function() {
-            showLoading();
-            try {
-                await db.ref('ads/' + adId).update({
-                    status: newStatus,
-                    updatedAt: Date.now()
-                });
-                
-                addActivityLog('Toggle Ad', `${action} iklan: ${ad.title}`);
-                hideLoading();
-                showToast(`✅ Iklan ${action}!`);
-                loadAds();
-                
-            } catch(error) {
-                hideLoading();
-                showToast('❌ Gagal ubah status: ' + error.message);
-            }
-        });
-    }
-    
-    // DELETE IKLAN
-    async function deleteAd(adId) {
-        const ad = allAds.find(a => a.id === adId);
-        if (!ad) return;
-        
-        showConfirm('Hapus Iklan', `Yakin ingin menghapus iklan "${ad.title}"?`, async function() {
-            showLoading();
-            try {
-                await db.ref('ads/' + adId).remove();
-                addActivityLog('Delete Ad', `Menghapus iklan: ${ad.title}`);
-                hideLoading();
-                showToast('✅ Iklan dihapus!');
-                loadAds();
-                
-            } catch(error) {
-                hideLoading();
-                showToast('❌ Gagal hapus iklan: ' + error.message);
-            }
-        });
-    }
-    
-    // VIEW AD DETAIL - POPUP
-    function viewAdDetail(adId) {
-        const ad = allAds.find(a => a.id === adId);
-        if (!ad) {
-            showToast('Iklan tidak ditemukan!');
-            return;
-        }
-        
-        const isActive = ad.status === 'active';
-        const date = ad.createdAt ? new Date(ad.createdAt).toLocaleString('id-ID') : '-';
-        const updated = ad.updatedAt ? new Date(ad.updatedAt).toLocaleString('id-ID') : '-';
-        const views = ad.views || 0;
-        const clicks = ad.clicks || 0;
-        
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay active';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 550px;">
-                <div class="modal-header">
-                    <h2 class="modal-title"><i class="fas fa-ad"></i> Detail Iklan</h2>
-                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
-                </div>
-                
-                <div style="padding:10px 0;">
-                    <div style="font-size:20px; font-weight:bold; color:var(--neon-cyan); font-family:'Orbitron',monospace; margin-bottom:5px;">
-                        ${escapeHtml(ad.title)}
-                    </div>
-                    <div style="display:inline-block; padding:4px 15px; border-radius:20px; font-size:12px; font-weight:bold; background:${isActive ? 'rgba(0,255,136,0.2)' : 'rgba(158,158,158,0.2)'}; color:${isActive ? '#00ff88' : '#9e9e9e'}; border:1px solid ${isActive ? '#00ff88' : '#9e9e9e'};">
-                        ${isActive ? '✅ Aktif' : '⛔ Nonaktif'}
-                    </div>
-                </div>
-                
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:15px 0;">
-                    <div style="background:rgba(0,0,0,0.4); border-radius:15px; padding:15px; text-align:center; border:1px solid rgba(0,255,255,0.1);">
-                        <div style="font-size:28px; font-weight:bold; color:#00ff88;">${views}</div>
-                        <div style="font-size:12px; color:#888;">Total Views</div>
-                    </div>
-                    <div style="background:rgba(0,0,0,0.4); border-radius:15px; padding:15px; text-align:center; border:1px solid rgba(0,255,255,0.1);">
-                        <div style="font-size:28px; font-weight:bold; color:#ffd700;">${clicks}</div>
-                        <div style="font-size:12px; color:#888;">Total Clicks</div>
-                    </div>
-                </div>
-                
-                <div style="background:rgba(0,0,0,0.3); border-radius:15px; padding:15px; margin:10px 0;">
-                    <div style="font-size:13px; color:#aaa; word-break:break-all;">
-                        <strong>Link:</strong> <span style="color:#fff; font-family:monospace; font-size:12px;">${escapeHtml(ad.link)}</span>
-                    </div>
-                    ${ad.description ? `<div style="font-size:13px; color:#ccc; margin-top:8px;"><strong>Deskripsi:</strong> ${escapeHtml(ad.description)}</div>` : ''}
-                </div>
-                
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; color:#888;">
-                    <div><strong>Durasi:</strong> <span style="color:#fff;">${ad.duration || 10}s</span></div>
-                    <div><strong>Dibuat:</strong> <span style="color:#fff;">${date}</span></div>
-                    <div style="grid-column:span 2;"><strong>Diupdate:</strong> <span style="color:#fff;">${updated}</span></div>
-                </div>
-                
-                <div class="modal-actions">
-                    <button class="btn btn-warning" onclick="this.closest('.modal-overlay').remove(); openEditAd('${ad.id}')"><i class="fas fa-edit"></i> Edit</button>
-                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i> Tutup</button>
-                </div>
+                <button class="ad-link-btn" onclick="adClicked('${ad.id}')" style="margin-top:15px; padding:10px 30px; background:linear-gradient(135deg, var(--neon-orange), #ff8800); border:none; border-radius:25px; color:#000; font-weight:bold; cursor:pointer; font-size:16px; font-family:'Orbitron',monospace; transition:all 0.3s;">
+                    <i class="fas fa-external-link-alt"></i> Klik untuk melihat iklan
+                </button>
             </div>
         `;
-        document.body.appendChild(modal);
+        content.innerHTML = html;
+        
+        // EKSEKUSI SCRIPT
+        try {
+            const container = document.getElementById('adScriptContainer');
+            // Jika link berisi script, eksekusi
+            if (link.includes('<script')) {
+                const script = document.createElement('script');
+                script.innerHTML = link;
+                container.appendChild(script);
+            } else if (link.includes('invoke.js') || link.includes('highrevenueformat')) {
+                // Jika link adalah URL script, buat script tag
+                const script = document.createElement('script');
+                script.src = link;
+                script.async = true;
+                script.setAttribute('data-cfasync', 'false');
+                container.appendChild(script);
+            } else {
+                // Tampilkan sebagai konten HTML
+                container.innerHTML = link;
+            }
+        } catch(e) {
+            console.log('Script error:', e);
+            // Fallback: tampilkan tombol
+            content.innerHTML = `
+                <div class="ad-placeholder">
+                    <i class="fas fa-exclamation-triangle" style="color:#ffaa00; font-size:30px; display:block; margin-bottom:10px;"></i>
+                    <p>Klik tombol di bawah untuk melihat iklan</p>
+                    <button class="ad-link-btn" onclick="adClicked('${ad.id}')" style="margin-top:15px; padding:15px 40px; background:linear-gradient(135deg, var(--neon-orange), #ff8800); border:none; border-radius:25px; color:#000; font-weight:bold; cursor:pointer; font-size:18px; font-family:'Orbitron',monospace;">
+                        <i class="fas fa-external-link-alt"></i> Lihat Iklan
+                    </button>
+                </div>
+            `;
+        }
+    } else if (isUrl) {
+        // URL BIASA
+        html = `
+            <div style="text-align:center; padding:20px;">
+                <a href="${link}" target="_blank" onclick="adClicked('${ad.id}')" style="display:inline-block; padding:15px 40px; background:linear-gradient(135deg, var(--neon-orange), #ff8800); border:none; border-radius:25px; color:#000; font-weight:bold; cursor:pointer; font-size:18px; font-family:'Orbitron',monospace; text-decoration:none; animation:pulse 1.5s infinite;">
+                    <i class="fas fa-external-link-alt"></i> Klik untuk melihat iklan
+                </a>
+                ${ad.description ? `<div style="margin-top:10px; color:#888; font-size:12px;">${escapeHtml(ad.description)}</div>` : ''}
+            </div>
+        `;
+        content.innerHTML = html;
+    } else {
+        // TEKS BIASA
+        html = `
+            <div class="ad-placeholder" style="text-align:center; padding:20px;">
+                <i class="fas fa-ad" style="font-size:40px; color:#ffaa00; display:block; margin-bottom:10px;"></i>
+                <p style="font-size:16px; color:#fff;">${escapeHtml(ad.title)}</p>
+                ${ad.description ? `<p style="font-size:13px; color:#888;">${escapeHtml(ad.description)}</p>` : ''}
+                <button class="ad-link-btn" onclick="adClicked('${ad.id}')" style="margin-top:15px; padding:15px 40px; background:linear-gradient(135deg, var(--neon-orange), #ff8800); border:none; border-radius:25px; color:#000; font-weight:bold; cursor:pointer; font-size:18px; font-family:'Orbitron',monospace;">
+                    <i class="fas fa-external-link-alt"></i> Lihat Iklan
+                </button>
+            </div>
+        `;
+        content.innerHTML = html;
     }
     
-    // RESET FORM
-    function resetAdForm() {
-        clearAdForm();
-        const btn = document.querySelector('#ads .btn-primary');
-        btn.innerHTML = '<i class="fas fa-save"></i> Tambah Iklan';
-        btn.onclick = addAd;
-        editingAdId = null;
-        showToast('🔄 Form direset');
+    // Timer dan close button
+    const duration = ad.duration || 15;
+    let remaining = duration;
+    timer.textContent = remaining + 's';
+    timer.style.color = '#ffaa00';
+    
+    closeBtn.disabled = true;
+    closeBtn.classList.remove('enabled');
+    infoText.textContent = `⏳ Tunggu ${remaining} detik...`;
+    
+    if (adCountdownInterval) {
+        clearInterval(adCountdownInterval);
     }
+    
+    adCountdownInterval = setInterval(function() {
+        remaining--;
+        timer.textContent = remaining + 's';
+        
+        if (remaining <= 5) {
+            timer.style.color = '#ff4444';
+        }
+        
+        if (remaining <= 0) {
+            clearInterval(adCountdownInterval);
+            adCountdownInterval = null;
+            
+            closeBtn.disabled = false;
+            closeBtn.classList.add('enabled');
+            infoText.textContent = '✅ Klik "Tutup Iklan" untuk melanjutkan';
+            
+            if (adIsClicked) {
+                closeAdPopup();
+            }
+        }
+    }, 1000);
+    
+    closeBtn.onclick = function() {
+        if (!closeBtn.disabled) {
+            closeAdPopup();
+        }
+    };
+    
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    adHistory.push(ad.id);
+    if (adHistory.length > 25) {
+        adHistory.shift();
+    }
+    localStorage.setItem('ad_history', JSON.stringify(adHistory));
+    
+    updateAdStats(ad.id, 'view');
+}
+
+// FUNGSI adClicked - PERBAIKAN
+function adClicked(adId) {
+    adIsClicked = true;
+    
+    const ad = adData.find(a => a.id === adId);
+    if (!ad) return;
+    
+    updateAdStats(adId, 'click');
+    
+    const link = ad.link || '';
+    
+    // BUKA LINK - PASTIKAN BISA DI-CLICK
+    if (link.startsWith('http://') || link.startsWith('https://')) {
+        window.open(link, '_blank');
+        showNeonToast('✅ Iklan dibuka di tab baru!');
+    } else if (link.includes('<script') || link.includes('invoke.js')) {
+        // Untuk script, coba eksekusi ulang
+        try {
+            const container = document.getElementById('adScriptContainer');
+            if (container) {
+                // Coba eksekusi script lagi
+                const script = document.createElement('script');
+                script.innerHTML = link;
+                container.appendChild(script);
+                showNeonToast('✅ Iklan dimuat!');
+            } else {
+                // Fallback: buka sebagai URL
+                const urlMatch = link.match(/https?:\/\/[^\s"']+/);
+                if (urlMatch) {
+                    window.open(urlMatch[0], '_blank');
+                } else {
+                    showNeonToast('✅ Iklan telah dilihat!');
+                }
+            }
+        } catch(e) {
+            showNeonToast('✅ Iklan telah dilihat!');
+        }
+    } else {
+        try {
+            window.open(link, '_blank');
+            showNeonToast('✅ Iklan dibuka di tab baru!');
+        } catch(e) {
+            showNeonToast('✅ Iklan telah dilihat!');
+        }
+    }
+    
+    const closeBtn = document.getElementById('adCloseBtn');
+    if (!closeBtn.disabled) {
+        closeAdPopup();
+    } else {
+        document.getElementById('adInfoText').textContent = '✅ Iklan diklik! Tunggu countdown selesai...';
+    }
+}
+
+// TUTUP POPUP IKLAN
+function closeAdPopup() {
+    if (adCountdownInterval) {
+        clearInterval(adCountdownInterval);
+        adCountdownInterval = null;
+    }
+    
+    const overlay = document.getElementById('adPopup');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    adPopupActive = false;
+    
+    document.getElementById('adContent').innerHTML = '';
+    
+    console.log('📢 Popup iklan ditutup');
+}
+
+// UPDATE STATS IKLAN (Views & Clicks)
+function updateAdStats(adId, type) {
+    if (typeof database === 'undefined' || !database) return;
+    
+    const field = type === 'view' ? 'views' : 'clicks';
+    database.ref('ads/' + adId).once('value', function(snap) {
+        const ad = snap.val();
+        if (!ad) return;
+        const current = ad[field] || 0;
+        database.ref('ads/' + adId).update({
+            [field]: current + 1,
+            lastUpdated: Date.now()
+        }).catch(function(error) {
+            console.log('❌ Gagal update stats:', error);
+        });
+    });
+}
+
+// INISIALISASI IKLAN UNTUK USER
+function initUserAds() {
+    console.log('📢 Inisialisasi iklan user...');
+    
+    setTimeout(function() {
+        loadAdsForUser();
+    }, 3000);
+    
+    setInterval(function() {
+        if (!adPopupActive) {
+            checkAndShowAd();
+        }
+    }, 60000);
+}
+
+// FUNGSI UNTUK MENAMPILKAN IKLAN SEBELUM LOGIN (OPSIONAL)
+function checkAndShowAdBeforeLogin() {
+    console.log('📢 Mencoba menampilkan iklan sebelum login...');
+    if (!adPopupActive && !currentUID) {
+        if (adData.length === 0) {
+            loadAdsForUser();
+        } else {
+            checkAndShowAd();
+        }
+    }
+}
     
     // ============================================================
     // ADMIN CHAT BADGE
