@@ -16953,8 +16953,8 @@ function startChartRealtime() {
     }, 60000);
 }
     
-    // ============================================================
-// POPUP IKLAN - USER (LENGKAP)
+   // ============================================================
+// POPUP IKLAN - USER (LENGKAP - SUDAH DIPERBAIKI UNTUK ADMIN)
 // ============================================================
 let adData = [];
 let currentAdIndex = 0;
@@ -16967,12 +16967,12 @@ let lastAdShowTime = 0;
 
 // LOAD IKLAN DARI FIREBASE
 function loadAdsForUser() {
-    if (typeof database === 'undefined' || !database) {
+    if (typeof db === 'undefined' || !db) {
         console.log('❌ Database tidak terhubung!');
         return;
     }
 
-    database.ref('ads').orderByChild('status').equalTo('active').once('value', function(snap) {
+    db.ref('ads').orderByChild('status').equalTo('active').once('value', function(snap) {
         const data = snap.val() || {};
         adData = Object.keys(data).map(key => ({ id: key, ...data[key] }));
         
@@ -17020,11 +17020,7 @@ function checkAndShowAd() {
     showAdPopup(selectedAd);
 }
 
-// ============================================================
-// IKLAN ADMIN - PERBAIKAN UNTUK SCRIPT & BANNER
-// ============================================================
-
-// MODIFIKASI FUNGSI showAdPopup di USER
+// TAMPILKAN POPUP IKLAN
 function showAdPopup(ad) {
     adPopupActive = true;
     adIsClicked = false;
@@ -17042,13 +17038,11 @@ function showAdPopup(ad) {
     let html = '';
     const link = ad.link || '';
     
-    // DETEKSI JENIS IKLAN
     const isScript = link.includes('<script') || link.includes('invoke.js');
     const isIframe = link.includes('iframe') || link.includes('highrevenueformat');
     const isUrl = link.startsWith('http://') || link.startsWith('https://');
     
     if (isScript || isIframe) {
-        // IKLAN SCRIPT / BANNER
         html = `
             <div class="ad-script-container" style="min-height:150px; display:flex; justify-content:center; align-items:center; flex-direction:column; width:100%;">
                 <div id="adScriptContainer" style="width:100%; display:flex; justify-content:center; align-items:center; flex-direction:column;">
@@ -17061,28 +17055,23 @@ function showAdPopup(ad) {
         `;
         content.innerHTML = html;
         
-        // EKSEKUSI SCRIPT
         try {
             const container = document.getElementById('adScriptContainer');
-            // Jika link berisi script, eksekusi
             if (link.includes('<script')) {
                 const script = document.createElement('script');
                 script.innerHTML = link;
                 container.appendChild(script);
             } else if (link.includes('invoke.js') || link.includes('highrevenueformat')) {
-                // Jika link adalah URL script, buat script tag
                 const script = document.createElement('script');
                 script.src = link;
                 script.async = true;
                 script.setAttribute('data-cfasync', 'false');
                 container.appendChild(script);
             } else {
-                // Tampilkan sebagai konten HTML
                 container.innerHTML = link;
             }
         } catch(e) {
             console.log('Script error:', e);
-            // Fallback: tampilkan tombol
             content.innerHTML = `
                 <div class="ad-placeholder">
                     <i class="fas fa-exclamation-triangle" style="color:#ffaa00; font-size:30px; display:block; margin-bottom:10px;"></i>
@@ -17094,7 +17083,6 @@ function showAdPopup(ad) {
             `;
         }
     } else if (isUrl) {
-        // URL BIASA
         html = `
             <div style="text-align:center; padding:20px;">
                 <a href="${link}" target="_blank" onclick="adClicked('${ad.id}')" style="display:inline-block; padding:15px 40px; background:linear-gradient(135deg, var(--neon-orange), #ff8800); border:none; border-radius:25px; color:#000; font-weight:bold; cursor:pointer; font-size:18px; font-family:'Orbitron',monospace; text-decoration:none; animation:pulse 1.5s infinite;">
@@ -17105,7 +17093,6 @@ function showAdPopup(ad) {
         `;
         content.innerHTML = html;
     } else {
-        // TEKS BIASA
         html = `
             <div class="ad-placeholder" style="text-align:center; padding:20px;">
                 <i class="fas fa-ad" style="font-size:40px; color:#ffaa00; display:block; margin-bottom:10px;"></i>
@@ -17119,7 +17106,6 @@ function showAdPopup(ad) {
         content.innerHTML = html;
     }
     
-    // Timer dan close button
     const duration = ad.duration || 15;
     let remaining = duration;
     timer.textContent = remaining + 's';
@@ -17173,7 +17159,7 @@ function showAdPopup(ad) {
     updateAdStats(ad.id, 'view');
 }
 
-// FUNGSI adClicked - PERBAIKAN
+// FUNGSI KETIKA IKLAN DI-CLICK
 function adClicked(adId) {
     adIsClicked = true;
     
@@ -17184,22 +17170,18 @@ function adClicked(adId) {
     
     const link = ad.link || '';
     
-    // BUKA LINK - PASTIKAN BISA DI-CLICK
     if (link.startsWith('http://') || link.startsWith('https://')) {
         window.open(link, '_blank');
         showNeonToast('✅ Iklan dibuka di tab baru!');
     } else if (link.includes('<script') || link.includes('invoke.js')) {
-        // Untuk script, coba eksekusi ulang
         try {
             const container = document.getElementById('adScriptContainer');
             if (container) {
-                // Coba eksekusi script lagi
                 const script = document.createElement('script');
                 script.innerHTML = link;
                 container.appendChild(script);
                 showNeonToast('✅ Iklan dimuat!');
             } else {
-                // Fallback: buka sebagai URL
                 const urlMatch = link.match(/https?:\/\/[^\s"']+/);
                 if (urlMatch) {
                     window.open(urlMatch[0], '_blank');
@@ -17246,14 +17228,14 @@ function closeAdPopup() {
 
 // UPDATE STATS IKLAN (Views & Clicks)
 function updateAdStats(adId, type) {
-    if (typeof database === 'undefined' || !database) return;
+    if (typeof db === 'undefined' || !db) return;
     
     const field = type === 'view' ? 'views' : 'clicks';
-    database.ref('ads/' + adId).once('value', function(snap) {
+    db.ref('ads/' + adId).once('value', function(snap) {
         const ad = snap.val();
         if (!ad) return;
         const current = ad[field] || 0;
-        database.ref('ads/' + adId).update({
+        db.ref('ads/' + adId).update({
             [field]: current + 1,
             lastUpdated: Date.now()
         }).catch(function(error) {
