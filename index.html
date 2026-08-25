@@ -16953,8 +16953,8 @@ function startChartRealtime() {
     }, 60000);
 }
     
-   // ============================================================
-// POPUP IKLAN - USER (LENGKAP - SUDAH DIPERBAIKI UNTUK ADMIN)
+    // ============================================================
+// POPUP IKLAN - USER (LENGKAP)
 // ============================================================
 let adData = [];
 let currentAdIndex = 0;
@@ -16965,62 +16965,377 @@ let adPopupActive = false;
 let adHistory = JSON.parse(localStorage.getItem('ad_history') || '[]');
 let lastAdShowTime = 0;
 
-// LOAD IKLAN DARI FIREBASE
-function loadAdsForUser() {
+// ============================================================
+// IKLAN TAB - ADMIN (LENGKAP - TIDAK LAG)
+// ============================================================
+
+let allAds = [];
+let adFilter = 'all';
+let editingAdId = null;
+
+// LOAD IKLAN
+function loadAds() {
     if (typeof db === 'undefined' || !db) {
-        console.log('❌ Database tidak terhubung!');
+        showToast('❌ Database tidak terhubung!');
         return;
     }
-
-    db.ref('ads').orderByChild('status').equalTo('active').once('value', function(snap) {
+    
+    showLoading();
+    db.ref('ads').once('value', function(snap) {
         const data = snap.val() || {};
-        adData = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-        
-        adData = adData.filter(ad => ad.status === 'active');
-        
-        if (adData.length === 0) {
-            console.log('📢 Tidak ada iklan aktif');
-            return;
-        }
-        
-        console.log('📢 Iklan dimuat:', adData.length, 'iklan');
-        checkAndShowAd();
-        
+        allAds = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        allAds.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        renderAds();
+        updateAdStats();
+        hideLoading();
     }).catch(function(error) {
-        console.log('❌ Gagal load iklan:', error);
+        hideLoading();
+        showToast('Error loading ads: ' + error.message);
     });
 }
 
-// CEK DAN TAMPILKAN IKLAN
-function checkAndShowAd() {
-    if (adData.length === 0) return;
-    if (adPopupActive) return;
+// RENDER IKLAN
+function renderAds() {
+    const container = document.getElementById('adsList');
+    if (!container) return;
     
-    const now = Date.now();
-    const cooldown = 5 * 60 * 1000; // 5 menit
+    let filtered = [...allAds];
     
-    if (now - lastAdShowTime < cooldown) {
-        const remaining = Math.ceil((cooldown - (now - lastAdShowTime)) / 60000);
-        console.log(`⏳ Tunggu ${remaining} menit untuk iklan berikutnya`);
+    if (adFilter !== 'all') {
+        filtered = filtered.filter(ad => ad.status === adFilter);
+    }
+    
+    const search = document.getElementById('adSearch')?.value.toLowerCase() || '';
+    if (search) {
+        filtered = filtered.filter(ad => 
+            (ad.title && ad.title.toLowerCase().includes(search)) ||
+            (ad.description && ad.description.toLowerCase().includes(search)) ||
+            (ad.link && ad.link.toLowerCase().includes(search))
+        );
+    }
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center; padding:40px; color:#888;">
+                <i class="fas fa-ad" style="font-size:40px; display:block; margin-bottom:15px; opacity:0.3;"></i>
+                <p>Belum ada iklan</p>
+            </div>
+        `;
         return;
     }
     
-    let availableAds = adData.filter(ad => {
-        return !adHistory.includes(ad.id);
+    let html = '';
+    filtered.forEach((ad, index) => {
+        const isActive = ad.status === 'active';
+        const date = ad.createdAt ? new Date(ad.createdAt).toLocaleString('id-ID') : '-';
+        const views = ad.views || 0;
+        const clicks = ad.clicks || 0;
+        
+        html += `
+            <div class="update-item" style="border-left: 5px solid ${isActive ? '#00ff88' : '#ff4444'};">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                    <div style="flex:1;">
+                        <div class="update-title" style="color:${isActive ? 'var(--neon-cyan)' : '#888'};">
+                            ${escapeHtml(ad.title || 'Iklan Tanpa Judul')}
+                            <span style="font-size:11px; padding:2px 12px; border-radius:15px; background:${isActive ? 'rgba(0,255,136,0.2)' : 'rgba(158,158,158,0.2)'}; color:${isActive ? '#00ff88' : '#9e9e9e'}; border:1px solid ${isActive ? '#00ff88' : '#9e9e9e'}; margin-left:10px;">
+                                ${isActive ? '✅ Aktif' : '⛔ Nonaktif'}
+                            </span>
+                        </div>
+                        <div class="update-desc" style="font-size:12px; color:#aaa; word-break:break-all;">
+                            <strong>Link:</strong> ${ad.link ? escapeHtml(ad.link.substring(0, 60)) + (ad.link.length > 60 ? '...' : '') : '-'}
+                        </div>
+                        ${ad.description ? `<div class="update-desc" style="font-size:13px;">${escapeHtml(ad.description)}</div>` : ''}
+                        <div class="update-meta">
+                            <span><i class="fas fa-eye"></i> ${views} views</span>
+                            <span><i class="fas fa-mouse-pointer"></i> ${clicks} clicks</span>
+                            <span><i class="fas fa-clock"></i> ${ad.duration || 10}s</span>
+                            <span><i class="fas fa-calendar"></i> ${date}</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-info btn-sm" onclick="viewAdDetail('${ad.id}')" style="padding:6px 12px; background:linear-gradient(135deg,#2196f3,#1976d2); color:white; border:none; border-radius:15px; cursor:pointer;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="openEditAd('${ad.id}')" style="padding:6px 12px; background:linear-gradient(135deg,#ffaa00,#ff8800); color:#000; border:none; border-radius:15px; cursor:pointer;">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${isActive ? 
+                            `<button class="btn btn-danger btn-sm" onclick="toggleAdStatus('${ad.id}', 'inactive')" style="padding:6px 12px; background:linear-gradient(135deg,#ff9800,#f57c00); color:white; border:none; border-radius:15px; cursor:pointer;">
+                                <i class="fas fa-pause"></i>
+                            </button>` :
+                            `<button class="btn btn-success btn-sm" onclick="toggleAdStatus('${ad.id}', 'active')" style="padding:6px 12px; background:linear-gradient(135deg,#00ff88,#00cc66); color:#000; border:none; border-radius:15px; cursor:pointer;">
+                                <i class="fas fa-play"></i>
+                            </button>`
+                        }
+                        <button class="btn btn-danger btn-sm" onclick="deleteAd('${ad.id}')" style="padding:6px 12px; background:linear-gradient(135deg,#ff4444,#cc0000); color:white; border:none; border-radius:15px; cursor:pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
     });
     
-    if (availableAds.length === 0) {
-        adHistory = [];
-        availableAds = adData;
-    }
-    
-    const randomIndex = Math.floor(Math.random() * availableAds.length);
-    const selectedAd = availableAds[randomIndex];
-    
-    showAdPopup(selectedAd);
+    container.innerHTML = html;
 }
 
-// TAMPILKAN POPUP IKLAN
+// UPDATE STATS
+function updateAdStats() {
+    const total = allAds.length;
+    const active = allAds.filter(a => a.status === 'active').length;
+    const totalViews = allAds.reduce((sum, a) => sum + (a.views || 0), 0);
+    const totalClicks = allAds.reduce((sum, a) => sum + (a.clicks || 0), 0);
+    document.getElementById('adsTotalCount').textContent = `Total: ${total} iklan | Aktif: ${active} | Views: ${totalViews} | Clicks: ${totalClicks}`;
+}
+
+// FILTER IKLAN
+function filterAds(filter) {
+    if (filter) {
+        adFilter = filter;
+        document.querySelectorAll('#ads .filter-tab').forEach(t => t.classList.remove('active'));
+        if (event?.currentTarget) event.currentTarget.classList.add('active');
+    }
+    renderAds();
+}
+
+// TAMBAH IKLAN
+async function addAd() {
+    const title = document.getElementById('adTitle').value.trim();
+    const link = document.getElementById('adLink').value.trim();
+    const description = document.getElementById('adDescription').value.trim();
+    const duration = parseInt(document.getElementById('adDuration').value) || 10;
+    const status = document.getElementById('adStatus').value;
+    
+    if (!title) {
+        showToast('❌ Judul iklan harus diisi!');
+        return;
+    }
+    if (!link) {
+        showToast('❌ Link iklan harus diisi!');
+        return;
+    }
+    if (duration < 5 || duration > 60) {
+        showToast('❌ Durasi harus antara 5-60 detik!');
+        return;
+    }
+    
+    showLoading();
+    try {
+        const newAd = {
+            title: title,
+            link: link,
+            description: description,
+            duration: duration,
+            status: status,
+            views: 0,
+            clicks: 0,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        };
+        
+        await db.ref('ads').push(newAd);
+        addActivityLog('Add Ad', `Menambahkan iklan: ${title}`);
+        hideLoading();
+        showToast('✅ Iklan berhasil ditambahkan!');
+        clearAdForm();
+        loadAds();
+    } catch(error) {
+        hideLoading();
+        showToast('❌ Gagal tambah iklan: ' + error.message);
+    }
+}
+
+// CLEAR FORM
+function clearAdForm() {
+    document.getElementById('adTitle').value = '';
+    document.getElementById('adLink').value = '';
+    document.getElementById('adDescription').value = '';
+    document.getElementById('adDuration').value = '10';
+    document.getElementById('adStatus').value = 'active';
+    editingAdId = null;
+    document.querySelector('#ads .btn-primary').innerHTML = '<i class="fas fa-save"></i> Tambah Iklan';
+    document.querySelector('#ads .btn-primary').onclick = addAd;
+}
+
+// OPEN EDIT
+function openEditAd(adId) {
+    const ad = allAds.find(a => a.id === adId);
+    if (!ad) {
+        showToast('Iklan tidak ditemukan!');
+        return;
+    }
+    
+    editingAdId = adId;
+    document.getElementById('adTitle').value = ad.title || '';
+    document.getElementById('adLink').value = ad.link || '';
+    document.getElementById('adDescription').value = ad.description || '';
+    document.getElementById('adDuration').value = ad.duration || 10;
+    document.getElementById('adStatus').value = ad.status || 'active';
+    
+    const btn = document.querySelector('#ads .btn-primary');
+    btn.innerHTML = '<i class="fas fa-save"></i> Update Iklan';
+    btn.onclick = updateAd;
+    
+    document.querySelector('#ads .card').scrollIntoView({ behavior: 'smooth' });
+}
+
+// UPDATE IKLAN
+async function updateAd() {
+    if (!editingAdId) {
+        showToast('❌ Tidak ada iklan yang diedit!');
+        return;
+    }
+    
+    const title = document.getElementById('adTitle').value.trim();
+    const link = document.getElementById('adLink').value.trim();
+    const description = document.getElementById('adDescription').value.trim();
+    const duration = parseInt(document.getElementById('adDuration').value) || 10;
+    const status = document.getElementById('adStatus').value;
+    
+    if (!title) {
+        showToast('❌ Judul iklan harus diisi!');
+        return;
+    }
+    if (!link) {
+        showToast('❌ Link iklan harus diisi!');
+        return;
+    }
+    if (duration < 5 || duration > 60) {
+        showToast('❌ Durasi harus antara 5-60 detik!');
+        return;
+    }
+    
+    showLoading();
+    try {
+        await db.ref('ads/' + editingAdId).update({
+            title: title,
+            link: link,
+            description: description,
+            duration: duration,
+            status: status,
+            updatedAt: Date.now()
+        });
+        
+        addActivityLog('Edit Ad', `Mengedit iklan: ${title}`);
+        hideLoading();
+        showToast('✅ Iklan berhasil diupdate!');
+        clearAdForm();
+        loadAds();
+    } catch(error) {
+        hideLoading();
+        showToast('❌ Gagal update iklan: ' + error.message);
+    }
+}
+
+// TOGGLE STATUS IKLAN
+async function toggleAdStatus(adId, newStatus) {
+    const ad = allAds.find(a => a.id === adId);
+    if (!ad) return;
+    
+    const action = newStatus === 'active' ? 'mengaktifkan' : 'menonaktifkan';
+    showConfirm('Ubah Status', `Yakin ingin ${action} iklan "${ad.title}"?`, async function() {
+        showLoading();
+        try {
+            await db.ref('ads/' + adId).update({
+                status: newStatus,
+                updatedAt: Date.now()
+            });
+            addActivityLog('Toggle Ad', `${action} iklan: ${ad.title}`);
+            hideLoading();
+            showToast(`✅ Iklan ${action}!`);
+            loadAds();
+        } catch(error) {
+            hideLoading();
+            showToast('❌ Gagal ubah status: ' + error.message);
+        }
+    });
+}
+
+// DELETE IKLAN
+async function deleteAd(adId) {
+    const ad = allAds.find(a => a.id === adId);
+    if (!ad) return;
+    
+    showConfirm('Hapus Iklan', `Yakin ingin menghapus iklan "${ad.title}"?`, async function() {
+        showLoading();
+        try {
+            await db.ref('ads/' + adId).remove();
+            addActivityLog('Delete Ad', `Menghapus iklan: ${ad.title}`);
+            hideLoading();
+            showToast('✅ Iklan dihapus!');
+            loadAds();
+        } catch(error) {
+            hideLoading();
+            showToast('❌ Gagal hapus iklan: ' + error.message);
+        }
+    });
+}
+
+// VIEW AD DETAIL
+function viewAdDetail(adId) {
+    const ad = allAds.find(a => a.id === adId);
+    if (!ad) {
+        showToast('Iklan tidak ditemukan!');
+        return;
+    }
+    
+    const isActive = ad.status === 'active';
+    const date = ad.createdAt ? new Date(ad.createdAt).toLocaleString('id-ID') : '-';
+    const updated = ad.updatedAt ? new Date(ad.updatedAt).toLocaleString('id-ID') : '-';
+    const views = ad.views || 0;
+    const clicks = ad.clicks || 0;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-ad"></i> Detail Iklan</h2>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+            </div>
+            <div style="padding:10px 0;">
+                <div style="font-size:20px; font-weight:bold; color:var(--neon-cyan); font-family:'Orbitron',monospace; margin-bottom:5px;">
+                    ${escapeHtml(ad.title)}
+                </div>
+                <div style="display:inline-block; padding:4px 15px; border-radius:20px; font-size:12px; font-weight:bold; background:${isActive ? 'rgba(0,255,136,0.2)' : 'rgba(158,158,158,0.2)'}; color:${isActive ? '#00ff88' : '#9e9e9e'}; border:1px solid ${isActive ? '#00ff88' : '#9e9e9e'};">
+                    ${isActive ? '✅ Aktif' : '⛔ Nonaktif'}
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:15px 0;">
+                <div style="background:rgba(0,0,0,0.4); border-radius:15px; padding:15px; text-align:center; border:1px solid rgba(0,255,255,0.1);">
+                    <div style="font-size:28px; font-weight:bold; color:#00ff88;">${views}</div>
+                    <div style="font-size:12px; color:#888;">Total Views</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.4); border-radius:15px; padding:15px; text-align:center; border:1px solid rgba(0,255,255,0.1);">
+                    <div style="font-size:28px; font-weight:bold; color:#ffd700;">${clicks}</div>
+                    <div style="font-size:12px; color:#888;">Total Clicks</div>
+                </div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3); border-radius:15px; padding:15px; margin:10px 0;">
+                <div style="font-size:13px; color:#aaa; word-break:break-all;">
+                    <strong>Link:</strong> <span style="color:#fff; font-family:monospace; font-size:12px;">${escapeHtml(ad.link)}</span>
+                </div>
+                ${ad.description ? `<div style="font-size:13px; color:#ccc; margin-top:8px;"><strong>Deskripsi:</strong> ${escapeHtml(ad.description)}</div>` : ''}
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; color:#888;">
+                <div><strong>Durasi:</strong> <span style="color:#fff;">${ad.duration || 10}s</span></div>
+                <div><strong>Dibuat:</strong> <span style="color:#fff;">${date}</span></div>
+                <div style="grid-column:span 2;"><strong>Diupdate:</strong> <span style="color:#fff;">${updated}</span></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-warning" onclick="this.closest('.modal-overlay').remove(); openEditAd('${ad.id}')"><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i> Tutup</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// ============================================================
+// IKLAN ADMIN - PERBAIKAN UNTUK SCRIPT & BANNER
+// ============================================================
+
+// MODIFIKASI FUNGSI showAdPopup di USER
 function showAdPopup(ad) {
     adPopupActive = true;
     adIsClicked = false;
@@ -17038,11 +17353,13 @@ function showAdPopup(ad) {
     let html = '';
     const link = ad.link || '';
     
+    // DETEKSI JENIS IKLAN
     const isScript = link.includes('<script') || link.includes('invoke.js');
     const isIframe = link.includes('iframe') || link.includes('highrevenueformat');
     const isUrl = link.startsWith('http://') || link.startsWith('https://');
     
     if (isScript || isIframe) {
+        // IKLAN SCRIPT / BANNER
         html = `
             <div class="ad-script-container" style="min-height:150px; display:flex; justify-content:center; align-items:center; flex-direction:column; width:100%;">
                 <div id="adScriptContainer" style="width:100%; display:flex; justify-content:center; align-items:center; flex-direction:column;">
@@ -17055,23 +17372,28 @@ function showAdPopup(ad) {
         `;
         content.innerHTML = html;
         
+        // EKSEKUSI SCRIPT
         try {
             const container = document.getElementById('adScriptContainer');
+            // Jika link berisi script, eksekusi
             if (link.includes('<script')) {
                 const script = document.createElement('script');
                 script.innerHTML = link;
                 container.appendChild(script);
             } else if (link.includes('invoke.js') || link.includes('highrevenueformat')) {
+                // Jika link adalah URL script, buat script tag
                 const script = document.createElement('script');
                 script.src = link;
                 script.async = true;
                 script.setAttribute('data-cfasync', 'false');
                 container.appendChild(script);
             } else {
+                // Tampilkan sebagai konten HTML
                 container.innerHTML = link;
             }
         } catch(e) {
             console.log('Script error:', e);
+            // Fallback: tampilkan tombol
             content.innerHTML = `
                 <div class="ad-placeholder">
                     <i class="fas fa-exclamation-triangle" style="color:#ffaa00; font-size:30px; display:block; margin-bottom:10px;"></i>
@@ -17083,6 +17405,7 @@ function showAdPopup(ad) {
             `;
         }
     } else if (isUrl) {
+        // URL BIASA
         html = `
             <div style="text-align:center; padding:20px;">
                 <a href="${link}" target="_blank" onclick="adClicked('${ad.id}')" style="display:inline-block; padding:15px 40px; background:linear-gradient(135deg, var(--neon-orange), #ff8800); border:none; border-radius:25px; color:#000; font-weight:bold; cursor:pointer; font-size:18px; font-family:'Orbitron',monospace; text-decoration:none; animation:pulse 1.5s infinite;">
@@ -17093,6 +17416,7 @@ function showAdPopup(ad) {
         `;
         content.innerHTML = html;
     } else {
+        // TEKS BIASA
         html = `
             <div class="ad-placeholder" style="text-align:center; padding:20px;">
                 <i class="fas fa-ad" style="font-size:40px; color:#ffaa00; display:block; margin-bottom:10px;"></i>
@@ -17106,6 +17430,7 @@ function showAdPopup(ad) {
         content.innerHTML = html;
     }
     
+    // Timer dan close button
     const duration = ad.duration || 15;
     let remaining = duration;
     timer.textContent = remaining + 's';
@@ -17159,7 +17484,7 @@ function showAdPopup(ad) {
     updateAdStats(ad.id, 'view');
 }
 
-// FUNGSI KETIKA IKLAN DI-CLICK
+// FUNGSI adClicked - PERBAIKAN
 function adClicked(adId) {
     adIsClicked = true;
     
@@ -17170,18 +17495,22 @@ function adClicked(adId) {
     
     const link = ad.link || '';
     
+    // BUKA LINK - PASTIKAN BISA DI-CLICK
     if (link.startsWith('http://') || link.startsWith('https://')) {
         window.open(link, '_blank');
         showNeonToast('✅ Iklan dibuka di tab baru!');
     } else if (link.includes('<script') || link.includes('invoke.js')) {
+        // Untuk script, coba eksekusi ulang
         try {
             const container = document.getElementById('adScriptContainer');
             if (container) {
+                // Coba eksekusi script lagi
                 const script = document.createElement('script');
                 script.innerHTML = link;
                 container.appendChild(script);
                 showNeonToast('✅ Iklan dimuat!');
             } else {
+                // Fallback: buka sebagai URL
                 const urlMatch = link.match(/https?:\/\/[^\s"']+/);
                 if (urlMatch) {
                     window.open(urlMatch[0], '_blank');
@@ -17228,14 +17557,14 @@ function closeAdPopup() {
 
 // UPDATE STATS IKLAN (Views & Clicks)
 function updateAdStats(adId, type) {
-    if (typeof db === 'undefined' || !db) return;
+    if (typeof database === 'undefined' || !database) return;
     
     const field = type === 'view' ? 'views' : 'clicks';
-    db.ref('ads/' + adId).once('value', function(snap) {
+    database.ref('ads/' + adId).once('value', function(snap) {
         const ad = snap.val();
         if (!ad) return;
         const current = ad[field] || 0;
-        db.ref('ads/' + adId).update({
+        database.ref('ads/' + adId).update({
             [field]: current + 1,
             lastUpdated: Date.now()
         }).catch(function(error) {
