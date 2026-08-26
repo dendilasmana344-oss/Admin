@@ -4526,8 +4526,573 @@ body {
         }
         
         /* ============================================================
-       PRIVATE CHAT ADMIN - DESAIN MODERN
-       ============================================================ */
+        IKLAN ADMIN - STYLE DIPERBAIKI
+        ============================================================ */
+
+        /* Container utama */
+        #ads .ad-manager-container {
+            display: block;
+            width: 100%;
+        }
+        
+        /* Form Tambah Iklan */
+        #ads .ad-form-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.15);
+        }
+        
+        #ads .ad-form-title {
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #ads .ad-form-title i {
+            font-size: 18px;
+        }
+        
+        /* Form group */
+        #ads .ad-form-group {
+            margin-bottom: 18px;
+        }
+        
+        #ads .ad-form-group label {
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #ads .ad-form-group input,
+        #ads .ad-form-group textarea,
+        #ads .ad-form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(0, 255, 255, 0.15);
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        #ads .ad-form-group input:focus,
+        #ads .ad-form-group textarea:focus,
+        #ads .ad-form-group select:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+        }
+        
+        #ads .ad-form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        
+        #ads .ad-form-group select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300ffff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+        }
+        
+        #ads .ad-form-group select option {
+            background: #0a0a0a;
+            color: white;
+        }
+        
+        #ads .ad-form-group .helper-text {
+            display: block;
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        /* Tombol Aksi Form */
+        #ads .ad-form-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+        
+        #ads .ad-form-actions .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        #ads .ad-form-actions .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            color: #000;
+        }
+        
+        #ads .ad-form-actions .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
+        }
+        
+        #ads .ad-form-actions .btn-secondary {
+            background: #333;
+            color: white;
+            border: 2px solid #666;
+        }
+        
+        #ads .ad-form-actions .btn-secondary:hover {
+            background: #444;
+            transform: translateY(-3px);
+        }
+        
+        /* List Iklan */
+        #ads .ads-list-container {
+            margin-top: 20px;
+        }
+        
+        #ads .ads-stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        #ads .ads-stats-bar .stats-text {
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+        }
+        
+        #ads .ads-stats-bar .stats-text span {
+            color: #fff;
+        }
+        
+        /* Item Iklan */
+        #ads .ad-item {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+            border-left: 5px solid;
+        }
+        
+        #ads .ad-item:hover {
+            border-color: var(--neon-cyan);
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.1);
+        }
+        
+        #ads .ad-item.active {
+            border-left-color: #00ff88;
+        }
+        
+        #ads .ad-item.inactive {
+            border-left-color: #ff4444;
+            opacity: 0.7;
+        }
+        
+        #ads .ad-item .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        #ads .ad-item .ad-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            margin-bottom: 5px;
+        }
+        
+        #ads .ad-item .ad-title.inactive-title {
+            color: #888;
+        }
+        
+        #ads .ad-item .ad-status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        #ads .ad-item .ad-status-badge.active {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+        
+        #ads .ad-item .ad-status-badge.inactive {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+            border: 1px solid #9e9e9e;
+        }
+        
+        #ads .ad-item .ad-link-text {
+            font-size: 12px;
+            color: #aaa;
+            word-break: break-all;
+        }
+        
+        #ads .ad-item .ad-link-text strong {
+            color: #888;
+        }
+        
+        #ads .ad-item .ad-description {
+            font-size: 13px;
+            color: #ccc;
+            margin: 5px 0;
+        }
+        
+        #ads .ad-item .ad-meta {
+            display: flex;
+            gap: 18px;
+            font-size: 11px;
+            color: #888;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        
+        #ads .ad-item .ad-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        #ads .ad-item .ad-meta .views-count {
+            color: #00ff88;
+        }
+        
+        #ads .ad-item .ad-meta .clicks-count {
+            color: #ffd700;
+        }
+        
+        #ads .ad-item .ad-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        #ads .ad-item .ad-actions .btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+            font-family: 'Orbitron', monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        #ads .ad-item .ad-actions .btn-view {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+        }
+        
+        #ads .ad-item .ad-actions .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        #ads .ad-item .ad-actions .btn-edit {
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            color: #000;
+        }
+        
+        #ads .ad-item .ad-actions .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.4);
+        }
+        
+        #ads .ad-item .ad-actions .btn-toggle {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        #ads .ad-item .ad-actions .btn-toggle.active-toggle {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+        
+        #ads .ad-item .ad-actions .btn-toggle.active-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+        
+        #ads .ad-item .ad-actions .btn-toggle.inactive-toggle {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #000;
+        }
+        
+        #ads .ad-item .ad-actions .btn-toggle.inactive-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+        
+        #ads .ad-item .ad-actions .btn-delete {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+        }
+        
+        #ads .ad-item .ad-actions .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+        }
+        
+        /* Empty state */
+        #ads .ad-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+        
+        #ads .ad-empty i {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+        
+        #ads .ad-empty p {
+            font-size: 14px;
+        }
+        
+        #ads .ad-empty .sub-text {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #666;
+        }
+        
+        /* Modal Detail Iklan */
+        .ad-detail-modal .modal-content {
+            max-width: 550px;
+        }
+        
+        .ad-detail-modal .ad-detail-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', monospace;
+            margin-bottom: 5px;
+        }
+        
+        .ad-detail-modal .ad-detail-status {
+            display: inline-block;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .ad-detail-modal .ad-detail-status.active {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+        
+        .ad-detail-modal .ad-detail-status.inactive {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+            border: 1px solid #9e9e9e;
+        }
+        
+        .ad-detail-modal .ad-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        
+        .ad-detail-modal .ad-stats-grid .stat-box {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        
+        .ad-detail-modal .ad-stats-grid .stat-box .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .ad-detail-modal .ad-stats-grid .stat-box .stat-number.views {
+            color: #00ff88;
+        }
+        
+        .ad-detail-modal .ad-stats-grid .stat-box .stat-number.clicks {
+            color: #ffd700;
+        }
+        
+        .ad-detail-modal .ad-stats-grid .stat-box .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .ad-detail-modal .ad-link-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        
+        .ad-detail-modal .ad-link-box .link-label {
+            font-size: 13px;
+            color: #aaa;
+        }
+        
+        .ad-detail-modal .ad-link-box .link-value {
+            color: #fff;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .ad-detail-modal .ad-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 13px;
+            color: #888;
+            margin-top: 10px;
+        }
+        
+        .ad-detail-modal .ad-info-grid .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ad-detail-modal .ad-info-grid .info-item .info-label {
+            color: #888;
+        }
+        
+        .ad-detail-modal .ad-info-grid .info-item .info-value {
+            color: #fff;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            #ads .ad-item .ad-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            #ads .ad-item .ad-actions {
+                justify-content: center;
+                margin-top: 10px;
+            }
+            
+            #ads .ad-form-actions {
+                flex-direction: column;
+            }
+            
+            #ads .ad-form-actions .btn {
+                justify-content: center;
+            }
+            
+            .ad-detail-modal .ad-stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .ad-detail-modal .ad-info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            #ads .ads-stats-bar {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #ads .ad-item .ad-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            #ads .ad-item .ad-actions {
+                flex-wrap: wrap;
+            }
+            
+            #ads .ad-item .ad-actions .btn {
+                flex: 1;
+                justify-content: center;
+                min-width: 60px;
+            }
+            
+            .ad-detail-modal .ad-stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Scroll untuk list */
+        #ads .ads-scroll-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        #ads .ads-scroll-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        #ads .ads-scroll-list::-webkit-scrollbar-track {
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        #ads .ads-scroll-list::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 10px;
+        }
+        
+        /* ============================================================
+        PRIVATE CHAT ADMIN - DESAIN MODERN
+        ============================================================ */
 
         /* Container chat */
         .private-chat-wrapper {
@@ -11439,12 +12004,12 @@ body {
     // ============================================================
     // GLOBAL DISCOUNT - PERBAIKAN (HANYA UNTUK HARGA TERTENTU)
     // ============================================================
-
+    
     async function activateGlobalDiscount() {
         const percentage = parseInt(document.getElementById('discountPercentage').value);
         const duration = parseInt(document.getElementById('discountDuration').value);
         const minPurchase = parseInt(document.getElementById('discountMinPurchase').value) || 0;
-        // TAMBAHKAN: Harga spesifik yang akan didiskon
+        // HARGA SPESIFIK YANG AKAN DIDISKON
         const specificPrice = parseInt(document.getElementById('discountSpecificPrice').value) || 0;
     
         if (isNaN(percentage) || percentage < 0 || percentage > 100) {
@@ -11469,21 +12034,22 @@ body {
                 active: true,
                 percentage: percentage,
                 minPurchase: minPurchase,
-                specificPrice: specificPrice,
+                specificPrice: specificPrice, // HARGA SPESIFIK
                 expiryDate: expiryDate.toISOString(),
                 startedAt: new Date().toISOString(),
                 activatedBy: 'Admin'
             });
-        
+            
             await db.ref('discount_history').push({
                 action: 'activated',
                 percentage: percentage,
                 minPurchase: minPurchase,
                 specificPrice: specificPrice,
                 expiryDate: expiryDate.toISOString(),
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                note: `Diskon ${percentage}% untuk harga Rp ${formatRupiah(specificPrice)}`
             });
-        
+            
             addActivityLog('Activate Global Discount', `${percentage}% discount activated for price ${specificPrice}`);
             hideLoading();
             showToast(`✅ Diskon ${percentage}% berhasil diaktifkan untuk harga Rp ${formatRupiah(specificPrice)}!`);
@@ -11494,13 +12060,15 @@ body {
             showToast('Error: ' + error.message);
         }
     }
-
-    // MODIFIKASI FUNGSI loadGlobalDiscountStatus
+    
+    // ============================================================
+    // LOAD GLOBAL DISCOUNT STATUS - PERBAIKAN
+    // ============================================================
     function loadGlobalDiscountStatus() {
         db.ref('global_discount').on('value', (snap) => {
             const data = snap.val();
             const statusDiv = document.getElementById('currentDiscountStatus');
-        
+            
             if (data && data.active === true && new Date(data.expiryDate) > new Date()) {
                 statusDiv.style.display = 'block';
                 const expiry = new Date(data.expiryDate);
@@ -11510,6 +12078,9 @@ body {
                     <div><strong>Minimal Pembelian:</strong> ${data.minPurchase > 0 ? 'Rp ' + formatRupiah(data.minPurchase) : 'Tidak ada'}</div>
                     <div><strong>Berlaku hingga:</strong> ${expiry.toLocaleDateString('id-ID')}</div>
                     <div><strong>Dibuat:</strong> ${data.startedAt ? new Date(data.startedAt).toLocaleString() : '-'}</div>
+                    <div style="margin-top:10px; background:rgba(255,170,0,0.1); border-radius:10px; padding:10px; border:1px solid rgba(255,170,0,0.2);">
+                        <span style="color:#ffaa00;">ℹ️ Diskon hanya berlaku untuk paket dengan harga <strong>Rp ${formatRupiah(data.specificPrice)}</strong></span>
+                    </div>
                 `;
             } else {
                 statusDiv.style.display = 'none';
