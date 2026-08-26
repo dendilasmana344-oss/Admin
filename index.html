@@ -8247,6 +8247,12 @@ body {
                     <input type="number" class="modal-input" id="discountSpecificPrice" placeholder="35000" min="0" value="0">
                     <small style="color: #888;">Masukkan harga paket yang akan didiskon. Contoh: 35000 (hanya paket dengan harga 35.000 yang kena diskon)</small>
                 </div>
+                
+                <div class="modal-form-group">
+                    <label class="modal-label"><i class="fas fa-align-left"></i> Deskripsi (Opsional)</label>
+                    <input type="text" class="modal-input" id="discountDescription" placeholder="e.g., Diskon Spesial Akhir Tahun" maxlength="100">
+                    <small style="color: #888;">Deskripsi akan tampil di user panel</small>
+                </div>
         
                 <div class="modal-form-group">
                     <label class="modal-label"><i class="fas fa-calendar-alt"></i> Masa Berlaku (Hari)</label>
@@ -12002,7 +12008,7 @@ body {
     }
     
     // ============================================================
-    // GLOBAL DISCOUNT - PERBAIKAN TOTAL
+    // GLOBAL DISCOUNT - DENGAN MULTIPLE DISKON
     // ============================================================
     
     async function activateGlobalDiscount() {
@@ -12010,6 +12016,7 @@ body {
         const duration = parseInt(document.getElementById('discountDuration').value);
         const minPurchase = parseInt(document.getElementById('discountMinPurchase').value) || 0;
         const specificPrice = parseInt(document.getElementById('discountSpecificPrice').value) || 0;
+        const description = document.getElementById('discountDescription')?.value || '';
     
         // VALIDASI
         if (isNaN(percentage) || percentage < 0 || percentage > 100) {
@@ -12040,7 +12047,8 @@ body {
     
         showLoading();
         try {
-            await db.ref('global_discount').set({
+            // TAMBAHKAN DISKON BARU KE NODE global_discount
+            const newDiscountRef = await db.ref('global_discount').push({
                 active: true,
                 percentage: percentage,
                 minPurchase: minPurchase,
@@ -12048,7 +12056,9 @@ body {
                 expiryDate: expiryDate.toISOString(),
                 startedAt: new Date().toISOString(),
                 activatedBy: 'Admin',
-                packageLabel: foundPackage.label
+                packageLabel: foundPackage.label,
+                description: description || `Diskon ${percentage}% untuk ${foundPackage.label}`,
+                createdAt: Date.now()
             });
             
             await db.ref('discount_history').push({
@@ -12068,79 +12078,178 @@ body {
             loadGlobalDiscountStatus();
             loadDiscountHistory();
             loadPackages(); // REFRESH PACKAGES
+            
         } catch (error) {
             hideLoading();
             showToast('❌ Error: ' + error.message);
         }
     }
-    
-    // ============================================================
-    // LOAD GLOBAL DISCOUNT STATUS - DENGAN INFO PAKET
+        
+        // ============================================================
+    // LOAD GLOBAL DISCOUNT STATUS - MULTIPLE DISKON
     // ============================================================
     function loadGlobalDiscountStatus() {
         db.ref('global_discount').on('value', (snap) => {
-            const data = snap.val();
+            const data = snap.val() || {};
             const statusDiv = document.getElementById('currentDiscountStatus');
             
-            if (data && data.active === true) {
-                const expiry = new Date(data.expiryDate);
-                
-                // CEK APAKAH SUDAH EXPIRED
-                if (expiry <= new Date()) {
-                    statusDiv.style.display = 'none';
-                    // AUTO NONAKTIFKAN
-                    db.ref('global_discount').update({ active: false });
-                    return;
+            // AMBIL SEMUA DISKON AKTIF
+            const activeDiscounts = [];
+            const now = new Date();
+            
+            Object.keys(data).forEach(key => {
+                const discount = data[key];
+                if (discount && discount.active === true) {
+                    const expiry = new Date(discount.expiryDate);
+                    if (expiry > now) {
+                        activeDiscounts.push({
+                            id: key,
+                            ...discount
+                        });
+                    } else {
+                        // AUTO NONAKTIFKAN YANG EXPIRED
+                        db.ref('global_discount/' + key + '/active').set(false);
+                    }
                 }
-                
+            });
+            
+            if (activeDiscounts.length > 0) {
                 statusDiv.style.display = 'block';
-                document.getElementById('currentDiscountDetails').innerHTML = `
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div><strong>Persentase:</strong> <span style="color:#ffaa00; font-size:18px;">${data.percentage}%</span></div>
-                        <div><strong>Paket:</strong> <span style="color:#00ff88;">${data.packageLabel || 'Paket'}</span></div>
-                        <div><strong>Harga Spesifik:</strong> <span style="color:#ffd700;">Rp ${formatRupiah(data.specificPrice || 0)}</span></div>
-                        <div><strong>Minimal Pembelian:</strong> ${data.minPurchase > 0 ? 'Rp ' + formatRupiah(data.minPurchase) : 'Tidak ada'}</div>
-                        <div><strong>Berlaku hingga:</strong> <span style="color:${expiry <= new Date() ? '#ff4444' : '#ffaa00'};">${expiry.toLocaleDateString('id-ID')}</span></div>
-                        <div><strong>Dibuat:</strong> ${data.startedAt ? new Date(data.startedAt).toLocaleString() : '-'}</div>
-                    </div>
-                    <div style="margin-top:15px; background:rgba(255,170,0,0.15); border-radius:12px; padding:12px; border:2px solid rgba(255,170,0,0.3);">
-                        <span style="color:#ffaa00;">ℹ️ Diskon hanya berlaku untuk paket <strong>"${data.packageLabel || 'Paket'}"</strong> dengan harga <strong>Rp ${formatRupiah(data.specificPrice)}</strong></span>
+                
+                let html = `
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; flex-wrap:wrap;">
+                        <i class="fas fa-percent" style="font-size:28px; color:#00ff88;"></i>
+                        <span style="font-weight:bold; color:#00ff88; font-size:18px;" class="glow-green">${activeDiscounts.length} DISKON AKTIF</span>
+                        <span class="discount-status-badge active" style="margin-left:auto;">✅ AKTIF</span>
                     </div>
                 `;
+                
+                // TAMPILKAN SEMUA DISKON
+                activeDiscounts.forEach((discount, index) => {
+                    const expiry = new Date(discount.expiryDate);
+                    html += `
+                        <div style="background:rgba(0,0,0,0.3); border-radius:12px; padding:12px 15px; margin-bottom:10px; border-left:3px solid #ffaa00;">
+                            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                                <div><strong>#${index + 1} - ${discount.packageLabel || 'Paket'}</strong></div>
+                                <div><span style="color:#ffaa00;">${discount.percentage}%</span> untuk <span style="color:#ffd700;">Rp ${formatRupiah(discount.specificPrice)}</span></div>
+                            </div>
+                            <div style="font-size:12px; color:#888; display:flex; gap:15px; flex-wrap:wrap;">
+                                <span>Berlaku hingga: ${expiry.toLocaleDateString('id-ID')}</span>
+                                ${discount.minPurchase > 0 ? `<span>Min: Rp ${formatRupiah(discount.minPurchase)}</span>` : ''}
+                                ${discount.description ? `<span>${discount.description}</span>` : ''}
+                            </div>
+                            <button class="btn btn-danger btn-sm" onclick="deactivateSpecificDiscount('${discount.id}')" style="margin-top:8px; padding:4px 12px; font-size:11px;">
+                                <i class="fas fa-stop"></i> Nonaktifkan Diskon Ini
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                // TOMBOL NONAKTIFKAN SEMUA
+                html += `
+                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-danger btn-sm" onclick="deactivateAllDiscounts()"><i class="fas fa-stop"></i> Nonaktifkan Semua</button>
+                    </div>
+                `;
+                
+                document.getElementById('currentDiscountDetails').innerHTML = html;
             } else {
                 statusDiv.style.display = 'none';
             }
         });
     }
     
-    async function deactivateGlobalDiscount() {
-        showConfirm('Nonaktifkan Diskon', 'Yakin ingin menonaktifkan diskon global?', async () => {
+    // ============================================================
+    // FUNGSI UNTUK MULTIPLE DISKON - ADMIN
+    // ============================================================
+    
+    // NONAKTIFKAN DISKON TERTENTU
+    async function deactivateSpecificDiscount(discountId) {
+        showConfirm('Nonaktifkan Diskon', 'Yakin ingin menonaktifkan diskon ini?', async () => {
             showLoading();
             try {
-                // AMBIL DATA DISKON SEBELUM DINONAKTIFKAN
-                const snap = await db.ref('global_discount').once('value');
-                const data = snap.val() || {};
-                
-                await db.ref('global_discount').update({ 
+                await db.ref('global_discount/' + discountId).update({
                     active: false,
                     deactivatedAt: Date.now(),
                     deactivatedBy: 'Admin'
                 });
                 
                 await db.ref('discount_history').push({
-                    action: 'deactivated',
-                    percentage: data.percentage || 0,
-                    specificPrice: data.specificPrice || 0,
+                    action: 'deactivated_specific',
+                    discountId: discountId,
                     timestamp: Date.now(),
-                    note: `Diskon untuk Rp ${formatRupiah(data.specificPrice || 0)} dinonaktifkan oleh admin`
+                    note: 'Diskon spesifik dinonaktifkan oleh admin'
                 });
                 
-                addActivityLog('Deactivate Global Discount', 'Global discount deactivated');
+                addActivityLog('Deactivate Specific Discount', `Diskon ${discountId} dinonaktifkan`);
                 hideLoading();
-                showToast('✅ Diskon global dinonaktifkan!');
+                showToast('✅ Diskon dinonaktifkan!');
                 loadGlobalDiscountStatus();
                 loadDiscountHistory();
-                loadPackages(); // REFRESH PACKAGES
+                loadPackages();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+    
+    // NONAKTIFKAN SEMUA DISKON
+    async function deactivateAllDiscounts() {
+        showConfirm('Nonaktifkan Semua Diskon', 'Yakin ingin menonaktifkan SEMUA diskon?', async () => {
+            showLoading();
+            try {
+                const snap = await db.ref('global_discount').once('value');
+                const data = snap.val() || {};
+                
+                const updates = {};
+                Object.keys(data).forEach(key => {
+                    updates[key + '/active'] = false;
+                    updates[key + '/deactivatedAt'] = Date.now();
+                    updates[key + '/deactivatedBy'] = 'Admin';
+                });
+                
+                await db.ref('global_discount').update(updates);
+                
+                await db.ref('discount_history').push({
+                    action: 'deactivated_all',
+                    timestamp: Date.now(),
+                    note: 'Semua diskon dinonaktifkan oleh admin'
+                });
+                
+                addActivityLog('Deactivate All Discounts', 'Semua diskon dinonaktifkan');
+                hideLoading();
+                showToast('✅ Semua diskon dinonaktifkan!');
+                loadGlobalDiscountStatus();
+                loadDiscountHistory();
+                loadPackages();
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message);
+            }
+        });
+    }
+    
+    // HAPUS DISKON TERTENTU (PERMANEN)
+    async function deleteSpecificDiscount(discountId) {
+        showConfirm('Hapus Diskon', 'Yakin ingin menghapus diskon ini secara permanen?', async () => {
+            showLoading();
+            try {
+                await db.ref('global_discount/' + discountId).remove();
+                
+                await db.ref('discount_history').push({
+                    action: 'deleted_specific',
+                    discountId: discountId,
+                    timestamp: Date.now(),
+                    note: 'Diskon dihapus permanen oleh admin'
+                });
+                
+                addActivityLog('Delete Specific Discount', `Diskon ${discountId} dihapus`);
+                hideLoading();
+                showToast('✅ Diskon dihapus!');
+                loadGlobalDiscountStatus();
+                loadDiscountHistory();
+                loadPackages();
             } catch (error) {
                 hideLoading();
                 showToast('Error: ' + error.message);
